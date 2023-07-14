@@ -43,37 +43,35 @@
  */
 
 
-#define NSC	1
+#define NSC 1
 
 #include <sys/param.h>
 #include <luna68k/dev/scsireg.h>
 #include <luna68k/stand/device.h>
 #include <luna68k/stand/scsivar.h>
 
-#define SCSI_IPL	2
-#define SCSI_ID		7
+#define SCSI_IPL 2
+#define SCSI_ID 7
 
-int	scinit(), scstart(), scgo(), scintr(), scdone();
-void	screset();
-struct	driver scdriver = {
-	scinit, "sc", scstart, scgo, scintr, scdone
-};
+int scinit(), scstart(), scgo(), scintr(), scdone();
+void screset();
+struct driver scdriver = {
+        scinit, "sc", scstart, scgo, scintr, scdone};
 
-struct	scsi_softc scsi_softc[NSC];
+struct scsi_softc scsi_softc[NSC];
 
 /*
  * Initialize SPC & Data Structure
  */
 
-int
-scinit(hc)
-	register struct hp_ctlr *hc;
+int scinit(hc)
+register struct hp_ctlr *hc;
 {
 	register struct scsi_softc *hs = &scsi_softc[hc->hp_unit];
 	register int i;
 
-	hc->hp_ipl    = SCSI_IPL;
-	hs->sc_hc     = hc;
+	hc->hp_ipl = SCSI_IPL;
+	hs->sc_hc  = hc;
 
 	hs->sc_flags  = 0;
 	hs->sc_phase  = BUS_FREE_PHASE;
@@ -89,16 +87,15 @@ scinit(hc)
 	hs->sc_msg[0] = 0;
 
 	screset(hc->hp_unit);
-	return(1);
+	return (1);
 }
 
 void
-screset(unit)
-	register int unit;
+        screset(unit) register int unit;
 {
 	register struct scsi_softc *hs = &scsi_softc[unit];
 	volatile register struct scsidevice *hd =
-				(struct scsidevice *)hs->sc_hc->hp_addr;
+	        (struct scsidevice *) hs->sc_hc->hp_addr;
 
 	printf("sc%d: ", unit);
 
@@ -123,9 +120,9 @@ screset(unit)
 	 * interrupts enabled & appropriate parity.
 	 */
 	hd->scsi_bdid = SCSI_ID;
-	hd->scsi_sctl = SCTL_DISABLE | SCTL_ABRT_ENAB|
-			SCTL_PARITY_ENAB | SCTL_RESEL_ENAB |
-			SCTL_INTR_ENAB;
+	hd->scsi_sctl = SCTL_DISABLE | SCTL_ABRT_ENAB |
+	                SCTL_PARITY_ENAB | SCTL_RESEL_ENAB |
+	                SCTL_INTR_ENAB;
 	printf(", parity");
 
 	DELAY(400);
@@ -140,9 +137,8 @@ screset(unit)
  */
 
 int
-issue_select(hd, target)
-	volatile register struct scsidevice *hd;
-	u_char target;
+        issue_select(hd, target) volatile register struct scsidevice *hd;
+u_char target;
 {
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << SCSI_ID) | (1 << target);
@@ -170,27 +166,25 @@ issue_select(hd, target)
  */
 
 int
-ixfer_start(hd, len, phase, wait)
-	volatile register struct scsidevice *hd;
-	int len;
-	u_char phase;
-	register int wait;
+        ixfer_start(hd, len, phase, wait) volatile register struct scsidevice *hd;
+int len;
+u_char phase;
+register int wait;
 {
 	hd->scsi_tch  = ((len & 0xff0000) >> 16);
-	hd->scsi_tcm  = ((len & 0x00ff00) >>  8);
-	hd->scsi_tcl  =  (len & 0x0000ff);
+	hd->scsi_tcm  = ((len & 0x00ff00) >> 8);
+	hd->scsi_tcl  = (len & 0x0000ff);
 	hd->scsi_pctl = phase;
 	hd->scsi_scmd = SCMD_XFR | SCMD_PROG_XFR;
 }
 
 int
-ixfer_out(hd, len, buf)
-	volatile register struct scsidevice *hd;
-	int len;
-	register u_char *buf;
+        ixfer_out(hd, len, buf) volatile register struct scsidevice *hd;
+int len;
+register u_char *buf;
 {
 	for(; len > 0; len--) {
-		while (hd->scsi_ssts & SSTS_DREG_FULL) {
+		while(hd->scsi_ssts & SSTS_DREG_FULL) {
 			DELAY(5);
 		}
 		hd->scsi_dreg = *buf++;
@@ -198,14 +192,13 @@ ixfer_out(hd, len, buf)
 }
 
 int
-ixfer_in(hd, len, buf)
-	volatile register struct scsidevice *hd;
-	int len;
-	register u_char *buf;
+        ixfer_in(hd, len, buf) volatile register struct scsidevice *hd;
+int len;
+register u_char *buf;
 {
-	for (; len > 0; len--) {
+	for(; len > 0; len--) {
 		int i;
-		while (hd->scsi_ssts & SSTS_DREG_EMPTY) {
+		while(hd->scsi_ssts & SSTS_DREG_EMPTY) {
 			DELAY(5);
 		}
 		*buf++ = hd->scsi_dreg;
@@ -217,21 +210,20 @@ ixfer_in(hd, len, buf)
  * SPC drive routines
  */
 
-int
-scrun(ctlr, slave, cdb, cdblen, buf, len, lock)
-	int ctlr, slave;
-	u_char *cdb;
-	int cdblen;
-	u_char *buf;
-	int len;
-	int *lock;
+int scrun(ctlr, slave, cdb, cdblen, buf, len, lock)
+int ctlr, slave;
+u_char *cdb;
+int cdblen;
+u_char *buf;
+int len;
+int *lock;
 {
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
-	volatile register struct scsidevice *hd = 
-		(struct scsidevice *) hs->sc_hc->hp_addr;
+	volatile register struct scsidevice *hd =
+	        (struct scsidevice *) hs->sc_hc->hp_addr;
 
-	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
-		return(0);
+	if(hd->scsi_ssts & (SSTS_INITIATOR | SSTS_TARGET | SSTS_BUSY))
+		return (0);
 
 	hs->sc_flags  = 0;
 	hs->sc_phase  = ARB_SEL_PHASE;
@@ -249,15 +241,14 @@ scrun(ctlr, slave, cdb, cdblen, buf, len, lock)
 	*(hs->sc_lock) = SC_IN_PROGRESS;
 	issue_select(hd, hs->sc_target);
 
-	return(1);
+	return (1);
 }
 
-int
-scfinish(ctlr)
-	int ctlr;
+int scfinish(ctlr)
+int ctlr;
 {
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
-	int status = hs->sc_stat;
+	int status                     = hs->sc_stat;
 
 	hs->sc_flags  = 0;
 	hs->sc_phase  = BUS_FREE_PHASE;
@@ -272,25 +263,24 @@ scfinish(ctlr)
 	hs->sc_stat   = 0;
 	hs->sc_msg[0] = 0;
 
-	return(status);
+	return (status);
 }
 
-int
-scabort(hs, hd)
-	register struct scsi_softc *hs;
-	volatile register struct scsidevice *hd;
+int scabort(hs, hd)
+register struct scsi_softc *hs;
+volatile register struct scsidevice *hd;
 {
 	int len;
 	u_char junk;
 
 	printf("sc%d: abort  phase=0x%x, ssts=0x%x, ints=0x%x\n",
-		hs->sc_hc->hp_unit, hd->scsi_psns, hd->scsi_ssts,
-		hd->scsi_ints);
+	       hs->sc_hc->hp_unit, hd->scsi_psns, hd->scsi_ssts,
+	       hd->scsi_ints);
 
-	if (hd->scsi_ints != 0)
+	if(hd->scsi_ints != 0)
 		hd->scsi_ints = hd->scsi_ints;
 
-	if (hd->scsi_psns == 0 || (hd->scsi_ssts & SSTS_INITIATOR) == 0)
+	if(hd->scsi_psns == 0 || (hd->scsi_ssts & SSTS_INITIATOR) == 0)
 		/* no longer connected to scsi target */
 		return;
 
@@ -298,30 +288,30 @@ scabort(hs, hd)
 	len = (hd->scsi_tch << 16) | (hd->scsi_tcm << 8) | hd->scsi_tcl;
 
 	/* for that many bus cycles, try to send an abort msg */
-	for (len += 1024; (hd->scsi_ssts & SSTS_INITIATOR) && --len >= 0; ) {
+	for(len += 1024; (hd->scsi_ssts & SSTS_INITIATOR) && --len >= 0;) {
 		hd->scsi_scmd = SCMD_SET_ATN;
 
-		while ((hd->scsi_psns & PSNS_REQ) == 0) {
-			if (! (hd->scsi_ssts & SSTS_INITIATOR))
+		while((hd->scsi_psns & PSNS_REQ) == 0) {
+			if(!(hd->scsi_ssts & SSTS_INITIATOR))
 				goto out;
 			DELAY(1);
 		}
 
-		if ((hd->scsi_psns & PHASE) == MESG_OUT_PHASE)
+		if((hd->scsi_psns & PHASE) == MESG_OUT_PHASE)
 			hd->scsi_scmd = SCMD_RST_ATN;
 		hd->scsi_pctl = hs->sc_phase = hd->scsi_psns & PHASE;
 
-		if (hd->scsi_psns & PHASE_IO) {
+		if(hd->scsi_psns & PHASE_IO) {
 			/* one of the input phases - read & discard a byte */
 			hd->scsi_scmd = SCMD_SET_ACK;
-			while (hd->scsi_psns & PSNS_REQ)
+			while(hd->scsi_psns & PSNS_REQ)
 				DELAY(1);
 			junk = hd->scsi_temp;
 		} else {
 			/* one of the output phases - send an abort msg */
 			hd->scsi_temp = MSG_ABORT;
 			hd->scsi_scmd = SCMD_SET_ACK;
-			while (hd->scsi_psns & PSNS_REQ)
+			while(hd->scsi_psns & PSNS_REQ)
 				DELAY(1);
 		}
 
@@ -333,9 +323,9 @@ out:
 	 * the device didn't listen.  If the latter, announce the problem.
 	 * Either way, reset the card & the SPC.
 	 */
-	if (len < 0 && hs)
+	if(len < 0 && hs)
 		printf("sc%d: abort failed.  phase=0x%x, ssts=0x%x\n",
-			hs->sc_hc->hp_unit, hd->scsi_psns, hd->scsi_ssts);
+		       hs->sc_hc->hp_unit, hd->scsi_psns, hd->scsi_ssts);
 }
 
 
@@ -343,11 +333,10 @@ out:
  * SCSI Command Handler
  */
 
-int
-scsi_test_unit_rdy(ctlr, slave, unit)
-	int ctlr, slave, unit;
+int scsi_test_unit_rdy(ctlr, slave, unit)
+int ctlr, slave, unit;
 {
-	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
+	static struct scsi_cdb6 cdb = {CMD_TEST_UNIT_READY};
 	int status, lock;
 
 #ifdef DEBUG
@@ -356,35 +345,34 @@ scsi_test_unit_rdy(ctlr, slave, unit)
 
 	cdb.lun = unit;
 
-	if (!(scrun(ctlr, slave, &cdb, 6, (u_char *) 0, 0, &lock))) {
+	if(!(scrun(ctlr, slave, &cdb, 6, (u_char *) 0, 0, &lock))) {
 #ifdef DEBUG
 		printf("scsi_test_unit_rdy: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
-	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
+	while((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
 		DELAY(10);
 
 	status = scfinish(ctlr);
 
-	if (lock == SC_IO_COMPLETE) {
+	if(lock == SC_IO_COMPLETE) {
 #ifdef DEBUG
 		printf("scsi_test_unit_rdy: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return (status);
 	} else {
-		return(lock);
+		return (lock);
 	}
 }
 
-int
-scsi_request_sense(ctlr, slave, unit, buf, len)
-	int ctlr, slave, unit;
-	u_char *buf;
-	unsigned len;
+int scsi_request_sense(ctlr, slave, unit, buf, len)
+int ctlr, slave, unit;
+u_char *buf;
+unsigned len;
 {
-	static struct scsi_cdb6 cdb = {	CMD_REQUEST_SENSE };
+	static struct scsi_cdb6 cdb = {CMD_REQUEST_SENSE};
 	int status, lock;
 
 #ifdef DEBUG
@@ -402,34 +390,33 @@ scsi_request_sense(ctlr, slave, unit, buf, len)
 	cdb.lun = unit;
 	cdb.len = len;
 
-	if (!(scrun(ctlr, slave, &cdb, 6, buf, len, &lock))) {
+	if(!(scrun(ctlr, slave, &cdb, 6, buf, len, &lock))) {
 #ifdef DEBUG
 		printf("scsi_request_sense: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
-	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
+	while((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
 		DELAY(10);
 
 	status = scfinish(ctlr);
 
-	if (lock == SC_IO_COMPLETE) {
+	if(lock == SC_IO_COMPLETE) {
 #ifdef DEBUG
 		printf("scsi_request_sense: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return (status);
 	} else {
-		return(lock);
+		return (lock);
 	}
 }
 
-int
-scsi_immed_command(ctlr, slave, unit, cdb, buf, len)
-	int ctlr, slave, unit;
-	struct scsi_fmt_cdb *cdb;
-	u_char *buf;
-	unsigned len;
+int scsi_immed_command(ctlr, slave, unit, cdb, buf, len)
+int ctlr, slave, unit;
+struct scsi_fmt_cdb *cdb;
+u_char *buf;
+unsigned len;
 {
 	int lock, status;
 
@@ -440,33 +427,32 @@ scsi_immed_command(ctlr, slave, unit, cdb, buf, len)
 
 	cdb->cdb[1] |= unit << 5;
 
-	if (!(scrun(ctlr, slave, &cdb->cdb[0], cdb->len, buf, len, &lock))) {
+	if(!(scrun(ctlr, slave, &cdb->cdb[0], cdb->len, buf, len, &lock))) {
 #ifdef DEBUG
 		printf("scsi_immed_command: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
-	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
+	while((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED))
 		DELAY(10);
 
 	status = scfinish(ctlr);
 
-	if (lock == SC_IO_COMPLETE) {
+	if(lock == SC_IO_COMPLETE) {
 #ifdef DEBUG
 		printf("scsi_immed_command: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return (status);
 	} else {
-		return(lock);
+		return (lock);
 	}
 }
 
-int
-scsi_format_unit(ctlr, slave, unit)
-	int ctlr, slave, unit;
+int scsi_format_unit(ctlr, slave, unit)
+int ctlr, slave, unit;
 {
-	static struct scsi_cdb6 cdb = { CMD_FORMAT_UNIT, 0, 0, 0, 0, 0 };
+	static struct scsi_cdb6 cdb = {CMD_FORMAT_UNIT, 0, 0, 0, 0, 0};
 	int status, lock, count = 0;
 
 #ifdef DEBUG
@@ -475,30 +461,30 @@ scsi_format_unit(ctlr, slave, unit)
 
 	cdb.lun = unit;
 
-	if (!(scrun(ctlr, slave, &cdb, 6, (u_char *) 0, 0, &lock))) {
+	if(!(scrun(ctlr, slave, &cdb, 6, (u_char *) 0, 0, &lock))) {
 #ifdef DEBUG
 		printf("scsi_format_unit: Command Transfer Failed.\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
-	while ((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED)) {
+	while((lock == SC_IN_PROGRESS) || (lock == SC_DISCONNECTED)) {
 		DELAY(1000000);
 #ifdef DEBUG
-		if ((count % 60) == 0)
+		if((count % 60) == 0)
 			printf("scsi_format_unit: %d\n");
 #endif
 	}
 
 	status = scfinish(ctlr);
 
-	if (lock == SC_IO_COMPLETE) {
+	if(lock == SC_IO_COMPLETE) {
 #ifdef DEBUG
 		printf("scsi_format_unit: Status -- 0x%x\n", status);
 #endif
-		return(status);
+		return (status);
 	} else {
-		return(lock);
+		return (lock);
 	}
 }
 
@@ -507,19 +493,13 @@ scsi_format_unit(ctlr, slave, unit)
  * ????
  */
 
-int
-scstart()
-{
+int scstart() {
 }
 
-int
-scgo()
-{
+int scgo() {
 }
 
-int
-scdone()
-{
+int scdone() {
 }
 
 
@@ -527,9 +507,7 @@ scdone()
  * Interrupt Routine
  */
 
-int
-scintr()
-{
+int scintr() {
 	register struct scsi_softc *hs;
 	volatile register struct scsidevice *hd;
 	register u_char ints, temp;
@@ -537,10 +515,10 @@ scintr()
 	u_char *buf;
 	int len;
 
-	for (i = 0; i < NSC; i++) {
+	for(i = 0; i < NSC; i++) {
 		hs = &scsi_softc[i];
 		hd = (struct scsidevice *) hs->sc_hc->hp_addr;
-		if ((ints = hd->scsi_ints) != 0)
+		if((ints = hd->scsi_ints) != 0)
 			goto get_intr;
 	}
 
@@ -552,27 +530,27 @@ scintr()
 	 * Interrupt
 	 */
 
- get_intr:
+get_intr:
 #ifdef DEBUG
 	printf("scintr: INTS 0x%x, SSTS 0x%x,  PCTL 0x%x,  PSNS 0x%x    0x%x\n",
-	        ints, hd->scsi_ssts, hd->scsi_pctl, hd->scsi_psns,
-	        hs->sc_phase);
+	       ints, hd->scsi_ssts, hd->scsi_pctl, hd->scsi_psns,
+	       hs->sc_phase);
 #endif
-	if (ints & INTS_RESEL) {
-		if (hs->sc_phase == BUS_FREE_PHASE) {
+	if(ints & INTS_RESEL) {
+		if(hs->sc_phase == BUS_FREE_PHASE) {
 			temp = hd->scsi_temp & ~(1 << SCSI_ID);
-			for (i = 0; temp != 1; i++) {
+			for(i = 0; temp != 1; i++) {
 				temp >>= 1;
 			}
-			hs->sc_target = i;
+			hs->sc_target  = i;
 			*(hs->sc_lock) = SC_IN_PROGRESS;
-		} else 
+		} else
 			goto abort;
-	} else if (ints & INTS_DISCON) {
-		if ((hs->sc_msg[0] == MSG_CMD_COMPLETE) || (hs->sc_msg[0] == MSG_DISCONNECT)) {
+	} else if(ints & INTS_DISCON) {
+		if((hs->sc_msg[0] == MSG_CMD_COMPLETE) || (hs->sc_msg[0] == MSG_DISCONNECT)) {
 			hs->sc_phase  = BUS_FREE_PHASE;
 			hs->sc_target = SCSI_ID;
-			if (hs->sc_msg[0] == MSG_CMD_COMPLETE) 
+			if(hs->sc_msg[0] == MSG_CMD_COMPLETE)
 				/* SCSI IO complete */
 				*(hs->sc_lock) = SC_IO_COMPLETE;
 			else
@@ -582,29 +560,29 @@ scintr()
 			return;
 		} else
 			goto abort;
-	} else if (ints & INTS_CMD_DONE) {
-		if (hs->sc_phase == BUS_FREE_PHASE)
+	} else if(ints & INTS_CMD_DONE) {
+		if(hs->sc_phase == BUS_FREE_PHASE)
 			goto abort;
-		else if (hs->sc_phase == MESG_IN_PHASE) {
+		else if(hs->sc_phase == MESG_IN_PHASE) {
 			hd->scsi_scmd = SCMD_RST_ACK;
 			hd->scsi_ints = ints;
 			hs->sc_phase  = hd->scsi_psns & PHASE;
 			return;
 		}
-		if (hs->sc_flags & SC_SEL_TIMEOUT)
+		if(hs->sc_flags & SC_SEL_TIMEOUT)
 			hs->sc_flags &= ~SC_SEL_TIMEOUT;
-	} else if (ints & INTS_SRV_REQ) {
-		if (hs->sc_phase != MESG_IN_PHASE)
+	} else if(ints & INTS_SRV_REQ) {
+		if(hs->sc_phase != MESG_IN_PHASE)
 			goto abort;
-	} else if (ints & INTS_TIMEOUT) {
-		if (hs->sc_phase == ARB_SEL_PHASE) {
-			if (hs->sc_flags & SC_SEL_TIMEOUT) {
+	} else if(ints & INTS_TIMEOUT) {
+		if(hs->sc_phase == ARB_SEL_PHASE) {
+			if(hs->sc_flags & SC_SEL_TIMEOUT) {
 				hs->sc_flags &= ~SC_SEL_TIMEOUT;
 				hs->sc_phase  = BUS_FREE_PHASE;
 				hs->sc_target = SCSI_ID;
 				/* Such SCSI Device is not conected. */
 				*(hs->sc_lock) = SC_DEV_NOT_FOUND;
-				hd->scsi_ints = ints;
+				hd->scsi_ints  = ints;
 				return;
 			} else {
 				/* wait more 250 usec */
@@ -627,19 +605,19 @@ scintr()
 	 * Next SCSI Transfer
 	 */
 
-	while ((hd->scsi_psns & PSNS_REQ) == 0) {
+	while((hd->scsi_psns & PSNS_REQ) == 0) {
 		DELAY(1);
 	}
 
 	hs->sc_phase = hd->scsi_psns & PHASE;
 
-	if ((hs->sc_phase == DATA_OUT_PHASE) || (hs->sc_phase == DATA_IN_PHASE)) {
+	if((hs->sc_phase == DATA_OUT_PHASE) || (hs->sc_phase == DATA_IN_PHASE)) {
 		len = hs->sc_len;
 		buf = hs->sc_buf;
-	} else if (hs->sc_phase == CMD_PHASE) {
+	} else if(hs->sc_phase == CMD_PHASE) {
 		len = hs->sc_cdblen;
 		buf = hs->sc_cdb;
-	} else if (hs->sc_phase == STATUS_PHASE) {
+	} else if(hs->sc_phase == STATUS_PHASE) {
 		len = 1;
 		buf = &hs->sc_stat;
 	} else {
@@ -648,7 +626,7 @@ scintr()
 	}
 
 	ixfer_start(hd, len, hs->sc_phase, 0);
-	if (hs->sc_phase & PHASE_IO)
+	if(hs->sc_phase & PHASE_IO)
 		ixfer_in(hd, len, buf);
 	else
 		ixfer_out(hd, len, buf);
@@ -658,10 +636,10 @@ scintr()
 	/*
 	 * SCSI Abort
 	 */
- abort:
+abort:
 	/* SCSI IO failed */
 	scabort(hs, hd);
-	hd->scsi_ints = ints;
+	hd->scsi_ints  = ints;
 	*(hs->sc_lock) = SC_IO_FAILED;
 	return;
 }

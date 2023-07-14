@@ -58,34 +58,32 @@
 /*
  * fpu_execute returns the following error numbers (0 = no error):
  */
-#define	FPE		1	/* take a floating point exception */
-#define	NOTFPU		2	/* not an FPU instruction */
+#define FPE 1    /* take a floating point exception */
+#define NOTFPU 2 /* not an FPU instruction */
 
 /*
  * Translate current exceptions into `first' exception.  The
  * bits go the wrong way for ffs() (0x10 is most important, etc).
  * There are only 5, so do it the obvious way.
  */
-#define	X1(x) x
-#define	X2(x) x,x
-#define	X4(x) x,x,x,x
-#define	X8(x) X4(x),X4(x)
-#define	X16(x) X8(x),X8(x)
+#define X1(x) x
+#define X2(x) x, x
+#define X4(x) x, x, x, x
+#define X8(x) X4(x), X4(x)
+#define X16(x) X8(x), X8(x)
 
 static char cx_to_trapx[] = {
-	X1(FSR_NX),
-	X2(FSR_DZ),
-	X4(FSR_UF),
-	X8(FSR_OF),
-	X16(FSR_NV)
-};
+        X1(FSR_NX),
+        X2(FSR_DZ),
+        X4(FSR_UF),
+        X8(FSR_OF),
+        X16(FSR_NV)};
 static u_char fpu_codes[] = {
-	X1(FPE_FLTINEX_TRAP),
-	X2(FPE_FLTDIV_TRAP),
-	X4(FPE_FLTUND_TRAP),
-	X8(FPE_FLTOVF_TRAP),
-	X16(FPE_FLTOPERR_TRAP)
-};
+        X1(FPE_FLTINEX_TRAP),
+        X2(FPE_FLTDIV_TRAP),
+        X4(FPE_FLTUND_TRAP),
+        X8(FPE_FLTOVF_TRAP),
+        X16(FPE_FLTOPERR_TRAP)};
 
 /*
  * The FPU gave us an exception.  Clean up the mess.  Note that the
@@ -93,75 +91,74 @@ static u_char fpu_codes[] = {
  * nor FBfcc instructions.  Experiments with `crashme' prove that
  * unknown FPops do enter the queue, however.
  */
-fpu_cleanup(p, fs)
-	register struct proc *p;
-	register struct fpstate *fs;
+fpu_cleanup(p, fs) register struct proc *p;
+register struct fpstate *fs;
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
 	struct fpemu fe;
 
-	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
+	switch((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 
-	case FSR_TT_NONE:
-		panic("fpu_cleanup 1");	/* ??? */
-		break;
+		case FSR_TT_NONE:
+			panic("fpu_cleanup 1"); /* ??? */
+			break;
 
-	case FSR_TT_IEEE:
-		/* XXX missing trap address! */
-		if ((i = fsr & FSR_CX) == 0)
-			panic("fpu ieee trap, but no exception");
-		trapsignal(p, SIGFPE, fpu_codes[i - 1]);
-		break;		/* XXX should return, but queue remains */
+		case FSR_TT_IEEE:
+			/* XXX missing trap address! */
+			if((i = fsr & FSR_CX) == 0)
+				panic("fpu ieee trap, but no exception");
+			trapsignal(p, SIGFPE, fpu_codes[i - 1]);
+			break; /* XXX should return, but queue remains */
 
-	case FSR_TT_UNFIN:
-	case FSR_TT_UNIMP:
-		if (fs->fs_qsize == 0)
-			panic("fpu_cleanup 2");
-		break;
+		case FSR_TT_UNFIN:
+		case FSR_TT_UNIMP:
+			if(fs->fs_qsize == 0)
+				panic("fpu_cleanup 2");
+			break;
 
-	case FSR_TT_SEQ:
-		panic("fpu sequence error");
-		/* NOTREACHED */
+		case FSR_TT_SEQ:
+			panic("fpu sequence error");
+			/* NOTREACHED */
 
-	case FSR_TT_HWERR:
-		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
-		    p->p_comm, p->p_pid);
-		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
-		trapsignal(p, SIGFPE, -1);	/* ??? */
-		goto out;
+		case FSR_TT_HWERR:
+			log(LOG_ERR, "fpu hardware error (%s[%d])\n",
+			    p->p_comm, p->p_pid);
+			uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
+			trapsignal(p, SIGFPE, -1); /* ??? */
+			goto out;
 
-	default:
-		printf("fsr=%x\n", fsr);
-		panic("fpu error");
+		default:
+			printf("fsr=%x\n", fsr);
+			panic("fpu error");
 	}
 
 	/* emulate the instructions left in the queue */
 	fe.fe_fpstate = fs;
-	for (i = 0; i < fs->fs_qsize; i++) {
+	for(i = 0; i < fs->fs_qsize; i++) {
 		instr.i_int = fs->fs_queue[i].fq_instr;
-		if (instr.i_any.i_op != IOP_reg ||
-		    (instr.i_op3.i_op3 != IOP3_FPop1 &&
-		     instr.i_op3.i_op3 != IOP3_FPop2))
+		if(instr.i_any.i_op != IOP_reg ||
+		   (instr.i_op3.i_op3 != IOP3_FPop1 &&
+		    instr.i_op3.i_op3 != IOP3_FPop2))
 			panic("bogus fpu queue");
 		error = fpu_execute(&fe, instr);
-		switch (error) {
+		switch(error) {
 
-		case 0:
-			continue;
+			case 0:
+				continue;
 
-		case FPE:
-			trapsignal(p, SIGFPE,
-			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
-			break;
+			case FPE:
+				trapsignal(p, SIGFPE,
+				           fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
+				break;
 
-		case NOTFPU:
-			trapsignal(p, SIGILL, 0);	/* ??? code?  */
-			break;
+			case NOTFPU:
+				trapsignal(p, SIGILL, 0); /* ??? code?  */
+				break;
 
-		default:
-			panic("fpu_cleanup 3");
-			/* NOTREACHED */
+			default:
+				panic("fpu_cleanup 3");
+				/* NOTREACHED */
 		}
 		/* XXX should stop here, but queue remains */
 	}
@@ -177,43 +174,42 @@ out:
  * We know the `queue' is empty, though; we just want to emulate
  * the instruction at tf->tf_pc.
  */
-fpu_emulate(p, tf, fs)
-	struct proc *p;
-	register struct trapframe *tf;
-	register struct fpstate *fs;
+fpu_emulate(p, tf, fs) struct proc *p;
+register struct trapframe *tf;
+register struct fpstate *fs;
 {
 
 	do {
 		fetch instr from pc
-		decode
-		if (integer instr) {
+		        decode if(integer instr) {
 			/*
 			 * We do this here, rather than earlier, to avoid
 			 * losing even more badly than usual.
 			 */
-			if (p->p_addr->u_pcb.pcb_uw) {
+			if(p->p_addr->u_pcb.pcb_uw) {
 				write_user_windows();
-				if (rwindow_save(p))
+				if(rwindow_save(p))
 					sigexit(p, SIGILL);
 			}
-			if (loadstore) {
+			if(loadstore) {
 				do_it;
 				pc = npc, npc += 4
-			} else if (fbfcc) {
+			} else if(fbfcc) {
 				do_annul_stuff;
 			} else
 				return;
-		} else if (fpu instr) {
+		}
+		else if(fpu instr) {
 			fe.fe_fsr = fs->fs_fsr &= ~FSR_CX;
-			error = fpu_execute(&fe, fs, instr);
-			switch (error) {
+			error     = fpu_execute(&fe, fs, instr);
+			switch(error) {
 				etc;
 			}
-		} else
+		}
+		else return;
+		if(want to reschedule)
 			return;
-		if (want to reschedule)
-			return;
-	} while (error == 0);
+	} while(error == 0);
 }
 #endif
 
@@ -225,10 +221,9 @@ fpu_emulate(p, tf, fs)
  * Note that we do not catch all illegal opcodes, so you can, for instance,
  * multiply two integers this way.
  */
-int
-fpu_execute(fe, instr)
-	register struct fpemu *fe;
-	union instr instr;
+int fpu_execute(fe, instr)
+register struct fpemu *fe;
+union instr instr;
 {
 	register struct fpn *fp;
 	register int opf, rs1, rs2, rd, type, mask, fsr, cx;
@@ -240,113 +235,113 @@ fpu_execute(fe, instr)
 	 * The type of any i_opf opcode is in the bottom two bits, so we
 	 * squish them out here.
 	 */
-	opf = instr.i_opf.i_opf;
+	opf  = instr.i_opf.i_opf;
 	type = opf & 3;
 	mask = "\0\0\1\3"[type];
-	rs1 = instr.i_opf.i_rs1 & ~mask;
-	rs2 = instr.i_opf.i_rs2 & ~mask;
-	rd = instr.i_opf.i_rd & ~mask;
+	rs1  = instr.i_opf.i_rs1 & ~mask;
+	rs2  = instr.i_opf.i_rs2 & ~mask;
+	rd   = instr.i_opf.i_rd & ~mask;
 #ifdef notdef
-	if ((rs1 | rs2 | rd) & mask)
+	if((rs1 | rs2 | rd) & mask)
 		return (BADREG);
 #endif
-	fs = fe->fe_fpstate;
+	fs         = fe->fe_fpstate;
 	fe->fe_fsr = fs->fs_fsr & ~FSR_CX;
-	fe->fe_cx = 0;
-	switch (opf >>= 2) {
+	fe->fe_cx  = 0;
+	switch(opf >>= 2) {
 
-	default:
-		return (NOTFPU);
+		default:
+			return (NOTFPU);
 
-	case FMOV >> 2:		/* these should all be pretty obvious */
-		rs1 = fs->fs_regs[rs2];
-		goto mov;
+		case FMOV >> 2: /* these should all be pretty obvious */
+			rs1 = fs->fs_regs[rs2];
+			goto mov;
 
-	case FNEG >> 2:
-		rs1 = fs->fs_regs[rs2] ^ (1 << 31);
-		goto mov;
+		case FNEG >> 2:
+			rs1 = fs->fs_regs[rs2] ^ (1 << 31);
+			goto mov;
 
-	case FABS >> 2:
-		rs1 = fs->fs_regs[rs2] & ~(1 << 31);
-	mov:
-		fs->fs_regs[rd] = rs1;
-		fs->fs_fsr = fe->fe_fsr;
-		return (0);	/* success */
+		case FABS >> 2:
+			rs1 = fs->fs_regs[rs2] & ~(1 << 31);
+		mov:
+			fs->fs_regs[rd] = rs1;
+			fs->fs_fsr      = fe->fe_fsr;
+			return (0); /* success */
 
-	case FSQRT >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs2);
-		fp = fpu_sqrt(fe);
-		break;
+		case FSQRT >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs2);
+			fp = fpu_sqrt(fe);
+			break;
 
-	case FADD >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_add(fe);
-		break;
+		case FADD >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fp = fpu_add(fe);
+			break;
 
-	case FSUB >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_sub(fe);
-		break;
+		case FSUB >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fp = fpu_sub(fe);
+			break;
 
-	case FMUL >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_mul(fe);
-		break;
+		case FMUL >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fp = fpu_mul(fe);
+			break;
 
-	case FDIV >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fp = fpu_div(fe);
-		break;
+		case FDIV >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fp = fpu_div(fe);
+			break;
 
-	case FCMP >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fpu_compare(fe, 0);
-		goto cmpdone;
+		case FCMP >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fpu_compare(fe, 0);
+			goto cmpdone;
 
-	case FCMPE >> 2:
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		fpu_compare(fe, 1);
-	cmpdone:
-		/*
+		case FCMPE >> 2:
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			fpu_compare(fe, 1);
+		cmpdone:
+			/*
 		 * The only possible exception here is NV; catch it
 		 * early and get out, as there is no result register.
 		 */
-		cx = fe->fe_cx;
-		fsr = fe->fe_fsr | (cx << FSR_CX_SHIFT);
-		if (cx != 0) {
-			if (fsr & (FSR_NV << FSR_TEM_SHIFT)) {
-				fs->fs_fsr = (fsr & ~FSR_FTT) |
-				    (FSR_TT_IEEE << FSR_FTT_SHIFT);
-				return (FPE);
+			cx  = fe->fe_cx;
+			fsr = fe->fe_fsr | (cx << FSR_CX_SHIFT);
+			if(cx != 0) {
+				if(fsr & (FSR_NV << FSR_TEM_SHIFT)) {
+					fs->fs_fsr = (fsr & ~FSR_FTT) |
+					             (FSR_TT_IEEE << FSR_FTT_SHIFT);
+					return (FPE);
+				}
+				fsr |= FSR_NV << FSR_AX_SHIFT;
 			}
-			fsr |= FSR_NV << FSR_AX_SHIFT;
-		}
-		fs->fs_fsr = fsr;
-		return (0);
+			fs->fs_fsr = fsr;
+			return (0);
 
-	case FSMULD >> 2:
-	case FDMULX >> 2:
-		if (type == FTYPE_EXT)
-			return (NOTFPU);
-		fpu_explode(fe, &fe->fe_f1, type, rs1);
-		fpu_explode(fe, &fe->fe_f2, type, rs2);
-		type++;	/* single to double, or double to quad */
-		fp = fpu_mul(fe);
-		break;
+		case FSMULD >> 2:
+		case FDMULX >> 2:
+			if(type == FTYPE_EXT)
+				return (NOTFPU);
+			fpu_explode(fe, &fe->fe_f1, type, rs1);
+			fpu_explode(fe, &fe->fe_f2, type, rs2);
+			type++; /* single to double, or double to quad */
+			fp = fpu_mul(fe);
+			break;
 
-	case FTOS >> 2:
-	case FTOD >> 2:
-	case FTOX >> 2:
-	case FTOI >> 2:
-		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
-		type = opf & 3;	/* sneaky; depends on instruction encoding */
-		break;
+		case FTOS >> 2:
+		case FTOD >> 2:
+		case FTOX >> 2:
+		case FTOI >> 2:
+			fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
+			type = opf & 3; /* sneaky; depends on instruction encoding */
+			break;
 	}
 
 	/*
@@ -356,27 +351,27 @@ fpu_execute(fe, instr)
 	 * Otherwise set new current exceptions and accrue.
 	 */
 	fpu_implode(fe, fp, type, space);
-	cx = fe->fe_cx;
+	cx  = fe->fe_cx;
 	fsr = fe->fe_fsr;
-	if (cx != 0) {
+	if(cx != 0) {
 		mask = (fsr >> FSR_TEM_SHIFT) & FSR_TEM_MASK;
-		if (cx & mask) {
+		if(cx & mask) {
 			/* not accrued??? */
 			fs->fs_fsr = (fsr & ~FSR_FTT) |
-			    (FSR_TT_IEEE << FSR_FTT_SHIFT) |
-			    (cx_to_trapx[(cx & mask) - 1] << FSR_CX_SHIFT);
+			             (FSR_TT_IEEE << FSR_FTT_SHIFT) |
+			             (cx_to_trapx[(cx & mask) - 1] << FSR_CX_SHIFT);
 			return (FPE);
 		}
 		fsr |= (cx << FSR_CX_SHIFT) | (cx << FSR_AX_SHIFT);
 	}
-	fs->fs_fsr = fsr;
+	fs->fs_fsr      = fsr;
 	fs->fs_regs[rd] = space[0];
-	if (type >= FTYPE_DBL) {
+	if(type >= FTYPE_DBL) {
 		fs->fs_regs[rd + 1] = space[1];
-		if (type > FTYPE_DBL) {
+		if(type > FTYPE_DBL) {
 			fs->fs_regs[rd + 2] = space[2];
 			fs->fs_regs[rd + 3] = space[3];
 		}
 	}
-	return (0);	/* success */
+	return (0); /* success */
 }

@@ -37,13 +37,12 @@
  * This is designed to be small, not fast.
  */
 void
-bzero(s1, n)
-	void *s1;
-	unsigned n;
+        bzero(s1, n) void *s1;
+unsigned n;
 {
 	register char *t = s1;
 
-	while (n != 0) {
+	while(n != 0) {
 		*t++ = 0;
 		n--;
 	}

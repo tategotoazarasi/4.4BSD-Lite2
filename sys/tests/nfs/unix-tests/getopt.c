@@ -23,15 +23,18 @@ static char NFSTestID[] = "@(#)getopt.c	1.1 Lachman ONC Test Suite source";
 
 
 /*LINTLIBRARY*/
-#define NULL	0
-#define EOF	(-1)
-#define ERR(s, c)	if(opterr){\
-	extern int write();\
-	char errbuf[2];\
-	errbuf[0] = c; errbuf[1] = '\n';\
-	(void) write(2, argv[0], (unsigned)strlen(argv[0]));\
-	(void) write(2, s, (unsigned)strlen(s));\
-	(void) write(2, errbuf, 2);}
+#define NULL 0
+#define EOF (-1)
+#define ERR(s, c)                                             \
+	if(opterr) {                                              \
+		extern int write();                                   \
+		char errbuf[2];                                       \
+		errbuf[0] = c;                                        \
+		errbuf[1] = '\n';                                     \
+		(void) write(2, argv[0], (unsigned) strlen(argv[0])); \
+		(void) write(2, s, (unsigned) strlen(s));             \
+		(void) write(2, errbuf, 2);                           \
+	}
 
 #ifdef SVR3
 extern char *strchr();
@@ -39,15 +42,14 @@ extern char *strchr();
 extern char *index();
 #endif
 
-int	opterr = 1;
-int	optind = 1;
-int	optopt;
-char	*optarg;
+int opterr = 1;
+int optind = 1;
+int optopt;
+char *optarg;
 
-int
-getopt(argc, argv, opts)
-int	argc;
-char	**argv, *opts;
+int getopt(argc, argv, opts)
+int argc;
+char **argv, *opts;
 {
 	static int sp = 1;
 	register int c;
@@ -56,31 +58,31 @@ char	**argv, *opts;
 	if(sp == 1)
 		if(optind >= argc ||
 		   argv[optind][0] != '-' || argv[optind][1] == '\0')
-			return(EOF);
+			return (EOF);
 		else if(strcmp(argv[optind], "--") == NULL) {
 			optind++;
-			return(EOF);
+			return (EOF);
 		}
 	optopt = c = argv[optind][sp];
 #ifdef SVR3
-	if(c == ':' || (cp=strchr(opts, c)) == NULL) {
+	if(c == ':' || (cp = strchr(opts, c)) == NULL) {
 #else
-	if(c == ':' || (cp=index(opts, c)) == NULL) {
+	if(c == ':' || (cp = index(opts, c)) == NULL) {
 #endif
 		ERR(": illegal option -- ", c);
 		if(argv[optind][++sp] == '\0') {
 			optind++;
 			sp = 1;
 		}
-		return('?');
+		return ('?');
 	}
 	if(*++cp == ':') {
-		if(argv[optind][sp+1] != '\0')
-			optarg = &argv[optind++][sp+1];
+		if(argv[optind][sp + 1] != '\0')
+			optarg = &argv[optind++][sp + 1];
 		else if(++optind >= argc) {
 			ERR(": option requires an argument -- ", c);
 			sp = 1;
-			return('?');
+			return ('?');
 		} else
 			optarg = argv[optind++];
 		sp = 1;
@@ -91,52 +93,50 @@ char	**argv, *opts;
 		}
 		optarg = NULL;
 	}
-	return(c);
+	return (c);
 }
 
-#include	<stdio.h>
+#include <stdio.h>
 
-main(ac, av)
-char	**av;
+main(ac, av) char **av;
 {
-	register int	i;
-	int	first = 1;
-	int	error = 0;
-	char	buf[BUFSIZ];
-	char	line[BUFSIZ];
-	extern char	*optarg;
-	extern int	optind;
+	register int i;
+	int first = 1;
+	int error = 0;
+	char buf[BUFSIZ];
+	char line[BUFSIZ];
+	extern char *optarg;
+	extern int optind;
 
-	if (ac == 1) {
+	if(ac == 1) {
 		fprintf(stderr, "usage:  getopt legal-args $*\n");
 		exit(2);
 	}
 
 	line[0] = '\0';
-	while ((i = getopt(ac - 1, &av[1], av[1])) != EOF) {
-		if (i == '?')
+	while((i = getopt(ac - 1, &av[1], av[1])) != EOF) {
+		if(i == '?')
 			exit(2);
 
-		if (first) {
+		if(first) {
 			first = 0;
 			sprintf(buf, "-%c", i & 0xff);
-		}
-		else
+		} else
 			sprintf(buf, " -%c", i & 0xff);
 		strcat(line, buf);
-		if (optarg) {
+		if(optarg) {
 			sprintf(buf, " %s", optarg);
 			strcat(line, buf);
 		}
 	}
 
-	if (first)
+	if(first)
 		strcat(line, "--");
 	else
 		strcat(line, " --");
 
 	optind++;
-	for (; optind < ac; optind++) {
+	for(; optind < ac; optind++) {
 		sprintf(buf, " %s", av[optind]);
 		strcat(line, buf);
 	}

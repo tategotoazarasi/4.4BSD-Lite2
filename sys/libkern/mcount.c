@@ -53,8 +53,8 @@ static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
  */
-_MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	register u_long frompc, selfpc;
+_MCOUNT_DECL(frompc, selfpc) /* _mcount; may be static, inline, etc */
+register u_long frompc, selfpc;
 {
 	register u_short *frompcindex;
 	register struct tostruct *top, *prevtop;
@@ -69,7 +69,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	 * check that we are profiling
 	 * and that we aren't recursively invoked.
 	 */
-	if (p->state != GMON_PROF_ON)
+	if(p->state != GMON_PROF_ON)
 		return;
 #ifdef KERNEL
 	MCOUNT_ENTER;
@@ -82,29 +82,29 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	 *		not from text space.  too bad.
 	 */
 	frompc -= p->lowpc;
-	if (frompc > p->textsize)
+	if(frompc > p->textsize)
 		goto done;
 
 	frompcindex = &p->froms[frompc / (p->hashfraction * sizeof(*p->froms))];
-	toindex = *frompcindex;
-	if (toindex == 0) {
+	toindex     = *frompcindex;
+	if(toindex == 0) {
 		/*
 		 *	first time traversing this arc
 		 */
 		toindex = ++p->tos[0].link;
-		if (toindex >= p->tolimit)
+		if(toindex >= p->tolimit)
 			/* halt further profiling */
 			goto overflow;
 
 		*frompcindex = toindex;
-		top = &p->tos[toindex];
-		top->selfpc = selfpc;
-		top->count = 1;
-		top->link = 0;
+		top          = &p->tos[toindex];
+		top->selfpc  = selfpc;
+		top->count   = 1;
+		top->link    = 0;
 		goto done;
 	}
 	top = &p->tos[toindex];
-	if (top->selfpc == selfpc) {
+	if(top->selfpc == selfpc) {
 		/*
 		 * arc at front of chain; usual case.
 		 */
@@ -117,8 +117,8 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	 * prevtop points to previous top.
 	 * we know it is not at the head of the chain.
 	 */
-	for (; /* goto done */; ) {
-		if (top->link == 0) {
+	for(; /* goto done */;) {
+		if(top->link == 0) {
 			/*
 			 * top is end of the chain and none of the chain
 			 * had top->selfpc == selfpc.
@@ -126,13 +126,13 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 			 * and link it to the head of the chain.
 			 */
 			toindex = ++p->tos[0].link;
-			if (toindex >= p->tolimit)
+			if(toindex >= p->tolimit)
 				goto overflow;
 
-			top = &p->tos[toindex];
-			top->selfpc = selfpc;
-			top->count = 1;
-			top->link = *frompcindex;
+			top          = &p->tos[toindex];
+			top->selfpc  = selfpc;
+			top->count   = 1;
+			top->link    = *frompcindex;
 			*frompcindex = toindex;
 			goto done;
 		}
@@ -140,21 +140,20 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 		 * otherwise, check the next arc on the chain.
 		 */
 		prevtop = top;
-		top = &p->tos[top->link];
-		if (top->selfpc == selfpc) {
+		top     = &p->tos[top->link];
+		if(top->selfpc == selfpc) {
 			/*
 			 * there it is.
 			 * increment its count
 			 * move it to the head of the chain.
 			 */
 			top->count++;
-			toindex = prevtop->link;
+			toindex       = prevtop->link;
 			prevtop->link = top->link;
-			top->link = *frompcindex;
-			*frompcindex = toindex;
+			top->link     = *frompcindex;
+			*frompcindex  = toindex;
 			goto done;
 		}
-		
 	}
 done:
 #ifdef KERNEL

@@ -110,21 +110,15 @@
  *
  */
 
-#define XTRACTPKP(rt)	((rt)->rt_flags & RTF_GATEWAY ? \
-			 ((rt)->rt_llinfo ? \
-			  (struct pkcb *) ((struct rtentry *)((rt)->rt_llinfo))->rt_llinfo : \
-			  (struct pkcb *) NULL) : \
-			 (struct pkcb *)((rt)->rt_llinfo))
+#define XTRACTPKP(rt) ((rt)->rt_flags & RTF_GATEWAY ? ((rt)->rt_llinfo ? (struct pkcb *) ((struct rtentry *) ((rt)->rt_llinfo))->rt_llinfo : (struct pkcb *) NULL) : (struct pkcb *) ((rt)->rt_llinfo))
 
-#define equal(a1, a2) (bcmp((caddr_t)(a1), \
-			       (caddr_t)(a2), \
-			       (a1)->sa_len) == 0)
-#define XIFA(rt) ((struct x25_ifaddr *)((rt)->rt_ifa))
-#define SA(s) ((struct sockaddr *)s)
+#define equal(a1, a2) (bcmp((caddr_t) (a1), \
+	                        (caddr_t) (a2), \
+	                        (a1)->sa_len) == 0)
+#define XIFA(rt) ((struct x25_ifaddr *) ((rt)->rt_ifa))
+#define SA(s) ((struct sockaddr *) s)
 
-void
-cons_rtrequest(int cmd, struct rtentry *rt, struct sockaddr *dst)
-{
+void cons_rtrequest(int cmd, struct rtentry *rt, struct sockaddr *dst) {
 	register struct pkcb *pkp;
 	register int i;
 	register char one_to_one;
@@ -134,18 +128,18 @@ cons_rtrequest(int cmd, struct rtentry *rt, struct sockaddr *dst)
 	pkp = XTRACTPKP(rt);
 
 	switch(cmd) {
-	case RTM_RESOLVE:
-	case RTM_ADD:
-		if (pkp) 
-			return; /* XXX: EEXIST */
+		case RTM_RESOLVE:
+		case RTM_ADD:
+			if(pkp)
+				return; /* XXX: EEXIST */
 
-		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_llinfo)
-				RTFREE((struct rtentry *)rt->rt_llinfo);
-			rt->rt_llinfo = (caddr_t) rtalloc1(rt->rt_gateway, 1);
-			return; /* XXX: OK */
-		}
-		/*
+			if(rt->rt_flags & RTF_GATEWAY) {
+				if(rt->rt_llinfo)
+					RTFREE((struct rtentry *) rt->rt_llinfo);
+				rt->rt_llinfo = (caddr_t) rtalloc1(rt->rt_gateway, 1);
+				return; /* XXX: OK */
+			}
+			/*
 		 * Assumptions:	(1) ifnet structure is filled in
 		 *		(2) at least the pkcb created via 
 		 *		    x25config (ifconfig?) has been 
@@ -156,10 +150,10 @@ cons_rtrequest(int cmd, struct rtentry *rt, struct sockaddr *dst)
 		 *		    do this?)
 		 *
 		 */
-		if (!rt->rt_ifa)
-			return; /* XXX: ENETDOWN */
-	
-		/*	
+			if(!rt->rt_ifa)
+				return; /* XXX: ENETDOWN */
+
+			/*
 		 * We differentiate between dealing with a many-to-one
 		 * (HDLC: DTE-DCE) and a one-to-one (LLC2: DTE-DTE) 
 		 * relationship (by looking at the if type).
@@ -177,51 +171,50 @@ cons_rtrequest(int cmd, struct rtentry *rt, struct sockaddr *dst)
 		 * to a pkcb, in the LLC2 case it doesn't (as we don't 
 		 * need it here)!
 		 */
-		one_to_one = ISISO8802(rt->rt_ifp);
+			one_to_one = ISISO8802(rt->rt_ifp);
 
-		if (!(pkp = XIFA(rt)->ia_pkcb) && !one_to_one) 
-			XIFA(rt)->ia_pkcb = pkp = 
-				pk_newlink(XIFA(rt), (caddr_t) 0);
-		else if (one_to_one && 
-			 !equal(rt->rt_gateway, rt->rt_ifa->ifa_addr)) {
-			pkp = pk_newlink(XIFA(rt), (caddr_t) 0);
-			/*
+			if(!(pkp = XIFA(rt)->ia_pkcb) && !one_to_one)
+				XIFA(rt)->ia_pkcb = pkp =
+				        pk_newlink(XIFA(rt), (caddr_t) 0);
+			else if(one_to_one &&
+			        !equal(rt->rt_gateway, rt->rt_ifa->ifa_addr)) {
+				pkp = pk_newlink(XIFA(rt), (caddr_t) 0);
+				/*
 			 * We also need another route entry for mapping
 			 * MAC+LSAP->X.25 address
 			 */
-			pkp->pk_llrt = npaidb_enter(rt->rt_gateway, rt_key(rt), rt, 0);
-		}
-		if (pkp) {
-			if (!pkp->pk_rt)
-				pkp->pk_rt = rt;
-			pkp->pk_refcount++;
-		}
-		rt->rt_llinfo = (caddr_t) pkp;
+				pkp->pk_llrt = npaidb_enter(rt->rt_gateway, rt_key(rt), rt, 0);
+			}
+			if(pkp) {
+				if(!pkp->pk_rt)
+					pkp->pk_rt = rt;
+				pkp->pk_refcount++;
+			}
+			rt->rt_llinfo = (caddr_t) pkp;
 
-		return; /* XXX: OK */
+			return; /* XXX: OK */
 
-	case RTM_DELETE:
-	{
-		/*
+		case RTM_DELETE: {
+			/*
 		 * The pkp might be empty if we are dealing
 		 * with an interface route entry for LLC2, in this 
 		 * case we don't need to do anything ...
 		 */
-		if (pkp) {
-			if ( rt->rt_flags & RTF_GATEWAY ) {
-				if (rt->rt_llinfo)
-					RTFREE((struct rtentry *)rt->rt_llinfo);
+			if(pkp) {
+				if(rt->rt_flags & RTF_GATEWAY) {
+					if(rt->rt_llinfo)
+						RTFREE((struct rtentry *) rt->rt_llinfo);
+					return; /* XXX: OK */
+				}
+
+				if(pkp->pk_llrt)
+					npaidb_destroy(pkp->pk_llrt);
+
+				pk_dellink(pkp);
+
 				return; /* XXX: OK */
 			}
-			
-			if (pkp->pk_llrt)
-				npaidb_destroy(pkp->pk_llrt);
-
-			pk_dellink (pkp);
-			
-			return; /* XXX: OK */
 		}
-	}
 	}
 }
 
@@ -256,30 +249,30 @@ cons_rtrequest(int cmd, struct rtentry *rt, struct sockaddr *dst)
  */
 
 struct sockaddr_dl npdl_netmask = {
- sizeof(struct sockaddr_dl),					/* _len */
- 0,								/* _family */
- 0,								/* _index */
- 0,								/* _type */
- -1,								/* _nlen */
- -1,								/* _alen */
- -1,								/* _slen */
- { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},		/* _data */
-}; 
+        sizeof(struct sockaddr_dl),                       /* _len */
+        0,                                                /* _family */
+        0,                                                /* _index */
+        0,                                                /* _type */
+        -1,                                               /* _nlen */
+        -1,                                               /* _alen */
+        -1,                                               /* _slen */
+        {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* _data */
+};
 struct sockaddr npdl_dummy;
 
-int npdl_datasize = sizeof(struct sockaddr_dl)-
-		((int)((caddr_t)&((struct sockaddr_dl *)0)->sdl_data[0]));
+int npdl_datasize = sizeof(struct sockaddr_dl) -
+                    ((int) ((caddr_t) & ((struct sockaddr_dl *) 0)->sdl_data[0]));
 
 struct rtentry *
 npaidb_enter(struct sockaddr_dl *key, struct sockaddr *value,
-	     struct rtentry *rt, struct llc_linkcb *link)
-{
-	struct rtentry *nprt; register int i;
+             struct rtentry *rt, struct llc_linkcb *link) {
+	struct rtentry *nprt;
+	register int i;
 
 	USES_AF_LINK_RTS;
 
-	if ((nprt = rtalloc1(SA(key), 0)) == 0) {
-		register u_int size = sizeof(struct npaidbentry);
+	if((nprt = rtalloc1(SA(key), 0)) == 0) {
+		register u_int size    = sizeof(struct npaidbentry);
 		register u_char saploc = LLSAPLOC(key, rt->rt_ifp);
 
 		/* 
@@ -290,59 +283,57 @@ npaidb_enter(struct sockaddr_dl *key, struct sockaddr *value,
 		 * are zeroed out.
 		 */
 		npdl_netmask.sdl_data[saploc] = NPDL_SAPNETMASK;
-		bzero((caddr_t)&npdl_netmask.sdl_data[saploc+1], 
-		      npdl_datasize-saploc-1);
+		bzero((caddr_t) &npdl_netmask.sdl_data[saploc + 1],
+		      npdl_datasize - saploc - 1);
 
-		if (value == 0)
+		if(value == 0)
 			value = &npdl_dummy;
 
 		/* now enter it */
 		rtrequest(RTM_ADD, SA(key), SA(value),
-			SA(&npdl_netmask), 0, &nprt);
+		          SA(&npdl_netmask), 0, &nprt);
 
 		/* and reset npdl_netmask */
-		for (i = saploc; i < npdl_datasize; i++)
+		for(i = saploc; i < npdl_datasize; i++)
 			npdl_netmask.sdl_data[i] = -1;
 
-		nprt->rt_llinfo = malloc(size , M_PCB, M_WAITOK);
-		if (nprt->rt_llinfo) {
-			bzero (nprt->rt_llinfo, size);
+		nprt->rt_llinfo = malloc(size, M_PCB, M_WAITOK);
+		if(nprt->rt_llinfo) {
+			bzero(nprt->rt_llinfo, size);
 			((struct npaidbentry *) (nprt->rt_llinfo))->np_rt = rt;
 		}
-	} else nprt->rt_refcnt--;
+	} else
+		nprt->rt_refcnt--;
 	return nprt;
 }
 
 struct rtentry *
-npaidb_enrich(short type, caddr_t info, struct sockaddr_dl *sdl)
-{
+npaidb_enrich(short type, caddr_t info, struct sockaddr_dl *sdl) {
 	struct rtentry *rt;
 
 	USES_AF_LINK_RTS;
 
-	if (rt = rtalloc1((struct sockaddr *)sdl, 0)) {
+	if(rt = rtalloc1((struct sockaddr *) sdl, 0)) {
 		rt->rt_refcnt--;
-		switch (type) {
-		case NPAIDB_LINK:
-			((struct npaidbentry *)(rt->rt_llinfo))->np_link = 
-				(struct llc_linkcb *) info;
-			break;
+		switch(type) {
+			case NPAIDB_LINK:
+				((struct npaidbentry *) (rt->rt_llinfo))->np_link =
+				        (struct llc_linkcb *) info;
+				break;
 		}
 		return rt;
-	}		
+	}
 
 	return ((struct rtentry *) 0);
-
 }
 
-npaidb_destroy(struct rtentry *rt)
-{
+npaidb_destroy(struct rtentry *rt) {
 	USES_AF_LINK_RTS;
 
-	if (rt->rt_llinfo) 
+	if(rt->rt_llinfo)
 		free((caddr_t) rt->rt_llinfo, M_PCB);
-	return(rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt), 
-			 0, 0));
+	return (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt),
+	                  0, 0));
 }
 
 
@@ -350,20 +341,18 @@ npaidb_destroy(struct rtentry *rt)
 /*
  * Glue between X.25 and LLC2
  */
-int
-x25_llcglue(int prc, struct sockaddr *addr)
-{
-	register struct sockaddr_x25 *sx25 = (struct sockaddr_x25 *)addr;
+int x25_llcglue(int prc, struct sockaddr *addr) {
+	register struct sockaddr_x25 *sx25 = (struct sockaddr_x25 *) addr;
 	register struct x25_ifaddr *x25ifa;
 	struct dll_ctlinfo ctlinfo;
-	
-	if((x25ifa = (struct x25_ifaddr *)ifa_ifwithaddr(addr)) == 0)
+
+	if((x25ifa = (struct x25_ifaddr *) ifa_ifwithaddr(addr)) == 0)
 		return 0;
 
-	ctlinfo.dlcti_cfg  =
-	    (struct dllconfig *)(((struct sockaddr_x25 *)(&x25ifa->ia_xc))+1);
+	ctlinfo.dlcti_cfg =
+	        (struct dllconfig *) (((struct sockaddr_x25 *) (&x25ifa->ia_xc)) + 1);
 	ctlinfo.dlcti_lsap = LLC_X25_LSAP;
 
-	return ((int)llc_ctlinput(prc, addr, (caddr_t)&ctlinfo));
+	return ((int) llc_ctlinput(prc, addr, (caddr_t) &ctlinfo));
 }
 #endif /* LLC */

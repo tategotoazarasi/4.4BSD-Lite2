@@ -43,34 +43,32 @@
 #include <luna68k/luna68k/cons.h>
 #include <luna68k/stand/romvec.h>
 
-romcnprobe(cp)
-	struct consdev *cp;
+romcnprobe(cp) struct consdev *cp;
 {
 	cp->cn_tp  = 0;
 	cp->cn_dev = 0;
 	cp->cn_pri = CN_NORMAL;
 }
 
-romcninit(cp)
-	struct consdev *cp;
+romcninit(cp) struct consdev *cp;
 {
 }
 
 romcngetc(dev)
-	dev_t dev;
+        dev_t dev;
 {
 	int c;
 
-	for (;;)
-		if ((c = ROM_getchar()) != -1)
+	for(;;)
+		if((c = ROM_getchar()) != -1)
 			break;
 
-	return(c);
+	return (c);
 }
 
 romcnputc(dev, c)
-	dev_t dev;
-	int c;
+        dev_t dev;
+int c;
 {
 	ROM_putchar(c);
 }

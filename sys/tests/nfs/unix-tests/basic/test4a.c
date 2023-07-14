@@ -27,13 +27,12 @@
 #include <stdio.h>
 #include "tests.h"
 
-int Tflag = 0;		/* print timing */
-int Hflag = 0;		/* print help message */
-int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-int Nflag = 0;		/* Suppress directory operations */
+int Tflag = 0; /* print timing */
+int Hflag = 0; /* print help message */
+int Fflag = 0; /* test function only;  set count to 1, negate -t */
+int Nflag = 0; /* Suppress directory operations */
 
-usage()
-{
+usage() {
 	fprintf(stdout, "usage: %s [-htfn] [files count fname]\n", Myname);
 	fprintf(stdout, "  Flags:  h    Help - print this usage info\n");
 	fprintf(stdout, "          t    Print execution time statistics\n");
@@ -41,17 +40,16 @@ usage()
 	fprintf(stdout, "          n    Suppress test directory create operations\n");
 }
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(argc, argv) int argc;
+char *argv[];
 {
-	int files = 10;		/* number of files in each dir */
+	int files = 10; /* number of files in each dir */
 	int fi;
-	int count = 50;	/* times to do each file */
+	int count = 50; /* times to do each file */
 	int ct;
 	int totfiles = 0;
-	int totdirs = 0;
-	char *fname = FNAME;
+	int totdirs  = 0;
+	char *fname  = FNAME;
 	struct timeval time;
 	char str[MAXPATHLEN];
 	struct stat statb;
@@ -61,25 +59,25 @@ main(argc, argv)
 	setbuf(stdout, NULL);
 	Myname = *argv++;
 	argc--;
-	while (argc && **argv == '-') {
-		for (opts = &argv[0][1]; *opts; opts++) {
-			switch (*opts) {
-				case 'h':	/* help */
+	while(argc && **argv == '-') {
+		for(opts = &argv[0][1]; *opts; opts++) {
+			switch(*opts) {
+				case 'h': /* help */
 					usage();
 					exit(1);
 
-				case 't':	/* time */
+				case 't': /* time */
 					Tflag++;
 					break;
-				
-				case 'f':	/* funtionality */
+
+				case 'f': /* funtionality */
 					Fflag++;
 					break;
-				
-				case 'n':	/* suppress initial directory */
+
+				case 'n': /* suppress initial directory */
 					Nflag++;
 					break;
-				
+
 				default:
 					error("unknown option '%c'", *opts);
 					usage();
@@ -90,32 +88,32 @@ main(argc, argv)
 		argv++;
 	}
 
-	if (argc) {
+	if(argc) {
 		files = getparm(*argv, 1, "files");
 		argv++;
 		argc--;
 	}
-	if (argc) {
+	if(argc) {
 		count = getparm(*argv, 1, "count");
 		argv++;
 		argc--;
 	}
-	if (argc) {
+	if(argc) {
 		fname = *argv;
 		argc--;
 		argv++;
 	}
-	if (argc) {
+	if(argc) {
 		usage();
 		exit(1);
 	}
 
-	if (Fflag) {
+	if(Fflag) {
 		Tflag = 0;
 		count = 1;
 	}
 
-	if (!Nflag)
+	if(!Nflag)
 		testdir(NULL);
 	else
 		mtestdir(NULL);
@@ -124,28 +122,28 @@ main(argc, argv)
 
 	fprintf(stdout, "%s: getattr and lookup\n", Myname);
 
-	if (Tflag) {
+	if(Tflag) {
 		starttime();
 	}
 
-	for (ct = 0; ct < count; ct++) {
-		for (fi = 0; fi < files; fi++) {
+	for(ct = 0; ct < count; ct++) {
+		for(fi = 0; fi < files; fi++) {
 			sprintf(str, "%s%d", fname, fi);
-			if (stat(str, &statb) < 0) {
+			if(stat(str, &statb) < 0) {
 				error("can't stat %s", str);
 				exit(1);
 			}
 		}
 	}
 
-	if (Tflag) {
+	if(Tflag) {
 		endtime(&time);
 	}
 	fprintf(stdout, "\t%d stats on %d files",
-		files * count * 2, files);
-	if (Tflag) {
+	        files * count * 2, files);
+	if(Tflag) {
 		fprintf(stdout, " in %d.%-2d seconds",
-		    time.tv_sec, time.tv_usec / 10000);
+		        time.tv_sec, time.tv_usec / 10000);
 	}
 	fprintf(stdout, "\n");
 	/* XXX REMOVE DIRECTORY TREE? */

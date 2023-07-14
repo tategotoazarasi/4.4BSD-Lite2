@@ -46,11 +46,11 @@ static char sccsid[] = "@(#)negdi2.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __negdi2(a)
-	quad_t a;
+quad_t a;
 {
 	union uu aa, res;
 
-	aa.q = a;
+	aa.q      = a;
 	res.ul[L] = -aa.ul[L];
 	res.ul[H] = -aa.ul[H] - (res.ul[L] > 0);
 	return (res.q);

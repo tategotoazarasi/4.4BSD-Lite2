@@ -57,67 +57,67 @@
  */
 #include <pmax/pmax/cons.h>
 
-extern struct tty *constty;	/* virtual console output device */
+extern struct tty *constty; /* virtual console output device */
 
 struct consdev cn_tab = {
-	1,
-	1,
-	NODEV,
-	(struct pmax_fb *)0,
-	(int (*)())0,
-	(int (*)())0,
-	(void (*)())0,
-	(struct tty *)0,
+        1,
+        1,
+        NODEV,
+        (struct pmax_fb *) 0,
+        (int (*)()) 0,
+        (int (*)()) 0,
+        (void (*)()) 0,
+        (struct tty *) 0,
 };
 
 cnopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
-	if (cn_tab.cn_dev == NODEV)
+	if(cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
 	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
- 
+
 cnclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
-	if (cn_tab.cn_dev == NODEV)
+	if(cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
 	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
 }
- 
+
 cnread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
+        dev_t dev;
+struct uio *uio;
 {
-	if (cn_tab.cn_dev == NODEV)
+	if(cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
 	return ((*cdevsw[major(dev)].d_read)(dev, uio, flag));
 }
- 
+
 cnwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
+        dev_t dev;
+struct uio *uio;
 {
-	if (constty)
+	if(constty)
 		return ((*linesw[constty->t_line].l_write)(constty, uio, flag));
-	if (cn_tab.cn_dev == NODEV)
+	if(cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
 	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
 }
- 
+
 cnioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	caddr_t data;
-	struct proc *p;
+        dev_t dev;
+caddr_t data;
+struct proc *p;
 {
 	int error;
 
@@ -125,9 +125,9 @@ cnioctl(dev, cmd, data, flag, p)
 	 * Superuser can always use this to wrest control of console
 	 * output from the "virtual" console.
 	 */
-	if (cmd == TIOCCONS && constty) {
+	if(cmd == TIOCCONS && constty) {
 		error = suser(p->p_ucred, (u_short *) NULL);
-		if (error)
+		if(error)
 			return (error);
 		constty = NULL;
 		return (0);
@@ -140,7 +140,7 @@ cnioctl(dev, cmd, data, flag, p)
 			return (error);
 	}
 #endif
-	if (cn_tab.cn_dev == NODEV)
+	if(cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
 	return ((*cdevsw[major(dev)].d_ioctl)(dev, cmd, data, flag, p));
@@ -148,11 +148,11 @@ cnioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 cnselect(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
+        dev_t dev;
+int rw;
+struct proc *p;
 {
-	if (cn_tab.cn_dev == NODEV)
+	if(cn_tab.cn_dev == NODEV)
 		return (1);
 	return (ttselect(cn_tab.cn_dev, rw, p));
 }
@@ -160,11 +160,10 @@ cnselect(dev, rw, p)
 /*
  * Get character from console.
  */
-cngetc()
-{
+cngetc() {
 
 	/* check to be sure device has been initialized */
-	if (cn_tab.cn_dev == NODEV || cn_tab.cn_disabled)
+	if(cn_tab.cn_dev == NODEV || cn_tab.cn_disabled)
 		return ((*callv->getchar)());
 	return ((*cn_tab.cn_getc)(cn_tab.cn_dev));
 }
@@ -172,17 +171,16 @@ cngetc()
 /*
  * Print a character on console.
  */
-cnputc(c)
-	register int c;
+cnputc(c) register int c;
 {
 	int s;
 
-	if (cn_tab.cn_dev == NODEV || cn_tab.cn_disabled) {
+	if(cn_tab.cn_dev == NODEV || cn_tab.cn_disabled) {
 		s = splhigh();
 		(*callv->printf)("%c", c);
 		splx(s);
-	} else if (c) {
-		if (c == '\n')
+	} else if(c) {
+		if(c == '\n')
 			(*cn_tab.cn_putc)(cn_tab.cn_dev, '\r');
 		(*cn_tab.cn_putc)(cn_tab.cn_dev, c);
 	}

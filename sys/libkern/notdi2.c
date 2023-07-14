@@ -47,11 +47,11 @@ static char sccsid[] = "@(#)notdi2.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __one_cmpldi2(a)
-	quad_t a;
+quad_t a;
 {
 	union uu aa;
 
-	aa.q = a;
+	aa.q     = a;
 	aa.ul[0] = ~aa.ul[0];
 	aa.ul[1] = ~aa.ul[1];
 	return (aa.q);

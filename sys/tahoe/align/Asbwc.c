@@ -36,8 +36,8 @@
  *	@(#)Asbwc.c	7.1 (Berkeley) 12/6/90
  */
 
-#include "align.h" 
-sbwc(infop)	process_info *infop;
+#include "align.h"
+sbwc(infop) process_info *infop;
 /*
 /*	Subtract with carry.
 /*	Note : the play with 'tmp' just before the 'asm' line makes
@@ -47,23 +47,24 @@ sbwc(infop)	process_info *infop;
 /*
 /*****************************/
 {
-	register	long	Register_12;	/* Has to be first reg ! */
-	register	long	Register_11;
-	register	long	Register_10;
-	register 	long	tmp;
+	register long Register_12; /* Has to be first reg ! */
+	register long Register_11;
+	register long Register_10;
+	register long tmp;
 
-	Register_12 = operand(infop,0)->data;
-	Register_11 = operand(infop,1)->data;
-	if (carry)	/* If process' carry set */
+	Register_12 = operand(infop, 0)->data;
+	Register_11 = operand(infop, 1)->data;
+	if(carry) /* If process' carry set */
 		tmp = -1;
-	else tmp = 0;
-	tmp++;		/* 0 => carry set.  1 => carry clear */
+	else
+		tmp = 0;
+	tmp++; /* 0 => carry set.  1 => carry clear */
 
-	Register_10=psl;
-	Set_psl(r10);	/* restore the user psl */
+	Register_10 = psl;
+	Set_psl(r10); /* restore the user psl */
 	asm("	sbwc	r12,r11");
 	asm("	movpsl	r12");
-	New_cc (Register_12);
+	New_cc(Register_12);
 
-	write_back(infop, Register_11, operand(infop,1) );
+	write_back(infop, Register_11, operand(infop, 1));
 }

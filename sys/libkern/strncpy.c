@@ -47,22 +47,22 @@ static char sccsid[] = "@(#)strncpy.c	8.1 (Berkeley) 6/4/93";
  */
 char *
 strncpy(dst, src, n)
-	char *dst;
-	const char *src;
-	register size_t n;
+char *dst;
+const char *src;
+register size_t n;
 {
-	if (n != 0) {
-		register char *d = dst;
+	if(n != 0) {
+		register char *d       = dst;
 		register const char *s = src;
 
 		do {
-			if ((*d++ = *s++) == 0) {
+			if((*d++ = *s++) == 0) {
 				/* NUL pad the remaining n-1 bytes */
-				while (--n != 0)
+				while(--n != 0)
 					*d++ = 0;
 				break;
 			}
-		} while (--n != 0);
+		} while(--n != 0);
 	}
 	return (dst);
 }

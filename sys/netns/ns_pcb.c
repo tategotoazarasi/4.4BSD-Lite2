@@ -48,65 +48,63 @@
 #include <netns/ns_if.h>
 #include <netns/ns_pcb.h>
 
-struct	ns_addr zerons_addr;
+struct ns_addr zerons_addr;
 
-ns_pcballoc(so, head)
-	struct socket *so;
-	struct nspcb *head;
+ns_pcballoc(so, head) struct socket *so;
+struct nspcb *head;
 {
 	struct mbuf *m;
 	register struct nspcb *nsp;
 
 	m = m_getclr(M_DONTWAIT, MT_PCB);
-	if (m == NULL)
+	if(m == NULL)
 		return (ENOBUFS);
-	nsp = mtod(m, struct nspcb *);
+	nsp             = mtod(m, struct nspcb *);
 	nsp->nsp_socket = so;
 	insque(nsp, head);
-	so->so_pcb = (caddr_t)nsp;
+	so->so_pcb = (caddr_t) nsp;
 	return (0);
 }
-	
-ns_pcbbind(nsp, nam)
-	register struct nspcb *nsp;
-	struct mbuf *nam;
+
+ns_pcbbind(nsp, nam) register struct nspcb *nsp;
+struct mbuf *nam;
 {
 	register struct sockaddr_ns *sns;
 	u_short lport = 0;
 
-	if (nsp->nsp_lport || !ns_nullhost(nsp->nsp_laddr))
+	if(nsp->nsp_lport || !ns_nullhost(nsp->nsp_laddr))
 		return (EINVAL);
-	if (nam == 0)
+	if(nam == 0)
 		goto noname;
 	sns = mtod(nam, struct sockaddr_ns *);
-	if (nam->m_len != sizeof (*sns))
+	if(nam->m_len != sizeof(*sns))
 		return (EINVAL);
-	if (!ns_nullhost(sns->sns_addr)) {
+	if(!ns_nullhost(sns->sns_addr)) {
 		int tport = sns->sns_port;
 
-		sns->sns_port = 0;		/* yech... */
-		if (ifa_ifwithaddr((struct sockaddr *)sns) == 0)
+		sns->sns_port = 0; /* yech... */
+		if(ifa_ifwithaddr((struct sockaddr *) sns) == 0)
 			return (EADDRNOTAVAIL);
 		sns->sns_port = tport;
 	}
 	lport = sns->sns_port;
-	if (lport) {
+	if(lport) {
 		u_short aport = ntohs(lport);
 
-		if (aport < NSPORT_RESERVED &&
-		    (nsp->nsp_socket->so_state & SS_PRIV) == 0)
+		if(aport < NSPORT_RESERVED &&
+		   (nsp->nsp_socket->so_state & SS_PRIV) == 0)
 			return (EACCES);
-		if (ns_pcblookup(&zerons_addr, lport, 0))
+		if(ns_pcblookup(&zerons_addr, lport, 0))
 			return (EADDRINUSE);
 	}
 	nsp->nsp_laddr = sns->sns_addr;
 noname:
-	if (lport == 0)
+	if(lport == 0)
 		do {
-			if (nspcb.nsp_lport++ < NSPORT_RESERVED)
+			if(nspcb.nsp_lport++ < NSPORT_RESERVED)
 				nspcb.nsp_lport = NSPORT_RESERVED;
 			lport = htons(nspcb.nsp_lport);
-		} while (ns_pcblookup(&zerons_addr, lport, 0));
+		} while(ns_pcblookup(&zerons_addr, lport, 0));
 	nsp->nsp_lport = lport;
 	return (0);
 }
@@ -117,9 +115,8 @@ noname:
  * If don't have a local address for this socket yet,
  * then pick one.
  */
-ns_pcbconnect(nsp, nam)
-	struct nspcb *nsp;
-	struct mbuf *nam;
+ns_pcbconnect(nsp, nam) struct nspcb *nsp;
+struct mbuf *nam;
 {
 	struct ns_ifaddr *ia;
 	register struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
@@ -127,11 +124,11 @@ ns_pcbconnect(nsp, nam)
 	register struct route *ro;
 	struct ifnet *ifp;
 
-	if (nam->m_len != sizeof (*sns))
+	if(nam->m_len != sizeof(*sns))
 		return (EINVAL);
-	if (sns->sns_family != AF_NS)
+	if(sns->sns_family != AF_NS)
 		return (EAFNOSUPPORT);
-	if (sns->sns_port==0 || ns_nullhost(sns->sns_addr))
+	if(sns->sns_port == 0 || ns_nullhost(sns->sns_addr))
 		return (EADDRNOTAVAIL);
 	/*
 	 * If we haven't bound which network number to use as ours,
@@ -145,70 +142,70 @@ ns_pcbconnect(nsp, nam)
 	 * chose a port number once, even if sending to multiple
 	 * destinations.
 	 */
-	ro = &nsp->nsp_route;
+	ro  = &nsp->nsp_route;
 	dst = &satons_addr(ro->ro_dst);
-	if (nsp->nsp_socket->so_options & SO_DONTROUTE)
+	if(nsp->nsp_socket->so_options & SO_DONTROUTE)
 		goto flush;
-	if (!ns_neteq(nsp->nsp_lastdst, sns->sns_addr))
+	if(!ns_neteq(nsp->nsp_lastdst, sns->sns_addr))
 		goto flush;
-	if (!ns_hosteq(nsp->nsp_lastdst, sns->sns_addr)) {
-		if (ro->ro_rt && ! (ro->ro_rt->rt_flags & RTF_HOST)) {
+	if(!ns_hosteq(nsp->nsp_lastdst, sns->sns_addr)) {
+		if(ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_HOST)) {
 			/* can patch route to avoid rtalloc */
 			*dst = sns->sns_addr;
 		} else {
-	flush:
-			if (ro->ro_rt)
+		flush:
+			if(ro->ro_rt)
 				RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)0;
+			ro->ro_rt            = (struct rtentry *) 0;
 			nsp->nsp_laddr.x_net = ns_zeronet;
 		}
-	}/* else cached route is ok; do nothing */
+	} /* else cached route is ok; do nothing */
 	nsp->nsp_lastdst = sns->sns_addr;
-	if ((nsp->nsp_socket->so_options & SO_DONTROUTE) == 0 && /*XXX*/
-	    (ro->ro_rt == (struct rtentry *)0 ||
-	     ro->ro_rt->rt_ifp == (struct ifnet *)0)) {
-		    /* No route yet, so try to acquire one */
-		    ro->ro_dst.sa_family = AF_NS;
-		    ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-		    *dst = sns->sns_addr;
-		    dst->x_port = 0;
-		    rtalloc(ro);
+	if((nsp->nsp_socket->so_options & SO_DONTROUTE) == 0 && /*XXX*/
+	   (ro->ro_rt == (struct rtentry *) 0 ||
+	    ro->ro_rt->rt_ifp == (struct ifnet *) 0)) {
+		/* No route yet, so try to acquire one */
+		ro->ro_dst.sa_family = AF_NS;
+		ro->ro_dst.sa_len    = sizeof(ro->ro_dst);
+		*dst                 = sns->sns_addr;
+		dst->x_port          = 0;
+		rtalloc(ro);
 	}
-	if (ns_neteqnn(nsp->nsp_laddr.x_net, ns_zeronet)) {
+	if(ns_neteqnn(nsp->nsp_laddr.x_net, ns_zeronet)) {
 		/* 
 		 * If route is known or can be allocated now,
 		 * our src addr is taken from the i/f, else punt.
 		 */
 
-		ia = (struct ns_ifaddr *)0;
+		ia = (struct ns_ifaddr *) 0;
 		/*
 		 * If we found a route, use the address
 		 * corresponding to the outgoing interface
 		 */
-		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp))
-			for (ia = ns_ifaddr; ia; ia = ia->ia_next)
-				if (ia->ia_ifp == ifp)
+		if(ro->ro_rt && (ifp = ro->ro_rt->rt_ifp))
+			for(ia = ns_ifaddr; ia; ia = ia->ia_next)
+				if(ia->ia_ifp == ifp)
 					break;
-		if (ia == 0) {
-			u_short fport = sns->sns_addr.x_port;
+		if(ia == 0) {
+			u_short fport        = sns->sns_addr.x_port;
 			sns->sns_addr.x_port = 0;
-			ia = (struct ns_ifaddr *)
-				ifa_ifwithdstaddr((struct sockaddr *)sns);
+			ia                   = (struct ns_ifaddr *)
+			        ifa_ifwithdstaddr((struct sockaddr *) sns);
 			sns->sns_addr.x_port = fport;
-			if (ia == 0)
+			if(ia == 0)
 				ia = ns_iaonnetof(&sns->sns_addr);
-			if (ia == 0)
+			if(ia == 0)
 				ia = ns_ifaddr;
-			if (ia == 0)
+			if(ia == 0)
 				return (EADDRNOTAVAIL);
 		}
 		nsp->nsp_laddr.x_net = satons_addr(ia->ia_addr).x_net;
 	}
-	if (ns_pcblookup(&sns->sns_addr, nsp->nsp_lport, 0))
+	if(ns_pcblookup(&sns->sns_addr, nsp->nsp_lport, 0))
 		return (EADDRINUSE);
-	if (ns_nullhost(nsp->nsp_laddr)) {
-		if (nsp->nsp_lport == 0)
-			(void) ns_pcbbind(nsp, (struct mbuf *)0);
+	if(ns_nullhost(nsp->nsp_laddr)) {
+		if(nsp->nsp_lport == 0)
+			(void) ns_pcbbind(nsp, (struct mbuf *) 0);
 		nsp->nsp_laddr.x_host = ns_thishost;
 	}
 	nsp->nsp_faddr = sns->sns_addr;
@@ -216,54 +213,50 @@ ns_pcbconnect(nsp, nam)
 	return (0);
 }
 
-ns_pcbdisconnect(nsp)
-	struct nspcb *nsp;
+ns_pcbdisconnect(nsp) struct nspcb *nsp;
 {
 
 	nsp->nsp_faddr = zerons_addr;
-	if (nsp->nsp_socket->so_state & SS_NOFDREF)
+	if(nsp->nsp_socket->so_state & SS_NOFDREF)
 		ns_pcbdetach(nsp);
 }
 
-ns_pcbdetach(nsp)
-	struct nspcb *nsp;
+ns_pcbdetach(nsp) struct nspcb *nsp;
 {
 	struct socket *so = nsp->nsp_socket;
 
 	so->so_pcb = 0;
 	sofree(so);
-	if (nsp->nsp_route.ro_rt)
+	if(nsp->nsp_route.ro_rt)
 		rtfree(nsp->nsp_route.ro_rt);
 	remque(nsp);
 	(void) m_free(dtom(nsp));
 }
 
-ns_setsockaddr(nsp, nam)
-	register struct nspcb *nsp;
-	struct mbuf *nam;
+ns_setsockaddr(nsp, nam) register struct nspcb *nsp;
+struct mbuf *nam;
 {
 	register struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
-	
-	nam->m_len = sizeof (*sns);
-	sns = mtod(nam, struct sockaddr_ns *);
-	bzero((caddr_t)sns, sizeof (*sns));
-	sns->sns_len = sizeof(*sns);
+
+	nam->m_len = sizeof(*sns);
+	sns        = mtod(nam, struct sockaddr_ns *);
+	bzero((caddr_t) sns, sizeof(*sns));
+	sns->sns_len    = sizeof(*sns);
 	sns->sns_family = AF_NS;
-	sns->sns_addr = nsp->nsp_laddr;
+	sns->sns_addr   = nsp->nsp_laddr;
 }
 
-ns_setpeeraddr(nsp, nam)
-	register struct nspcb *nsp;
-	struct mbuf *nam;
+ns_setpeeraddr(nsp, nam) register struct nspcb *nsp;
+struct mbuf *nam;
 {
 	register struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
-	
-	nam->m_len = sizeof (*sns);
-	sns = mtod(nam, struct sockaddr_ns *);
-	bzero((caddr_t)sns, sizeof (*sns));
-	sns->sns_len = sizeof(*sns);
+
+	nam->m_len = sizeof(*sns);
+	sns        = mtod(nam, struct sockaddr_ns *);
+	bzero((caddr_t) sns, sizeof(*sns));
+	sns->sns_len    = sizeof(*sns);
 	sns->sns_family = AF_NS;
-	sns->sns_addr  = nsp->nsp_faddr;
+	sns->sns_addr   = nsp->nsp_faddr;
 }
 
 /*
@@ -273,26 +266,25 @@ ns_setpeeraddr(nsp, nam)
  * Also pass an extra paramter via the nspcb. (which may in fact
  * be a parameter list!)
  */
-ns_pcbnotify(dst, errno, notify, param)
-	register struct ns_addr *dst;
-	long param;
-	int errno, (*notify)();
+ns_pcbnotify(dst, errno, notify, param) register struct ns_addr *dst;
+long param;
+int errno, (*notify)();
 {
 	register struct nspcb *nsp, *oinp;
 	int s = splimp();
 
-	for (nsp = (&nspcb)->nsp_next; nsp != (&nspcb);) {
-		if (!ns_hosteq(*dst,nsp->nsp_faddr)) {
-	next:
+	for(nsp = (&nspcb)->nsp_next; nsp != (&nspcb);) {
+		if(!ns_hosteq(*dst, nsp->nsp_faddr)) {
+		next:
 			nsp = nsp->nsp_next;
 			continue;
 		}
-		if (nsp->nsp_socket == 0)
+		if(nsp->nsp_socket == 0)
 			goto next;
-		if (errno) 
+		if(errno)
 			nsp->nsp_socket->so_error = errno;
-		oinp = nsp;
-		nsp = nsp->nsp_next;
+		oinp                   = nsp;
+		nsp                    = nsp->nsp_next;
 		oinp->nsp_notify_param = param;
 		(*notify)(oinp);
 	}
@@ -304,10 +296,9 @@ ns_pcbnotify(dst, errno, notify, param)
  * After a routing change, flush old routing
  * and allocate a (hopefully) better one.
  */
-ns_rtchange(nsp)
-	struct nspcb *nsp;
+ns_rtchange(nsp) struct nspcb *nsp;
 {
-	if (nsp->nsp_route.ro_rt) {
+	if(nsp->nsp_route.ro_rt) {
 		rtfree(nsp->nsp_route.ro_rt);
 		nsp->nsp_route.ro_rt = 0;
 		/*
@@ -321,41 +312,41 @@ ns_rtchange(nsp)
 
 struct nspcb *
 ns_pcblookup(faddr, lport, wildp)
-	struct ns_addr *faddr;
-	u_short lport;
+struct ns_addr *faddr;
+u_short lport;
 {
 	register struct nspcb *nsp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_short fport;
 
 	fport = faddr->x_port;
-	for (nsp = (&nspcb)->nsp_next; nsp != (&nspcb); nsp = nsp->nsp_next) {
-		if (nsp->nsp_lport != lport)
+	for(nsp = (&nspcb)->nsp_next; nsp != (&nspcb); nsp = nsp->nsp_next) {
+		if(nsp->nsp_lport != lport)
 			continue;
 		wildcard = 0;
-		if (ns_nullhost(nsp->nsp_faddr)) {
-			if (!ns_nullhost(*faddr))
+		if(ns_nullhost(nsp->nsp_faddr)) {
+			if(!ns_nullhost(*faddr))
 				wildcard++;
 		} else {
-			if (ns_nullhost(*faddr))
+			if(ns_nullhost(*faddr))
 				wildcard++;
 			else {
-				if (!ns_hosteq(nsp->nsp_faddr, *faddr))
+				if(!ns_hosteq(nsp->nsp_faddr, *faddr))
 					continue;
-				if (nsp->nsp_fport != fport) {
-					if (nsp->nsp_fport != 0)
+				if(nsp->nsp_fport != fport) {
+					if(nsp->nsp_fport != 0)
 						continue;
 					else
 						wildcard++;
 				}
 			}
 		}
-		if (wildcard && wildp==0)
+		if(wildcard && wildp == 0)
 			continue;
-		if (wildcard < matchwild) {
-			match = nsp;
+		if(wildcard < matchwild) {
+			match     = nsp;
 			matchwild = wildcard;
-			if (wildcard == 0)
+			if(wildcard == 0)
 				break;
 		}
 	}

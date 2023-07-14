@@ -63,15 +63,14 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2) register struct proc *p1, *p2;
 {
 	register struct user *up = p2->p_addr;
 	register pt_entry_t *pte;
 	register int i;
 	extern struct proc *machFPCurProcPtr;
 
-	p2->p_md.md_regs = up->u_pcb.pcb_regs;
+	p2->p_md.md_regs  = up->u_pcb.pcb_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & (MDP_FPUSED | MDP_ULTRIX);
 
 	/*
@@ -81,7 +80,7 @@ cpu_fork(p1, p2)
 	 * translation changes (e.g. swapout) we have to update this.
 	 */
 	pte = kvtopte(up);
-	for (i = 0; i < UPAGES; i++) {
+	for(i = 0; i < UPAGES; i++) {
 		p2->p_md.md_upte[i] = pte->pt_entry & ~PG_G;
 		pte++;
 	}
@@ -90,7 +89,7 @@ cpu_fork(p1, p2)
 	 * Copy floating point state from the FP chip if this process
 	 * has state stored there.
 	 */
-	if (p1 == machFPCurProcPtr)
+	if(p1 == machFPCurProcPtr)
 		MachSaveCurFPState(p1);
 
 	/*
@@ -100,17 +99,17 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
-	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
+	p2->p_addr->u_pcb.pcb_segtab = (void *) p2->p_vmspace->vm_pmap.pm_segtab;
 
 	/*
 	 * Arrange for a non-local goto when the new process
 	 * is started, to resume here, returning nonzero from setjmp.
 	 */
 #ifdef DIAGNOSTIC
-	if (p1 != curproc)
+	if(p1 != curproc)
 		panic("cpu_fork: curproc");
 #endif
-	if (copykstack(up)) {
+	if(copykstack(up)) {
 		/*
 		 * Return 1 in child.
 		 */
@@ -125,8 +124,7 @@ cpu_fork(p1, p2)
  * machine dependent part of the proc structure.
  */
 void
-cpu_swapin(p)
-	register struct proc *p;
+        cpu_swapin(p) register struct proc *p;
 {
 	register struct user *up = p->p_addr;
 	register pt_entry_t *pte;
@@ -138,7 +136,7 @@ cpu_swapin(p)
 	 * the user struct and kernel stack.
 	 */
 	pte = kvtopte(up);
-	for (i = 0; i < UPAGES; i++) {
+	for(i = 0; i < UPAGES; i++) {
 		p->p_md.md_upte[i] = pte->pt_entry & ~PG_G;
 		pte++;
 	}
@@ -152,18 +150,17 @@ cpu_swapin(p)
  * pcb and stack and never returns.  We block memory allocation
  * until switch_exit has made things safe again.
  */
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(p) struct proc *p;
 {
 	extern struct proc *machFPCurProcPtr;
 
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = (struct proc *)0;
+	if(machFPCurProcPtr == p)
+		machFPCurProcPtr = (struct proc *) 0;
 
 	vmspace_free(p->p_vmspace);
 
 	(void) splhigh();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	kmem_free(kernel_map, (vm_offset_t) p->p_addr, ctob(UPAGES));
 	switch_exit();
 	/* NOTREACHED */
 }
@@ -171,10 +168,9 @@ cpu_exit(p)
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
-cpu_coredump(p, vp, cred)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
+cpu_coredump(p, vp, cred) struct proc *p;
+struct vnode *vp;
+struct ucred *cred;
 {
 	extern struct proc *machFPCurProcPtr;
 
@@ -182,12 +178,12 @@ cpu_coredump(p, vp, cred)
 	 * Copy floating point state from the FP chip if this process
 	 * has state stored there.
 	 */
-	if (p == machFPCurProcPtr)
+	if(p == machFPCurProcPtr)
 		MachSaveCurFPState(p);
 
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	                (off_t) 0, UIO_SYSSPACE, IO_NODELOCKED | IO_UNIT, cred, (int *) NULL,
+	                p));
 }
 
 /*
@@ -195,20 +191,19 @@ cpu_coredump(p, vp, cred)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
-pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
+pagemove(from, to, size) register caddr_t from, to;
+int size;
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if(size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	while (size > 0) {
+	while(size > 0) {
 		MachTLBFlushAddr(from);
 		MachTLBUpdate(to, *fpte);
-		*tpte++ = *fpte;
+		*tpte++        = *fpte;
 		fpte->pt_entry = 0;
 		fpte++;
 		size -= NBPG;
@@ -236,8 +231,7 @@ extern vm_map_t phys_map;
  *
  * All requests are (re)mapped into kernel VA space via the phys_map
  */
-vmapbuf(bp)
-	register struct buf *bp;
+vmapbuf(bp) register struct buf *bp;
 {
 	register caddr_t addr;
 	register vm_size_t sz;
@@ -246,22 +240,22 @@ vmapbuf(bp)
 	vm_offset_t kva;
 	register vm_offset_t pa;
 
-	if ((bp->b_flags & B_PHYS) == 0)
+	if((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	addr = bp->b_saveaddr = bp->b_un.b_addr;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	sz = round_page(bp->b_bcount + off);
-	kva = kmem_alloc_wait(phys_map, sz);
-	bp->b_un.b_addr = (caddr_t) (kva + off);
-	sz = atop(sz);
-	while (sz--) {
+	off                   = (int) addr & PGOFSET;
+	p                     = bp->b_proc;
+	sz                    = round_page(bp->b_bcount + off);
+	kva                   = kmem_alloc_wait(phys_map, sz);
+	bp->b_un.b_addr       = (caddr_t) (kva + off);
+	sz                    = atop(sz);
+	while(sz--) {
 		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-			(vm_offset_t)addr);
-		if (pa == 0)
+		                  (vm_offset_t) addr);
+		if(pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		           VM_PROT_READ | VM_PROT_WRITE, TRUE);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
@@ -271,18 +265,17 @@ vmapbuf(bp)
  * Free the io map PTEs associated with this IO operation.
  * We also invalidate the TLB entries and restore the original b_addr.
  */
-vunmapbuf(bp)
-	register struct buf *bp;
+vunmapbuf(bp) register struct buf *bp;
 {
 	register caddr_t addr = bp->b_un.b_addr;
 	register vm_size_t sz;
 	vm_offset_t kva;
 
-	if ((bp->b_flags & B_PHYS) == 0)
+	if((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	sz = round_page(bp->b_bcount + ((int)addr & PGOFSET));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+	sz  = round_page(bp->b_bcount + ((int) addr & PGOFSET));
+	kva = (vm_offset_t) ((int) addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, sz);
 	bp->b_un.b_addr = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+	bp->b_saveaddr  = NULL;
 }

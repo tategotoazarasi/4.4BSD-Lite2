@@ -69,8 +69,8 @@ extern int protection_codes[];
  *	ledbase:	SPU LEDs
  *	msgbufp:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap, ledbase;
-struct msgbuf	*msgbufp;
+caddr_t CADDR1, CADDR2, vmmap, ledbase;
+struct msgbuf *msgbufp;
 
 /*
  * Bootstrap the VM system.
@@ -84,9 +84,9 @@ struct msgbuf	*msgbufp;
  * XXX a PIC compiler would make this much easier.
  */
 void
-pmap_bootstrap(nextpa, firstpa)
-	vm_offset_t nextpa;
-	register vm_offset_t firstpa;
+        pmap_bootstrap(nextpa, firstpa)
+                vm_offset_t nextpa;
+register vm_offset_t firstpa;
 {
 	vm_offset_t kstpa, kptpa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
@@ -113,13 +113,13 @@ pmap_bootstrap(nextpa, firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
-	if (mmutype == MMU_68040)
-		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
+	if(mmutype == MMU_68040)
+		kstsize = MAXKL2SIZE / (NPTEPG / SG4_LEV2SIZE);
 	else
 		kstsize = 1;
 	kstpa = nextpa;
 	nextpa += kstsize * NBPG;
-	kptpa = nextpa;
+	kptpa    = nextpa;
 	nptpages = Sysptsize;
 	nextpa += nptpages * NBPG;
 	kptmpa = nextpa;
@@ -158,16 +158,16 @@ pmap_bootstrap(nextpa, firstpa)
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
 #if defined(LUNA2)
-	if (mmutype == MMU_68040) {
+	if(mmutype == MMU_68040) {
 		register int num;
 
 		/*
 		 * First invalidate the entire "segment table" pages
 		 * (levels 1 and 2 have the same "invalid" value).
 		 */
-		pte = (u_int *)kstpa;
+		pte  = (u_int *) kstpa;
 		epte = &pte[kstsize * NPTEPG];
-		while (pte < epte)
+		while(pte < epte)
 			*pte++ = SG_NV;
 		/*
 		 * Initialize level 2 descriptors (which immediately
@@ -177,11 +177,11 @@ pmap_bootstrap(nextpa, firstpa)
 		 * pages of PTEs.  Note that we set the "used" bit
 		 * now to save the HW the expense of doing it.
 		 */
-		num = (nptpages + 1) * (NPTEPG / SG4_LEV3SIZE);
-		pte = &((u_int *)kstpa)[SG4_LEV1SIZE];
-		epte = &pte[num];
+		num      = (nptpages + 1) * (NPTEPG / SG4_LEV3SIZE);
+		pte      = &((u_int *) kstpa)[SG4_LEV1SIZE];
+		epte     = &pte[num];
 		protoste = kptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
+		while(pte < epte) {
 			*pte++ = protoste;
 			protoste += (SG4_LEV3SIZE * sizeof(struct ste));
 		}
@@ -190,10 +190,10 @@ pmap_bootstrap(nextpa, firstpa)
 		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE
 		 * level 1 descriptors to map the `num' level 2's.
 		 */
-		pte = (u_int *)kstpa;
-		epte = &pte[roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE];
-		protoste = (u_int)&pte[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
+		pte      = (u_int *) kstpa;
+		epte     = &pte[roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE];
+		protoste = (u_int) &pte[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
+		while(pte < epte) {
 			*pte++ = protoste;
 			protoste += (SG4_LEV2SIZE * sizeof(struct ste));
 		}
@@ -201,31 +201,31 @@ pmap_bootstrap(nextpa, firstpa)
 		 * Initialize the final level 1 descriptor to map the last
 		 * block of level 2 descriptors.
 		 */
-		ste = &((u_int *)kstpa)[KERNELSTACK >> SG4_SHIFT1];
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
-		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
+		ste  = &((u_int *) kstpa)[KERNELSTACK >> SG4_SHIFT1];
+		pte  = &((u_int *) kstpa)[kstsize * NPTEPG - SG4_LEV2SIZE];
+		*ste = (u_int) pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
 		 * descriptors to map the "last PT page".
 		 */
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
+		pte      = &((u_int *) kstpa)[kstsize * NPTEPG - NPTEPG / SG4_LEV3SIZE];
+		epte     = &pte[NPTEPG / SG4_LEV3SIZE];
 		protoste = lkptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
+		while(pte < epte) {
 			*pte++ = protoste;
 			protoste += (SG4_LEV3SIZE * sizeof(struct ste));
 		}
 		/*
 		 * Initialize Sysptmap
 		 */
-		pte = (u_int *)kptmpa;
-		epte = &pte[nptpages+1];
+		pte      = (u_int *) kptmpa;
+		epte     = &pte[nptpages + 1];
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
-		while (pte < epte) {
+		while(pte < epte) {
 			*pte++ = protopte;
 			protopte += NBPG;
 		}
-		pte = &((u_int *)kptmpa)[KERNELSTACK>>SG_ISHIFT];
+		pte  = &((u_int *) kptmpa)[KERNELSTACK >> SG_ISHIFT];
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else
 #endif
@@ -235,12 +235,12 @@ pmap_bootstrap(nextpa, firstpa)
 		 * and the software Sysptmap.  Note that Sysptmap is also
 		 * considered a PT page hence the +1.
 		 */
-		ste = (u_int *)kstpa;
-		pte = (u_int *)kptmpa;
-		epte = &pte[nptpages+1];
+		ste      = (u_int *) kstpa;
+		pte      = (u_int *) kptmpa;
+		epte     = &pte[nptpages + 1];
 		protoste = kptpa | SG_RW | SG_V;
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
-		while (pte < epte) {
+		while(pte < epte) {
 			*ste++ = protoste;
 			*pte++ = protopte;
 			protoste += NBPG;
@@ -249,45 +249,45 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all entries.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG];
-		while (pte < epte) {
+		epte = &((u_int *) kptmpa)[NPTEPG];
+		while(pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
 		/* LUNA: Uarea pt map */
-		ste = (u_int *)kstpa;
-		pte = (u_int *)kptmpa;
-		ste[KERNELSTACK>>SG_ISHIFT] = lkptpa | SG_RW | SG_V;
-		pte[KERNELSTACK>>SG_ISHIFT] = lkptpa | PG_RW | PG_CI | PG_V;
+		ste                           = (u_int *) kstpa;
+		pte                           = (u_int *) kptmpa;
+		ste[KERNELSTACK >> SG_ISHIFT] = lkptpa | SG_RW | SG_V;
+		pte[KERNELSTACK >> SG_ISHIFT] = lkptpa | PG_RW | PG_CI | PG_V;
 	}
 	/*
 	 * Invalidate all but the final entry in the last kernel PT page
 	 * (u-area PTEs will be validated later).  The final entry maps
 	 * the last page of physical memory.
 	 */
-	pte = (u_int *)lkptpa;
+	pte  = (u_int *) lkptpa;
 	epte = &pte[NPTEPG];
-	while (pte < epte)
+	while(pte < epte)
 		*pte++ = PG_NV;
 	/*
 	 * Initialize kernel page table.
 	 * Start by invalidating the `nptpages' that we have allocated.
 	 */
-	pte = (u_int *)kptpa;
+	pte  = (u_int *) kptpa;
 	epte = &pte[nptpages * NPTEPG];
-	while (pte < epte)
+	while(pte < epte)
 		*pte++ = PG_NV;
 	/*
 	 * Validate PTEs for kernel text (RO)
 	 */
-	pte = &((u_int *)kptpa)[luna_btop(KERNBASE)];
+	pte  = &((u_int *) kptpa)[luna_btop(KERNBASE)];
 	epte = &pte[luna_btop(luna_trunc_page(&etext))];
 #ifdef KGDB
-	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
+	protopte = firstpa | PG_RW | PG_V; /* XXX RW for now */
 #else
 	protopte = firstpa | PG_RO | PG_V;
 #endif
-	while (pte < epte) {
+	while(pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
@@ -296,16 +296,16 @@ pmap_bootstrap(nextpa, firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[luna_btop(nextpa - firstpa)];
+	epte     = &((u_int *) kptpa)[luna_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 #if defined(LUNA2)
 	/*
 	 * Enable copy-back caching of data pages
 	 */
-	if (mmutype == MMU_68040)
+	if(mmutype == MMU_68040)
 		protopte |= PG_CCB;
 #endif
-	while (pte < epte) {
+	while(pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
@@ -315,22 +315,22 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Sysseg: base of kernel segment table
 	 */
-	Sysseg = (struct ste *)(kstpa - firstpa);
+	Sysseg = (struct ste *) (kstpa - firstpa);
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */
-	Sysptmap = (struct pte *)(kptmpa - firstpa);
+	Sysptmap = (struct pte *) (kptmpa - firstpa);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
-	Sysmap = (struct pte *)luna_ptob(nptpages * NPTEPG);
+	Sysmap = (struct pte *) luna_ptob(nptpages * NPTEPG);
 	/*
 	 * Umap: first of UPAGES PTEs (in Sysmap) for fixed-address u-area.
 	 * HIGHPAGES PTEs from the end of Sysmap.
 	 * LUNA: User stack address = 0x3ff00000.
 	 */
-	Umap = (vm_offset_t)Sysmap + (LUNA_MAX_PTSIZE/4 - HIGHPAGES * sizeof(struct pte));
+	Umap = (vm_offset_t) Sysmap + (LUNA_MAX_PTSIZE / 4 - HIGHPAGES * sizeof(struct pte));
 
 	/*
 	 * Setup u-area for process 0.
@@ -340,10 +340,10 @@ pmap_bootstrap(nextpa, firstpa)
 	 * which are HIGHPAGES from the end of the last kernel PT page
 	 * allocated earlier.
 	 */
-	pte = &((u_int *)lkptpa)[NPTEPG - HIGHPAGES];
-	epte = &pte[UPAGES];
+	pte      = &((u_int *) lkptpa)[NPTEPG - HIGHPAGES];
+	epte     = &pte[UPAGES];
 	protopte = p0upa | PG_RW | PG_V;
-	while (pte < epte) {
+	while(pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
@@ -351,27 +351,27 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
-	pte = (u_int *)p0upa;
-	epte = (u_int *)(p0upa + UPAGES*NBPG);
-	while (pte < epte)
+	pte  = (u_int *) p0upa;
+	epte = (u_int *) (p0upa + UPAGES * NBPG);
+	while(pte < epte)
 		*pte++ = 0;
 	/*
 	 * Remember the u-area address so it can be loaded in the
 	 * proc struct p_addr field later.
 	 */
-	proc0paddr = (char *)(p0upa - firstpa);
+	proc0paddr = (char *) (p0upa - firstpa);
 
 	/*
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
 	 */
 	avail_start = nextpa;
-	avail_end = luna_ptob(maxmem)
-			/* XXX allow for msgbuf */
-			- luna_round_page(sizeof(struct msgbuf));
-	mem_size = luna_ptob(physmem);
+	avail_end   = luna_ptob(maxmem)
+	            /* XXX allow for msgbuf */
+	            - luna_round_page(sizeof(struct msgbuf));
+	mem_size      = luna_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
-	virtual_end = VM_MAX_KERNEL_ADDRESS;
+	virtual_end   = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Initialize protection array.
@@ -381,15 +381,15 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		register int *kp;
 
-		kp = protection_codes;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
+		kp                                                 = protection_codes;
+		kp[VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE]     = 0;
+		kp[VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE]     = PG_RO;
+		kp[VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE]  = PG_RO;
+		kp[VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE]  = PG_RO;
+		kp[VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE]    = PG_RW;
+		kp[VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE] = PG_RW;
+		kp[VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE]    = PG_RW;
+		kp[VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE] = PG_RW;
 	}
 
 	/*
@@ -403,7 +403,7 @@ pmap_bootstrap(nextpa, firstpa)
 		kpm->pm_ptab = Sysmap;
 		simple_lock_init(&kpm->pm_lock);
 		kpm->pm_count = 1;
-		kpm->pm_stpa = (struct ste *)kstpa;
+		kpm->pm_stpa  = (struct ste *) kstpa;
 #if defined(LUNA2)
 		/*
 		 * For the 040 we also initialize the free level 2
@@ -412,18 +412,19 @@ pmap_bootstrap(nextpa, firstpa)
 		 *	1 to `num':	map page tables
 		 *	MAXKL2SIZE-1:	maps last-page page table
 		 */
-		if (mmutype == MMU_68040) {
+		if(mmutype == MMU_68040) {
 			register int num;
-			
+
 			kpm->pm_stfree = ~l2tobm(0);
-			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
-				      SG4_LEV2SIZE) / SG4_LEV2SIZE;
-			while (num)
+			num            = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
+			                         SG4_LEV2SIZE) /
+			      SG4_LEV2SIZE;
+			while(num)
 				kpm->pm_stfree &= ~l2tobm(num--);
-			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE-1);
-			for (num = MAXKL2SIZE;
-			     num < sizeof(kpm->pm_stfree)*NBBY;
-			     num++)
+			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE - 1);
+			for(num = MAXKL2SIZE;
+			    num < sizeof(kpm->pm_stfree) * NBBY;
+			    num++)
 				kpm->pm_stfree &= ~l2tobm(num);
 		}
 #endif
@@ -435,15 +436,15 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		vm_offset_t va = virtual_avail;
 
-		CADDR1 = (caddr_t)va;
+		CADDR1 = (caddr_t) va;
 		va += LUNA_PAGE_SIZE;
-		CADDR2 = (caddr_t)va;
+		CADDR2 = (caddr_t) va;
 		va += LUNA_PAGE_SIZE;
-		vmmap = (caddr_t)va;
+		vmmap = (caddr_t) va;
 		va += LUNA_PAGE_SIZE;
-		ledbase = (caddr_t)va;
+		ledbase = (caddr_t) va;
 		va += LUNA_PAGE_SIZE;
-		msgbufp = (struct msgbuf *)va;
+		msgbufp = (struct msgbuf *) va;
 		va += LUNA_PAGE_SIZE;
 		virtual_avail = va;
 	}

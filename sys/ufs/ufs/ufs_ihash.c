@@ -46,17 +46,16 @@
 /*
  * Structures associated with inode cacheing.
  */
-LIST_HEAD(ihashhead, inode) *ihashtbl;
-u_long	ihash;		/* size of hash table - 1 */
-#define	INOHASH(device, inum)	(&ihashtbl[((device) + (inum)) & ihash])
+LIST_HEAD(ihashhead, inode) *
+        ihashtbl;
+u_long ihash; /* size of hash table - 1 */
+#define INOHASH(device, inum) (&ihashtbl[((device) + (inum)) & ihash])
 struct simplelock ufs_ihash_slock;
 
 /*
  * Initialize inode hash table.
  */
-void
-ufs_ihashinit()
-{
+void ufs_ihashinit() {
 
 	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, &ihash);
 	simple_lock_init(&ufs_ihash_slock);
@@ -68,18 +67,18 @@ ufs_ihashinit()
  */
 struct vnode *
 ufs_ihashlookup(dev, inum)
-	dev_t dev;
-	ino_t inum;
+dev_t dev;
+ino_t inum;
 {
 	struct inode *ip;
 
 	simple_lock(&ufs_ihash_slock);
-	for (ip = INOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next)
-		if (inum == ip->i_number && dev == ip->i_dev)
+	for(ip = INOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next)
+		if(inum == ip->i_number && dev == ip->i_dev)
 			break;
 	simple_unlock(&ufs_ihash_slock);
 
-	if (ip)
+	if(ip)
 		return (ITOV(ip));
 	return (NULLVP);
 }
@@ -90,21 +89,21 @@ ufs_ihashlookup(dev, inum)
  */
 struct vnode *
 ufs_ihashget(dev, inum)
-	dev_t dev;
-	ino_t inum;
+dev_t dev;
+ino_t inum;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc; /* XXX */
 	struct inode *ip;
 	struct vnode *vp;
 
 loop:
 	simple_lock(&ufs_ihash_slock);
-	for (ip = INOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next) {
-		if (inum == ip->i_number && dev == ip->i_dev) {
+	for(ip = INOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next) {
+		if(inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&ufs_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, p))
+			if(vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, p))
 				goto loop;
 			return (vp);
 		}
@@ -117,14 +116,13 @@ loop:
 * Insert the inode into the hash table, and return it locked.
  */
 void
-ufs_ihashins(ip)
-	struct inode *ip;
+        ufs_ihashins(ip) struct inode *ip;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc; /* XXX */
 	struct ihashhead *ipp;
 
 	/* lock the inode, then put it on the appropriate hash list */
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, (struct simplelock *)0, p);
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE, (struct simplelock *) 0, p);
 
 	simple_lock(&ufs_ihash_slock);
 	ipp = INOHASH(ip->i_dev, ip->i_number);
@@ -136,8 +134,7 @@ ufs_ihashins(ip)
  * Remove the inode from the hash table.
  */
 void
-ufs_ihashrem(ip)
-	struct inode *ip;
+        ufs_ihashrem(ip) struct inode *ip;
 {
 	struct inode *iq;
 

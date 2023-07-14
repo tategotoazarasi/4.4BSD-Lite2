@@ -49,12 +49,11 @@
 #include <machine/reg.h>
 #include <miscfs/procfs/procfs.h>
 
-int
-procfs_doregs(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+int procfs_doregs(curp, p, pfs, uio)
+struct proc *curp;
+struct proc *p;
+struct pfsnode *pfs;
+struct uio *uio;
 {
 	int error;
 	struct reg r;
@@ -66,17 +65,17 @@ procfs_doregs(curp, p, pfs, uio)
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl > uio->uio_resid)
+	if(kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	if (kl < 0)
+	if(kl < 0)
 		error = EINVAL;
 	else
 		error = procfs_read_regs(p, &r);
-	if (error == 0)
+	if(error == 0)
 		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+	if(error == 0 && uio->uio_rw == UIO_WRITE) {
+		if(p->p_stat != SSTOP)
 			error = EBUSY;
 		else
 			error = procfs_write_regs(p, &r);
@@ -86,9 +85,8 @@ procfs_doregs(curp, p, pfs, uio)
 	return (error);
 }
 
-int
-procfs_validregs(p)
-	struct proc *p;
+int procfs_validregs(p)
+struct proc *p;
 {
 
 	return ((p->p_flag & P_SYSTEM) == 0);

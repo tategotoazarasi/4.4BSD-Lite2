@@ -40,7 +40,7 @@
 
 char *
 getenv(s)
-	char *s;
+char *s;
 {
 	return (callv->getenv(s));
 }

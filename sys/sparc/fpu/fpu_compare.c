@@ -73,9 +73,7 @@
  * manual---it would be nice if the SPARC documentation were more
  * complete).
  */
-void
-fpu_compare(struct fpemu *fe, int cmpe)
-{
+void fpu_compare(struct fpemu *fe, int cmpe) {
 	register struct fpn *a, *b;
 	register int cc, r3, r2, r1, r0;
 	FPU_DECL_CARRY
@@ -83,13 +81,13 @@ fpu_compare(struct fpemu *fe, int cmpe)
 	a = &fe->fe_f1;
 	b = &fe->fe_f2;
 
-	if (ISNAN(a) || ISNAN(b)) {
+	if(ISNAN(a) || ISNAN(b)) {
 		/*
 		 * In any case, we already got an exception for signalling
 		 * NaNs; here we may replace that one with an identical
 		 * exception, but so what?.
 		 */
-		if (cmpe)
+		if(cmpe)
 			fe->fe_cx = FSR_NV;
 		cc = FSR_CC_UO;
 		goto done;
@@ -99,17 +97,17 @@ fpu_compare(struct fpemu *fe, int cmpe)
 	 * Must handle both-zero early to avoid sign goofs.  Otherwise,
 	 * at most one is 0, and if the signs differ we are done.
 	 */
-	if (ISZERO(a) && ISZERO(b)) {
+	if(ISZERO(a) && ISZERO(b)) {
 		cc = FSR_CC_EQ;
 		goto done;
 	}
-	if (a->fp_sign) {		/* a < 0 (or -0) */
-		if (!b->fp_sign) {	/* b >= 0 (or if a = -0, b > 0) */
+	if(a->fp_sign) {      /* a < 0 (or -0) */
+		if(!b->fp_sign) { /* b >= 0 (or if a = -0, b > 0) */
 			cc = FSR_CC_LT;
 			goto done;
 		}
-	} else {			/* a > 0 (or +0) */
-		if (b->fp_sign) {	/* b <= -0 (or if a = +0, b < 0) */
+	} else {             /* a > 0 (or +0) */
+		if(b->fp_sign) { /* b <= -0 (or if a = +0, b < 0) */
 			cc = FSR_CC_GT;
 			goto done;
 		}
@@ -131,17 +129,17 @@ fpu_compare(struct fpemu *fe, int cmpe)
 	 *	|a| > |b|, a,b < 0:  a < b => FSR_CC_LT
 	 */
 #define opposite_cc(cc) ((cc) == FSR_CC_LT ? FSR_CC_GT : FSR_CC_LT)
-#define	diff(magnitude) (a->fp_sign ? opposite_cc(magnitude) :  (magnitude))
-	if (a->fp_class < b->fp_class) {	/* |a| < |b| */
+#define diff(magnitude) (a->fp_sign ? opposite_cc(magnitude) : (magnitude))
+	if(a->fp_class < b->fp_class) { /* |a| < |b| */
 		cc = diff(FSR_CC_LT);
 		goto done;
 	}
-	if (a->fp_class > b->fp_class) {	/* |a| > |b| */
+	if(a->fp_class > b->fp_class) { /* |a| > |b| */
 		cc = diff(FSR_CC_GT);
 		goto done;
 	}
 	/* now none can be 0: only Inf and numbers remain */
-	if (ISINF(a)) {				/* |Inf| = |Inf| */
+	if(ISINF(a)) { /* |Inf| = |Inf| */
 		cc = FSR_CC_EQ;
 		goto done;
 	}
@@ -153,12 +151,12 @@ fpu_compare(struct fpemu *fe, int cmpe)
 	FPU_SUBCS(r2, a->fp_mant[1], b->fp_mant[1]);
 	FPU_SUBCS(r1, a->fp_mant[2], b->fp_mant[2]);
 	FPU_SUBC(r0, a->fp_mant[3], b->fp_mant[3]);
-	if (r0 < 0)				/* underflow: |a| < |b| */
+	if(r0 < 0) /* underflow: |a| < |b| */
 		cc = diff(FSR_CC_LT);
-	else if ((r0 | r1 | r2 | r3) != 0)	/* |a| > |b| */
+	else if((r0 | r1 | r2 | r3) != 0) /* |a| > |b| */
 		cc = diff(FSR_CC_GT);
 	else
-		cc = FSR_CC_EQ;		/* |a| == |b| */
+		cc = FSR_CC_EQ; /* |a| == |b| */
 done:
 	fe->fe_fsr = (fe->fe_fsr & ~FSR_FCC) | (cc << FSR_FCC_SHIFT);
 }

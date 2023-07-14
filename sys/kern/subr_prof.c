@@ -51,89 +51,86 @@
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos
  */
-struct gmonparam _gmonparam = { GMON_PROF_OFF };
+struct gmonparam _gmonparam = {GMON_PROF_OFF};
 
 extern char etext[];
 
-void
-kmstartup()
-{
+void kmstartup() {
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
 	/*
 	 * Round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
 	 */
-	p->lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
-	p->highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
+	p->lowpc    = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
+	p->highpc   = ROUNDUP((u_long) etext, HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
 	printf("Profiling kernel, textsize=%d [%x..%x]\n",
 	       p->textsize, p->lowpc, p->highpc);
-	p->kcountsize = p->textsize / HISTFRACTION;
+	p->kcountsize   = p->textsize / HISTFRACTION;
 	p->hashfraction = HASHFRACTION;
-	p->fromssize = p->textsize / HASHFRACTION;
-	p->tolimit = p->textsize * ARCDENSITY / 100;
-	if (p->tolimit < MINARCS)
+	p->fromssize    = p->textsize / HASHFRACTION;
+	p->tolimit      = p->textsize * ARCDENSITY / 100;
+	if(p->tolimit < MINARCS)
 		p->tolimit = MINARCS;
-	else if (p->tolimit > MAXARCS)
+	else if(p->tolimit > MAXARCS)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
-	cp = (char *)malloc(p->kcountsize + p->fromssize + p->tossize,
-	    M_GPROF, M_NOWAIT);
-	if (cp == 0) {
+	cp         = (char *) malloc(p->kcountsize + p->fromssize + p->tossize,
+	                             M_GPROF, M_NOWAIT);
+	if(cp == 0) {
 		printf("No memory for profiling.\n");
 		return;
 	}
 	bzero(cp, p->kcountsize + p->tossize + p->fromssize);
-	p->tos = (struct tostruct *)cp;
+	p->tos = (struct tostruct *) cp;
 	cp += p->tossize;
-	p->kcount = (u_short *)cp;
+	p->kcount = (u_short *) cp;
 	cp += p->kcountsize;
-	p->froms = (u_short *)cp;
+	p->froms = (u_short *) cp;
 }
 
 /*
  * Return kernel profiling information.
  */
-int
-sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+int sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
+int *name;
+u_int namelen;
+void *oldp;
+size_t *oldlenp;
+void *newp;
+size_t newlen;
 {
 	struct gmonparam *gp = &_gmonparam;
 	int error;
 
 	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	if(namelen != 1)
+		return (ENOTDIR); /* overloaded */
 
-	switch (name[0]) {
-	case GPROF_STATE:
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &gp->state);
-		if (error)
-			return (error);
-		if (gp->state == GMON_PROF_OFF)
-			stopprofclock(&proc0);
-		else
-			startprofclock(&proc0);
-		return (0);
-	case GPROF_COUNT:
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    gp->kcount, gp->kcountsize));
-	case GPROF_FROMS:
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    gp->froms, gp->fromssize));
-	case GPROF_TOS:
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    gp->tos, gp->tossize));
-	case GPROF_GMONPARAM:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, gp, sizeof *gp));
-	default:
-		return (EOPNOTSUPP);
+	switch(name[0]) {
+		case GPROF_STATE:
+			error = sysctl_int(oldp, oldlenp, newp, newlen, &gp->state);
+			if(error)
+				return (error);
+			if(gp->state == GMON_PROF_OFF)
+				stopprofclock(&proc0);
+			else
+				startprofclock(&proc0);
+			return (0);
+		case GPROF_COUNT:
+			return (sysctl_struct(oldp, oldlenp, newp, newlen,
+			                      gp->kcount, gp->kcountsize));
+		case GPROF_FROMS:
+			return (sysctl_struct(oldp, oldlenp, newp, newlen,
+			                      gp->froms, gp->fromssize));
+		case GPROF_TOS:
+			return (sysctl_struct(oldp, oldlenp, newp, newlen,
+			                      gp->tos, gp->tossize));
+		case GPROF_GMONPARAM:
+			return (sysctl_rdstruct(oldp, oldlenp, newp, gp, sizeof *gp));
+		default:
+			return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }
@@ -146,34 +143,34 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
  * 1.0 is represented as 0x10000.  A scale factor of 0 turns off profiling.
  */
 /* ARGSUSED */
-int
-profil(p, uap, retval)
-	struct proc *p;
-	register struct profil_args /* {
+int profil(p, uap, retval)
+struct proc *p;
+register struct profil_args /* {
 		syscallarg(caddr_t) samples;
 		syscallarg(u_int) size;
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
-	} */ *uap;
-	register_t *retval;
+	} */
+        *uap;
+register_t *retval;
 {
 	register struct uprof *upp;
 	int s;
 
-	if (SCARG(uap, scale) > (1 << 16))
+	if(SCARG(uap, scale) > (1 << 16))
 		return (EINVAL);
-	if (SCARG(uap, scale) == 0) {
+	if(SCARG(uap, scale) == 0) {
 		stopprofclock(p);
 		return (0);
 	}
 	upp = &p->p_stats->p_prof;
 
 	/* Block profile interrupts while changing state. */
-	s = splstatclock();
-	upp->pr_off = SCARG(uap, offset);
+	s             = splstatclock();
+	upp->pr_off   = SCARG(uap, offset);
 	upp->pr_scale = SCARG(uap, scale);
-	upp->pr_base = SCARG(uap, samples);
-	upp->pr_size = SCARG(uap, size);
+	upp->pr_base  = SCARG(uap, samples);
+	upp->pr_size  = SCARG(uap, size);
 	startprofclock(p);
 	splx(s);
 
@@ -185,9 +182,11 @@ profil(p, uap, retval)
  * into the value, and is <= 1.0.  pc is at most 32 bits, so the
  * intermediate result is at most 48 bits.
  */
-#define	PC_TO_INDEX(pc, prof) \
-	((int)(((u_quad_t)((pc) - (prof)->pr_off) * \
-	    (u_quad_t)((prof)->pr_scale)) >> 16) & ~1)
+#define PC_TO_INDEX(pc, prof)                     \
+	((int) (((u_quad_t) ((pc) - (prof)->pr_off) * \
+	         (u_quad_t) ((prof)->pr_scale)) >>    \
+	        16) &                                 \
+	 ~1)
 
 /*
  * Collect user-level profiling statistics; called on a profiling tick,
@@ -203,26 +202,25 @@ profil(p, uap, retval)
  * inaccurate.
  */
 void
-addupc_intr(p, pc, ticks)
-	register struct proc *p;
-	register u_long pc;
-	u_int ticks;
+        addupc_intr(p, pc, ticks) register struct proc *p;
+register u_long pc;
+u_int ticks;
 {
 	register struct uprof *prof;
 	register caddr_t addr;
 	register u_int i;
 	register int v;
 
-	if (ticks == 0)
+	if(ticks == 0)
 		return;
 	prof = &p->p_stats->p_prof;
-	if (pc < prof->pr_off ||
-	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
-		return;			/* out of range; ignore */
+	if(pc < prof->pr_off ||
+	   (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
+		return; /* out of range; ignore */
 
 	addr = prof->pr_base + i;
-	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + ticks) == -1) {
-		prof->pr_addr = pc;
+	if((v = fuswintr(addr)) == -1 || suswintr(addr, v + ticks) == -1) {
+		prof->pr_addr  = pc;
 		prof->pr_ticks = ticks;
 		need_proftick(p);
 	}
@@ -233,10 +231,9 @@ addupc_intr(p, pc, ticks)
  * update fails, we simply turn off profiling.
  */
 void
-addupc_task(p, pc, ticks)
-	register struct proc *p;
-	register u_long pc;
-	u_int ticks;
+        addupc_task(p, pc, ticks) register struct proc *p;
+register u_long pc;
+u_int ticks;
 {
 	register struct uprof *prof;
 	register caddr_t addr;
@@ -244,18 +241,18 @@ addupc_task(p, pc, ticks)
 	u_short v;
 
 	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
-	if ((p->p_flag & P_PROFIL) == 0 || ticks == 0)
+	if((p->p_flag & P_PROFIL) == 0 || ticks == 0)
 		return;
 
 	prof = &p->p_stats->p_prof;
-	if (pc < prof->pr_off ||
-	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
+	if(pc < prof->pr_off ||
+	   (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;
 
 	addr = prof->pr_base + i;
-	if (copyin(addr, (caddr_t)&v, sizeof(v)) == 0) {
+	if(copyin(addr, (caddr_t) &v, sizeof(v)) == 0) {
 		v += ticks;
-		if (copyout((caddr_t)&v, addr, sizeof(v)) == 0)
+		if(copyout((caddr_t) &v, addr, sizeof(v)) == 0)
 			return;
 	}
 	stopprofclock(p);

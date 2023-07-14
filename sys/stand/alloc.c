@@ -66,40 +66,39 @@
  *	Dynamic memory allocator
  */
 struct fl {
-	struct fl	*next;
-	unsigned	size;
-} *freelist = (struct fl *)0;
+	struct fl *next;
+	unsigned size;
+} *freelist = (struct fl *) 0;
 
 extern char end[];
 static char *top = end;
 
 void *
 alloc(size)
-	unsigned size;
+unsigned size;
 {
 	register struct fl *f = freelist, **prev;
 
 	prev = &freelist;
-	while (f && f->size < size) {
+	while(f && f->size < size) {
 		prev = &f->next;
-		f = f->next;
+		f    = f->next;
 	}
-	if (f == (struct fl *)0) {
-		f = (struct fl *)top;
+	if(f == (struct fl *) 0) {
+		f = (struct fl *) top;
 		top += (size + 3) & ~3;
 	} else
 		*prev = f->next;
-	return ((void *)f);
+	return ((void *) f);
 }
 
 void
-free(ptr, size)
-	void *ptr;
-	unsigned size;
+        free(ptr, size) void *ptr;
+unsigned size;
 {
-	register struct fl *f = (struct fl *)ptr;
+	register struct fl *f = (struct fl *) ptr;
 
-	f->size = (size + 3) & ~3;
-	f->next = freelist;
+	f->size  = (size + 3) & ~3;
+	f->next  = freelist;
 	freelist = f;
 }

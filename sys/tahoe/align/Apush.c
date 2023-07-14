@@ -36,10 +36,10 @@
  *	@(#)Apush.c	7.1 (Berkeley) 12/6/90
  */
 
-#include	"align.h"
+#include "align.h"
 
-push (infop,longword)	process_info *infop;
-int	longword;
+push(infop, longword) process_info *infop;
+int longword;
 /*
 /*	Push the given datum on the current stack.
 /*
@@ -48,9 +48,9 @@ int	longword;
 
 	struct oprnd temp;
 
-	temp.mode = Add | W; 
-	sp -= 4; 
-	temp.address = sp; 
-	temp.length = 4;
-	write_back(infop,longword, &temp) ;
+	temp.mode = Add | W;
+	sp -= 4;
+	temp.address = sp;
+	temp.length  = 4;
+	write_back(infop, longword, &temp);
 }

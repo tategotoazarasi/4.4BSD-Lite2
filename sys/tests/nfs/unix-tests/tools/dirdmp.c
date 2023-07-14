@@ -14,19 +14,17 @@
 #include <stdio.h>
 #include <ctype.h>
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(argc, argv) int argc;
+char *argv[];
 {
 	argv++;
 	argc--;
-	while (argc--) {
+	while(argc--) {
 		print(*argv++);
 	}
 }
 
-print(dir)
-	char *dir;
+print(dir) char *dir;
 {
 	DIR *dirp;
 #ifdef SVR3
@@ -37,11 +35,12 @@ print(dir)
 	int rec = 0;
 
 	dirp = opendir(dir);
-	if (dirp == NULL) {
+	if(dirp == NULL) {
 		perror(dir);
 		return;
 	}
-	while ((dp = readdir(dirp)) != NULL) ;
+	while((dp = readdir(dirp)) != NULL)
+		;
 	closedir(dirp);
 }
 
@@ -50,20 +49,19 @@ print(dir)
 /*
  * open a directory.
  */
-DIR *
-opendir(name)
-	char *name;
+DIR *opendir(name)
+char *name;
 {
 	register DIR *dirp;
 	register int fd;
 	struct stat sb;
 	extern char *malloc();
 
-	if ((fd = open(name, 0)) == -1) {
+	if((fd = open(name, 0)) == -1) {
 		printf("open failed\n");
 		return (NULL);
 	}
-	if (fstat(fd, &sb) == -1) {
+	if(fstat(fd, &sb) == -1) {
 		printf("stat failed\n");
 		return (NULL);
 	}
@@ -74,14 +72,14 @@ opendir(name)
 	}
 	*/
 	printf("%s mode %o dir %o\n", name, sb.st_mode, S_IFDIR);
-	if (((dirp = (DIR *)malloc(sizeof(DIR))) == NULL) ||
+	if(((dirp = (DIR *) malloc(sizeof(DIR))) == NULL) ||
 #ifdef SVR3
-	    ((dirp->dd_buf = malloc(DIRBUF)) == NULL)) {
+	   ((dirp->dd_buf = malloc(DIRBUF)) == NULL)) {
 #else
-	    ((dirp->dd_buf = malloc((int)sb.st_blksize)) == NULL)) {
+	   ((dirp->dd_buf = malloc((int) sb.st_blksize)) == NULL)) {
 #endif
-		if (dirp) {
-			if (dirp->dd_buf) {
+		if(dirp) {
+			if(dirp->dd_buf) {
 				free(dirp->dd_buf);
 			}
 			free(dirp);
@@ -94,7 +92,7 @@ opendir(name)
 	dirp->dd_bbase = 0;
 	dirp->dd_entno = 0;
 #endif
-	dirp->dd_fd = fd;
+	dirp->dd_fd  = fd;
 	dirp->dd_loc = 0;
 	return (dirp);
 }
@@ -108,7 +106,7 @@ struct dirent *
 struct direct *
 #endif
 readdir(dirp)
-	register DIR *dirp;
+register DIR *dirp;
 {
 #ifdef SVR3
 	register struct dirent *dp;
@@ -116,16 +114,16 @@ readdir(dirp)
 	register struct direct *dp;
 #endif
 
-	for (;;) {
-		if (dirp->dd_loc == 0) {
+	for(;;) {
+		if(dirp->dd_loc == 0) {
 #ifdef SVR3
 			dirp->dd_size = getdents(dirp->dd_fd,
-			    dirp->dd_buf, DIRBUF);
+			                         dirp->dd_buf, DIRBUF);
 #else
 			dirp->dd_size = getdirentries(dirp->dd_fd,
-			    dirp->dd_buf, dirp->dd_bsize, &dirp->dd_bbase);
+			                              dirp->dd_buf, dirp->dd_bsize, &dirp->dd_bbase);
 #endif
-			if (dirp->dd_size <= 0) {
+			if(dirp->dd_size <= 0) {
 				printf("EOF\n");
 				return (NULL);
 			}
@@ -133,17 +131,17 @@ readdir(dirp)
 			dirp->dd_entno = 0;
 #endif
 		}
-		if (dirp->dd_loc >= dirp->dd_size) {
+		if(dirp->dd_loc >= dirp->dd_size) {
 			printf("EOB offset %d\n", tell(dirp->dd_fd));
 			dirp->dd_loc = 0;
 			continue;
 		}
 #ifdef SVR3
-		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
+		dp = (struct dirent *) (dirp->dd_buf + dirp->dd_loc);
 #else
-		dp = (struct direct *)(dirp->dd_buf + dirp->dd_loc);
+		dp = (struct direct *) (dirp->dd_buf + dirp->dd_loc);
 #endif
-		if (dp->d_reclen <= 0) {
+		if(dp->d_reclen <= 0) {
 			printf("0 reclen\n");
 			return (NULL);
 		}
@@ -153,17 +151,17 @@ readdir(dirp)
 #endif
 #ifdef SVR3
 		printf("%5d %5ld %5d %s\n",
-		    dirp->dd_loc, dp->d_ino, dp->d_reclen,
-		    dp->d_name);
+		       dirp->dd_loc, dp->d_ino, dp->d_reclen,
+		       dp->d_name);
 #else
 		printf("%5d %5d %5d %5d %s\n",
-		    dirp->dd_loc, dp->d_fileno, dp->d_reclen,
-		    dp->d_namlen, dp->d_name);
+		       dirp->dd_loc, dp->d_fileno, dp->d_reclen,
+		       dp->d_namlen, dp->d_name);
 #endif
 #ifdef SVR3
-		if (dp->d_ino == 0) {
+		if(dp->d_ino == 0) {
 #else
-		if (dp->d_fileno == 0) {
+		if(dp->d_fileno == 0) {
 #endif
 			continue;
 		}

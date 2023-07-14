@@ -61,95 +61,94 @@
 
 #include "zs.h"
 
-struct	tty *constty = 0;	/* virtual console output device */
-struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
-int	rom_console_input;	/* when set, hardclock calls cnrom() */
+struct tty *constty   = 0; /* virtual console output device */
+struct tty *fbconstty = 0; /* tty structure for frame buffer console */
+int rom_console_input;     /* when set, hardclock calls cnrom() */
 
-int	cons_ocount;		/* output byte count */
+int cons_ocount; /* output byte count */
 
 extern struct promvec *promvec;
 
 /*
  * The output driver may munge the minor number in cons.t_dev.
  */
-struct tty cons;		/* rom console tty device */
-static void cnstart __P((struct tty *));
-static void cnfbstart __P((struct tty *));
-static void cnfbstop __P((struct tty *, int));
-static void cnfbdma __P((void *));
+struct tty cons; /* rom console tty device */
+static void cnstart __P((struct tty *) );
+static void cnfbstart __P((struct tty *) );
+static void cnfbstop __P((struct tty *, int) );
+static void cnfbdma __P((void *) );
 
 extern const char char_type[];
 
-consinit()
-{
+consinit() {
 	register struct tty *tp = &cons;
 	register int in, out;
 	void zsconsole(), bwtwoconsole();
 
-	tp->t_dev = makedev(0, 0);	/* /dev/console */
+	tp->t_dev    = makedev(0, 0); /* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-	tp->t_param = (int (*)(struct tty *, struct termios *))nullop;
-	in = *promvec->pv_stdin;
-	out = *promvec->pv_stdout;
-	switch (in) {
+	tp->t_param                 = (int (*)(struct tty *, struct termios *)) nullop;
+	in                          = *promvec->pv_stdin;
+	out                         = *promvec->pv_stdout;
+	switch(in) {
 
 #if NZS > 0
-	case PROMDEV_TTYA:
-		zsconsole(tp, 0, 0);
-		break;
+		case PROMDEV_TTYA:
+			zsconsole(tp, 0, 0);
+			break;
 
-	case PROMDEV_TTYB:
-		zsconsole(tp, 1, 0);
-		break;
+		case PROMDEV_TTYB:
+			zsconsole(tp, 1, 0);
+			break;
 #endif
 
-	case PROMDEV_KBD:
-		/*
+		case PROMDEV_KBD:
+			/*
 		 * Tell the keyboard driver to direct ASCII input here.
 		 */
-		kbd_ascii(tp);
-		break;
+			kbd_ascii(tp);
+			break;
 
-	default:
-		rom_console_input = 1;
-		printf("unknown console input source %d; using rom\n", in);
-		break;
+		default:
+			rom_console_input = 1;
+			printf("unknown console input source %d; using rom\n", in);
+			break;
 	}
-	switch (out) {
+	switch(out) {
 
 #if NZS > 0
-	case PROMDEV_TTYA:
-		zsconsole(tp, 0, 1);
-		break;
+		case PROMDEV_TTYA:
+			zsconsole(tp, 0, 1);
+			break;
 
-	case PROMDEV_TTYB:
-		zsconsole(tp, 1, 1);
-		break;
+		case PROMDEV_TTYB:
+			zsconsole(tp, 1, 1);
+			break;
 #endif
 
-	case PROMDEV_SCREEN:
-		fbconstty = tp;
-		tp->t_oproc = cnfbstart;
-		tp->t_stop = cnfbstop;
-		break;
+		case PROMDEV_SCREEN:
+			fbconstty   = tp;
+			tp->t_oproc = cnfbstart;
+			tp->t_stop  = cnfbstop;
+			break;
 
-	default:
-		printf("unknown console output sink %d; using rom\n", out);
-		tp->t_oproc = cnstart;
-		tp->t_stop = (void (*)(struct tty *, int))nullop;
-		break;
+		default:
+			printf("unknown console output sink %d; using rom\n", out);
+			tp->t_oproc = cnstart;
+			tp->t_stop  = (void (*)(struct tty *, int)) nullop;
+			break;
 	}
 }
 
 /* ARGSUSED */
 cnopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	register struct tty *tp = &cons;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if((tp->t_state & TS_ISOPEN) == 0) {
 		/*
 		 * Leave baud rate alone!
 		 */
@@ -159,18 +158,18 @@ cnopen(dev, flag, mode, p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
-		(void)(*tp->t_param)(tp, &tp->t_termios);
+		(void) (*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if(tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 /* ARGSUSED */
 cnclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	register struct tty *tp = &cons;
 
@@ -181,9 +180,9 @@ cnclose(dev, flag, mode, p)
 
 /* ARGSUSED */
 cnread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
 	register struct tty *tp = &cons;
 
@@ -192,24 +191,24 @@ cnread(dev, uio, flag)
 
 /* ARGSUSED */
 cnwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
 	register struct tty *tp;
-	
-	if ((tp = constty) == NULL ||
-	    (tp->t_state & (TS_CARR_ON|TS_ISOPEN)) != (TS_CARR_ON|TS_ISOPEN))
+
+	if((tp = constty) == NULL ||
+	   (tp->t_state & (TS_CARR_ON | TS_ISOPEN)) != (TS_CARR_ON | TS_ISOPEN))
 		tp = &cons;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
 cnioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+        dev_t dev;
+int cmd;
+caddr_t data;
+int flag;
+struct proc *p;
 {
 	register struct tty *tp;
 	int error;
@@ -218,25 +217,25 @@ cnioctl(dev, cmd, data, flag, p)
 	 * Superuser can always use this to wrest control of console
 	 * output from the "virtual" console.
 	 */
-	if (cmd == TIOCCONS && constty) {
-		error = suser(p->p_ucred, (u_short *)NULL);
-		if (error)
+	if(cmd == TIOCCONS && constty) {
+		error = suser(p->p_ucred, (u_short *) NULL);
+		if(error)
 			return (error);
 		constty = NULL;
 		return (0);
 	}
 	tp = &cons;
-	if ((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
-	if ((error = ttioctl(tp, cmd, data, flag)) >= 0)
+	if((error = ttioctl(tp, cmd, data, flag)) >= 0)
 		return (error);
 	return (ENOTTY);
 }
 
 cnselect(dev, which, p)
-	dev_t dev;
-	int which;
-	struct proc *p;
+        dev_t dev;
+int which;
+struct proc *p;
 {
 
 	return (ttselect(makedev(major(dev), 0), which, p));
@@ -250,19 +249,18 @@ cnselect(dev, which, p)
  * Generic output.  We just call putchar.  (Very bad for performance.)
  */
 static void
-cnstart(tp)
-	register struct tty *tp;
+        cnstart(tp) register struct tty *tp;
 {
 	register int c, s;
 	register void (*putc)(int);
 
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) {
+	if(tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) {
 		splx(s);
 		return;
 	}
 	putc = promvec->pv_putchar;
-	while (tp->t_outq.c_cc) {
+	while(tp->t_outq.c_cc) {
 		c = getc(&tp->t_outq);
 		/*
 		 * *%&!*& ROM monitor console putchar is not reentrant!
@@ -273,9 +271,9 @@ cnstart(tp)
 		(*putc)(c & 0177);
 		(void) spltty();
 	}
-	if (tp->t_state & TS_ASLEEP) {		/* can't happen? */
+	if(tp->t_state & TS_ASLEEP) { /* can't happen? */
 		tp->t_state &= ~TS_ASLEEP;
-		wakeup((caddr_t)&tp->t_outq);
+		wakeup((caddr_t) &tp->t_outq);
 	}
 	selwakeup(&tp->t_wsel);
 	splx(s);
@@ -287,13 +285,12 @@ cnstart(tp)
  * software clock interrupts.
  */
 static void
-cnfbstart(tp)
-	register struct tty *tp;
+        cnfbstart(tp) register struct tty *tp;
 {
 	register int s;
 
-	s = spltty();		/* paranoid: splsoftclock should suffice */
-	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
+	s = spltty(); /* paranoid: splsoftclock should suffice */
+	if(tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
 		splx(s);
 		return;
 	}
@@ -301,18 +298,18 @@ cnfbstart(tp)
 	 * If there are sleepers, and output has drained below low
 	 * water mark, awaken.
 	 */
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
+	if(tp->t_outq.c_cc <= tp->t_lowat) {
+		if(tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t) &tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (tp->t_outq.c_cc) {
+	if(tp->t_outq.c_cc) {
 		tp->t_state |= TS_BUSY;
-		if (s == 0) {
+		if(s == 0) {
 			(void) splsoftclock();
-			cnfbdma((void *)tp);
+			cnfbdma((void *) tp);
 		} else
 			timeout(cnfbdma, tp, 1);
 	}
@@ -323,13 +320,12 @@ cnfbstart(tp)
  * Stop frame buffer output: just assert TS_FLUSH if necessary.
  */
 static void
-cnfbstop(tp, flag)
-	register struct tty *tp;
-	int flag;
+        cnfbstop(tp, flag) register struct tty *tp;
+int flag;
 {
-	register int s = spltty();	/* paranoid */
+	register int s = spltty(); /* paranoid */
 
-	if ((tp->t_state & (TS_BUSY | TS_TTSTOP)) == TS_BUSY)
+	if((tp->t_state & (TS_BUSY | TS_TTSTOP)) == TS_BUSY)
 		tp->t_state |= TS_FLUSH;
 	splx(s);
 }
@@ -338,15 +334,14 @@ cnfbstop(tp, flag)
  * Do pseudo-dma (called from software interrupt).
  */
 static void
-cnfbdma(tpaddr)
-	void *tpaddr;
+        cnfbdma(tpaddr) void *tpaddr;
 {
 	register struct tty *tp = tpaddr;
 	register char *p, *q;
 	register int n, c, s;
 
-	s = spltty();			/* paranoid */
-	if (tp->t_state & TS_FLUSH) {
+	s = spltty(); /* paranoid */
+	if(tp->t_state & TS_FLUSH) {
 		tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 		splx(s);
 	} else {
@@ -354,13 +349,13 @@ cnfbdma(tpaddr)
 		splx(s);
 		p = tp->t_outq.c_cf;
 		n = ndqb(&tp->t_outq, 0);
-		for (q = p, c = n; --c >= 0; q++)
-			if (*q & 0200)	/* high bits seem to be bad */
+		for(q = p, c = n; --c >= 0; q++)
+			if(*q & 0200) /* high bits seem to be bad */
 				*q &= ~0200;
 		(*promvec->pv_putstr)(p, n);
 		ndflush(&tp->t_outq, n);
 	}
-	if (tp->t_line)
+	if(tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
 	else
 		cnfbstart(tp);
@@ -371,35 +366,33 @@ cnfbdma(tpaddr)
  * an `interrupt' routine on console input ready, so we must poll.
  * This is all rather sad.
  */
-volatile int	cn_rxc;			/* XXX receive `silo' */
+volatile int cn_rxc; /* XXX receive `silo' */
 
 /* called from hardclock, which is above spltty, so no tty calls! */
-cnrom()
-{
+cnrom() {
 	register int c;
 
-	if (cn_rxc >= 0)
+	if(cn_rxc >= 0)
 		return (1);
-	if ((c = (*promvec->pv_nbgetchar)()) < 0)
+	if((c = (*promvec->pv_nbgetchar)()) < 0)
 		return (0);
 	cn_rxc = c;
 	return (1);
 }
 
 /* pseudo console software interrupt scheduled when cnrom() returns 1 */
-cnrint()
-{
+cnrint() {
 	register struct tty *tp;
 	register int c, s;
 
-	s = splclock();
-	c = cn_rxc;
+	s      = splclock();
+	c      = cn_rxc;
 	cn_rxc = -1;
 	splx(s);
-	if (c < 0)
+	if(c < 0)
 		return;
 	tp = &cons;
-	if ((tp->t_cflag & CSIZE) == CS7) {
+	if((tp->t_cflag & CSIZE) == CS7) {
 #if 0
 		/* XXX this should be done elsewhere, if at all */
 		if (tp->t_cflag & PARENB)
@@ -413,24 +406,22 @@ cnrint()
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
-cngetc()
-{
+cngetc() {
 	register int s, c;
 
 	s = splhigh();
 	c = (*promvec->pv_getchar)();
 	splx(s);
-	if (c == '\r')
+	if(c == '\r')
 		c = '\n';
 	return (c);
 }
 
-cnputc(c)
-	register int c;
+cnputc(c) register int c;
 {
 	register int s = splhigh();
 
-	if (c == '\n')
+	if(c == '\n')
 		(*promvec->pv_putchar)('\r');
 	(*promvec->pv_putchar)(c);
 	splx(s);

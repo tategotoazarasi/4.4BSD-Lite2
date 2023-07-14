@@ -76,12 +76,12 @@
 #include <hp300/hp300/pte.h>
 #include <net/netisr.h>
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define MAXMEM 64 * 1024 * CLSIZE /* XXX - from cmap.h */
 #include <vm/vm_extern.h>
 #include <vm/vm_kern.h>
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "hp300";		/* cpu "architecture" */
+char machine[] = "hp300"; /* cpu "architecture" */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -89,67 +89,66 @@ extern vm_offset_t avail_end;
 /*
  * Declare these as initialized data so we can patch them.
  */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
+int nswbuf = 0;
+#ifdef NBUF
+int nbuf = NBUF;
 #else
-int	nbuf = 0;
+int nbuf     = 0;
 #endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
+#ifdef BUFPAGES
+int bufpages = BUFPAGES;
 #else
-int	bufpages = 0;
+int bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
-int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+int msgbufmapped;     /* set when safe to use msgbuf */
+int maxmem;           /* max memory per process */
+int physmem = MAXMEM; /* max supported memory, changes to actual */
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
-int	safepri = PSL_LOWIPL;
+int safepri = PSL_LOWIPL;
 
-extern	u_int lowram;
-extern	short exframesize[];
+extern u_int lowram;
+extern short exframesize[];
 
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-consinit()
-{
+consinit() {
 
 	/*
 	 * Set cpuspeed immediately since cninit() called routines
 	 * might use delay.  Note that we only set it if a custom value
 	 * has not already been specified.
 	 */
-	if (cpuspeed == 0) {
-		switch (machineid) {
-		case HP_320:
-		case HP_330:
-		case HP_340:
-			cpuspeed = MHZ_16;
-			break;
-		case HP_350:
-		case HP_360:
-		case HP_380:
-			cpuspeed = MHZ_25;
-			break;
-		case HP_370:
-		case HP_433:
-			cpuspeed = MHZ_33;
-			break;
-		case HP_375:
-			cpuspeed = MHZ_50;
-			break;
-		default:	/* assume the fastest */
-			cpuspeed = MHZ_50;
-			break;
+	if(cpuspeed == 0) {
+		switch(machineid) {
+			case HP_320:
+			case HP_330:
+			case HP_340:
+				cpuspeed = MHZ_16;
+				break;
+			case HP_350:
+			case HP_360:
+			case HP_380:
+				cpuspeed = MHZ_25;
+				break;
+			case HP_370:
+			case HP_433:
+				cpuspeed = MHZ_33;
+				break;
+			case HP_375:
+				cpuspeed = MHZ_50;
+				break;
+			default: /* assume the fastest */
+				cpuspeed = MHZ_50;
+				break;
 		}
-		if (mmutype == MMU_68040)
-			cpuspeed *= 2;	/* XXX */
+		if(mmutype == MMU_68040)
+			cpuspeed *= 2; /* XXX */
 	}
 	/*
          * Find what hardware is attached to this machine.
@@ -166,8 +165,7 @@ consinit()
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
-cpu_startup()
-{
+cpu_startup() {
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
@@ -189,9 +187,9 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	for(i = 0; i < btoc(sizeof(struct msgbuf)); i++)
+		pmap_enter(kernel_pmap, (vm_offset_t) msgbufp,
+		           avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 	/*
@@ -218,19 +216,21 @@ cpu_startup()
 	 */
 	firstaddr = 0;
 again:
-	v = (caddr_t)firstaddr;
+	v = (caddr_t) firstaddr;
 
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+#define valloc(name, type, num) \
+	(name) = (type *) v;        \
+	v      = (caddr_t) ((name) + (num))
+#define valloclim(name, type, num, lim) \
+	(name) = (type *) v;                \
+	v      = (caddr_t) ((lim) = ((name) + (num)))
 	valloc(cfree, struct cblock, nclist);
 	valloc(callout, struct callout, ncallout);
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
-	
+
 	/*
 	 * Determine how many buffers to allocate.
 	 * Since HPs tend to be long on memory and short on disk speed,
@@ -239,31 +239,31 @@ again:
 	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
+	if(bufpages == 0)
 		bufpages = physmem / 10 / CLSIZE;
-	if (nbuf == 0) {
+	if(nbuf == 0) {
 		nbuf = bufpages;
-		if (nbuf < 16)
+		if(nbuf < 16)
 			nbuf = 16;
 	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
+	if(nswbuf == 0) {
+		nswbuf = (nbuf / 2) & ~1; /* force even */
+		if(nswbuf > 256)
+			nswbuf = 256; /* sanity */
 	}
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
 	/*
 	 * End of first pass, size has been calculated so allocate memory
 	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
+	if(firstaddr == 0) {
+		size      = (vm_size_t) (v - firstaddr);
 		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
+		if(firstaddr == 0)
 			panic("startup: no room for tables");
 #ifdef BUFFERS_UNMANAGED
-		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
-		if (buffermem == 0)
+		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages * CLBYTES);
+		if(buffermem == 0)
 			panic("startup: no room for buffers");
 #endif
 		goto again;
@@ -271,25 +271,25 @@ again:
 	/*
 	 * End of second pass, addresses have been assigned
 	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	if((vm_size_t) (v - firstaddr) != size)
 		panic("startup: table size inconsistency");
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
-	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
+	size       = MAXBSIZE * nbuf;
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *) &buffers,
+	                           &maxaddr, size, TRUE);
+	minaddr    = (vm_offset_t) buffers;
+	if(vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t) 0,
+	               &minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
-	base = bufpages / nbuf;
+	base     = bufpages / nbuf;
 	residual = bufpages % nbuf;
 #ifdef BUFFERS_UNMANAGED
 	bufmemp = (vm_offset_t) buffermem;
 #endif
-	for (i = 0; i < nbuf; i++) {
+	for(i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
 
@@ -300,26 +300,26 @@ again:
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		curbuf     = (vm_offset_t) buffers + i * MAXBSIZE;
+		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
 #ifdef BUFFERS_UNMANAGED
 		/*
 		 * Move the physical pages over from buffermem.
 		 */
-		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
+		for(ix = 0; ix < curbufsize / CLBYTES; ix++) {
 			vm_offset_t pa;
 
 			pa = pmap_extract(kernel_pmap, bufmemp);
-			if (pa == 0)
+			if(pa == 0)
 				panic("startup: unmapped buffer");
-			pmap_remove(kernel_pmap, bufmemp, bufmemp+CLBYTES);
+			pmap_remove(kernel_pmap, bufmemp, bufmemp + CLBYTES);
 			pmap_enter(kernel_pmap,
-				   (vm_offset_t)(curbuf + ix * CLBYTES),
-				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			           (vm_offset_t) (curbuf + ix * CLBYTES),
+			           pa, VM_PROT_READ | VM_PROT_WRITE, TRUE);
 			bufmemp += CLBYTES;
 		}
 #else
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
+		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 #endif
 	}
@@ -337,36 +337,36 @@ again:
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
+	                         16 * NCARGS, TRUE);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
+	                         VM_PHYS_SIZE, TRUE);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+	mclrefcnt = (char *) malloc(NMBCLUSTERS + CLBYTES / MCLBYTES,
+	                            M_MBUF, M_NOWAIT);
+	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES / MCLBYTES);
+	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *) &mbutl, &maxaddr,
+	                       VM_MBUF_SIZE, FALSE);
 	/*
 	 * Initialize callouts
 	 */
 	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
+	for(i = 1; i < ncallout; i++)
+		callout[i - 1].c_next = &callout[i];
+	callout[i - 1].c_next = NULL;
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	       nbuf, bufpages * CLBYTES);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -388,12 +388,11 @@ again:
  * XXX Should clear registers except sp, pc,
  * but would break init; should be fixed soon.
  */
-setregs(p, entry, retval)
-	register struct proc *p;
-	u_long entry;
-	int retval[2];
+setregs(p, entry, retval) register struct proc *p;
+u_long entry;
+int retval[2];
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *) p->p_md.md_regs;
 
 	frame->f_pc = entry & ~1;
 #ifdef FPCOPROC
@@ -402,14 +401,14 @@ setregs(p, entry, retval)
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
 #ifdef HPUXCOMPAT
-	if (p->p_md.md_flags & MDP_HPUX) {
+	if(p->p_md.md_flags & MDP_HPUX) {
 
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
-		retval[0] = 0;		/* no float card */
+		retval[0]         = 0; /* no float card */
 #ifdef FPCOPROC
-		retval[1] = 1;		/* yes 68881 */
+		retval[1] = 1; /* yes 68881 */
 #else
-		retval[1] = 0;		/* no 68881 */
+		retval[1] = 0; /* no 68881 */
 #endif
 	}
 	/*
@@ -438,8 +437,8 @@ setregs(p, entry, retval)
 	{
 		extern short sigcodetrap[];
 
-		if ((p->p_pptr->p_md.md_flags & MDP_HPUX) &&
-		    (p->p_flag & P_TRACED)) {
+		if((p->p_pptr->p_md.md_flags & MDP_HPUX) &&
+		   (p->p_flag & P_TRACED)) {
 			p->p_md.md_flags |= MDP_HPUXTRACE;
 			*sigcodetrap = 0x4E42;
 		} else {
@@ -453,85 +452,81 @@ setregs(p, entry, retval)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
-extern	char version[];
+char cpu_model[120];
+extern char version[];
 
-identifycpu()
-{
+identifycpu() {
 	char *t, *mc;
 	int len;
 
-	switch (machineid) {
-	case HP_320:
-		t = "320 (16.67MHz";
-		break;
-	case HP_330:
-		t = "318/319/330 (16.67MHz";
-		break;
-	case HP_340:
-		t = "340 (16.67MHz";
-		break;
-	case HP_350:
-		t = "350 (25MHz";
-		break;
-	case HP_360:
-		t = "360 (25MHz";
-		break;
-	case HP_370:
-		t = "370 (33.33MHz";
-		break;
-	case HP_375:
-		t = "345/375 (50MHz";
-		break;
-	case HP_380:
-		t = "380/425 (25MHz";
-		break;
-	case HP_433:
-		t = "433 (33MHz";
-		break;
-	default:
-		printf("\nunknown machine type %d\n", machineid);
-		panic("startup");
+	switch(machineid) {
+		case HP_320:
+			t = "320 (16.67MHz";
+			break;
+		case HP_330:
+			t = "318/319/330 (16.67MHz";
+			break;
+		case HP_340:
+			t = "340 (16.67MHz";
+			break;
+		case HP_350:
+			t = "350 (25MHz";
+			break;
+		case HP_360:
+			t = "360 (25MHz";
+			break;
+		case HP_370:
+			t = "370 (33.33MHz";
+			break;
+		case HP_375:
+			t = "345/375 (50MHz";
+			break;
+		case HP_380:
+			t = "380/425 (25MHz";
+			break;
+		case HP_433:
+			t = "433 (33MHz";
+			break;
+		default:
+			printf("\nunknown machine type %d\n", machineid);
+			panic("startup");
 	}
-	mc = (mmutype == MMU_68040 ? "40" :
-	       (mmutype == MMU_68030 ? "30" : "20"));
+	mc = (mmutype == MMU_68040 ? "40" : (mmutype == MMU_68030 ? "30" : "20"));
 	sprintf(cpu_model, "HP9000/%s MC680%s CPU", t, mc);
-	switch (mmutype) {
-	case MMU_68040:
-	case MMU_68030:
-		strcat(cpu_model, "+MMU");
-		break;
-	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
-		break;
-	case MMU_HP:
-		strcat(cpu_model, ", HP MMU");
-		break;
-	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
-		panic("startup");
+	switch(mmutype) {
+		case MMU_68040:
+		case MMU_68030:
+			strcat(cpu_model, "+MMU");
+			break;
+		case MMU_68851:
+			strcat(cpu_model, ", MC68851 MMU");
+			break;
+		case MMU_HP:
+			strcat(cpu_model, ", HP MMU");
+			break;
+		default:
+			printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+			panic("startup");
 	}
 	len = strlen(cpu_model);
-	if (mmutype == MMU_68040)
+	if(mmutype == MMU_68040)
 		len += sprintf(cpu_model + len,
-		    "+FPU, 4k on-chip physical I/D caches");
-	else if (mmutype == MMU_68030)
+		               "+FPU, 4k on-chip physical I/D caches");
+	else if(mmutype == MMU_68030)
 		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU",
-		       machineid == HP_340 ? "16.67" :
-		       (machineid == HP_360 ? "25" :
-			(machineid == HP_370 ? "33.33" : "50")));
+		               machineid == HP_340 ? "16.67" : (machineid == HP_360 ? "25" : (machineid == HP_370 ? "33.33" : "50")));
 	else
 		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
-		       machineid == HP_350 ? "20" : "16.67");
-	switch (ectype) {
-	case EC_VIRT:
-		sprintf(cpu_model + len, ", %dK virtual-address cache",
-		       machineid == HP_320 ? 16 : 32);
-		break;
-	case EC_PHYS:
-		sprintf(cpu_model + len, ", %dK physical-address cache",
-		       machineid == HP_370 ? 64 : 32);
-		break;
+		               machineid == HP_350 ? "20" : "16.67");
+	switch(ectype) {
+		case EC_VIRT:
+			sprintf(cpu_model + len, ", %dK virtual-address cache",
+			        machineid == HP_320 ? 16 : 32);
+			break;
+		case EC_PHYS:
+			sprintf(cpu_model + len, ", %dK physical-address cache",
+			        machineid == HP_370 ? 64 : 32);
+			break;
 	}
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
@@ -539,53 +534,52 @@ identifycpu()
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
 	 */
-	switch (machineid) {
-	case -1:		/* keep compilers happy */
+	switch(machineid) {
+		case -1: /* keep compilers happy */
 #if !defined(HP320) && !defined(HP350)
-	case HP_320:
-	case HP_350:
+		case HP_320:
+		case HP_350:
 #endif
 #ifndef HP330
-	case HP_330:
+		case HP_330:
 #endif
 #if !defined(HP360) && !defined(HP370)
-	case HP_340:
-	case HP_360:
-	case HP_370:
+		case HP_340:
+		case HP_360:
+		case HP_370:
 #endif
 #if !defined(HP380)
-	case HP_380:
-	case HP_433:
+		case HP_380:
+		case HP_433:
 #endif
-		panic("CPU type not configured");
-	default:
-		break;
+			panic("CPU type not configured");
+		default:
+			break;
 	}
 }
 
 /*
  * machine dependent system variables.
  */
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p) int *name;
+u_int namelen;
+void *oldp;
+size_t *oldlenp;
+void *newp;
+size_t newlen;
+struct proc *p;
 {
 
 	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	if(namelen != 1)
+		return (ENOTDIR); /* overloaded */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tty->t_dev,
-		    sizeof cn_tty->t_dev));
-	default:
-		return (EOPNOTSUPP);
+	switch(name[0]) {
+		case CPU_CONSDEV:
+			return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tty->t_dev,
+			                        sizeof cn_tty->t_dev));
+		default:
+			return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }
@@ -593,19 +587,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
 
-int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
+int inledcontrol = 0; /* 1 if we are in ledcontrol already, cheap mutex */
 char *ledaddr;
 
 /*
  * Map the LED page and setup the KVA to access it.
  */
-ledinit()
-{
+ledinit() {
 	extern caddr_t ledbase;
 
-	pmap_enter(kernel_pmap, (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
+	pmap_enter(kernel_pmap, (vm_offset_t) ledbase, (vm_offset_t) LED_ADDR,
+	           VM_PROT_READ | VM_PROT_WRITE, TRUE);
+	ledaddr = (char *) ((int) ledbase | (LED_ADDR & PGOFSET));
 }
 
 /*
@@ -617,34 +610,33 @@ ledinit()
  * They are expensive and we really don't need to be that precise.
  * Besides we would like to be able to profile this routine.
  */
-ledcontrol(ons, offs, togs)
-	register int ons, offs, togs;
+ledcontrol(ons, offs, togs) register int ons, offs, togs;
 {
 	static char currentleds;
 	register char leds;
 
 	inledcontrol = 1;
-	leds = currentleds;
-	if (ons)
+	leds         = currentleds;
+	if(ons)
 		leds |= ons;
-	if (offs)
+	if(offs)
 		leds &= ~offs;
-	if (togs)
+	if(togs)
 		leds ^= togs;
-	currentleds = leds;
-	*ledaddr = ~leds;
+	currentleds  = leds;
+	*ledaddr     = ~leds;
 	inledcontrol = 0;
 }
 #endif
 
-#define SS_RTEFRAME	1
-#define SS_FPSTATE	2
-#define SS_USERREGS	4
+#define SS_RTEFRAME 1
+#define SS_FPSTATE 2
+#define SS_USERREGS 4
 
 struct sigstate {
-	int	ss_flags;		/* which of the following are valid */
-	struct	frame ss_frame;		/* original exception frame */
-	struct	fpframe ss_fpstate;	/* 68881/68882 state info */
+	int ss_flags;              /* which of the following are valid */
+	struct frame ss_frame;     /* original exception frame */
+	struct fpframe ss_fpstate; /* 68881/68882 state info */
 };
 
 /*
@@ -652,29 +644,29 @@ struct sigstate {
  * thru sf_handler so... don't screw with them!
  */
 struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
-	struct	sigstate sf_state;	/* state of the hardware */
-	struct	sigcontext sf_sc;	/* actual context */
+	int sf_signum;             /* signo for handler */
+	int sf_code;               /* additional info for handler */
+	struct sigcontext *sf_scp; /* context ptr for handler */
+	sig_t sf_handler;          /* handler addr for u_sigc */
+	struct sigstate sf_state;  /* state of the hardware */
+	struct sigcontext sf_sc;   /* actual context */
 };
 
 #ifdef HPUXCOMPAT
-struct	hpuxsigcontext {
-	int	hsc_syscall;
-	char	hsc_action;
-	char	hsc_pad1;
-	char	hsc_pad2;
-	char	hsc_onstack;
-	int	hsc_mask;
-	int	hsc_sp;
-	short	hsc_ps;
-	int	hsc_pc;
-/* the rest aren't part of the context but are included for our convenience */
-	short	hsc_pad;
-	u_int	hsc_magic;		/* XXX sigreturn: cookie */
-	struct	sigcontext *hsc_realsc;	/* XXX sigreturn: ptr to BSD context */
+struct hpuxsigcontext {
+	int hsc_syscall;
+	char hsc_action;
+	char hsc_pad1;
+	char hsc_pad2;
+	char hsc_onstack;
+	int hsc_mask;
+	int hsc_sp;
+	short hsc_ps;
+	int hsc_pc;
+	/* the rest aren't part of the context but are included for our convenience */
+	short hsc_pad;
+	u_int hsc_magic;               /* XXX sigreturn: cookie */
+	struct sigcontext *hsc_realsc; /* XXX sigreturn: ptr to BSD context */
 };
 
 /*
@@ -682,30 +674,30 @@ struct	hpuxsigcontext {
  * Tremendous waste of space, but some HP-UX applications (e.g. LCL) need it.
  */
 struct hpuxsigframe {
-	int	hsf_signum;
-	int	hsf_code;
-	struct	sigcontext *hsf_scp;
-	struct	hpuxsigcontext hsf_sc;
-	int	hsf_regs[15];
+	int hsf_signum;
+	int hsf_code;
+	struct sigcontext *hsf_scp;
+	struct hpuxsigcontext hsf_sc;
+	int hsf_regs[15];
 };
 #endif
 
 #ifdef DEBUG
 int sigdebug = 0;
-int sigpid = 0;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
+int sigpid   = 0;
+#define SDB_FOLLOW 0x01
+#define SDB_KSTACK 0x02
+#define SDB_FPSTATE 0x04
 #endif
 
 /*
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
+        sendsig(catcher, sig, mask, code)
+                sig_t catcher;
+int sig, mask;
+u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -715,8 +707,8 @@ sendsig(catcher, sig, mask, code)
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
-	frame = (struct frame *)p->p_md.md_regs;
-	ft = frame->f_format;
+	frame    = (struct frame *) p->p_md.md_regs;
+	ft       = frame->f_format;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
@@ -726,29 +718,29 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 #ifdef HPUXCOMPAT
-	if (p->p_md.md_flags & MDP_HPUX)
+	if(p->p_md.md_flags & MDP_HPUX)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
 #endif
-	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
-					 psp->ps_sigstk.ss_size - fsize);
+		fsize = sizeof(struct sigframe);
+	if((psp->ps_flags & SAS_ALTSTACK) &&
+	   (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
+	   (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *) (psp->ps_sigstk.ss_base +
+		                          psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-		(void)grow(p, (vm_offset_t)fp);
+		fp = (struct sigframe *) (frame->f_regs[SP] - fsize);
+	if((unsigned) fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+		(void) grow(p, (vm_offset_t) fp);
 #ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	if((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+	if(useracc((caddr_t) fp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		if((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): useracc failed on sig %d\n",
 			       p->p_pid, sig);
 #endif
@@ -757,20 +749,20 @@ sendsig(catcher, sig, mask, code)
 		 * instruction to halt it in its tracks.
 		 */
 		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
+		sig                  = sigmask(SIGILL);
 		p->p_sigignore &= ~sig;
 		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;
 	}
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+	kfp = (struct sigframe *) malloc((u_long) fsize, M_TEMP, M_WAITOK);
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-	kfp->sf_signum = sig;
-	kfp->sf_code = code;
-	kfp->sf_scp = &fp->sf_sc;
+	kfp->sf_signum  = sig;
+	kfp->sf_code    = code;
+	kfp->sf_scp     = &fp->sf_sc;
 	kfp->sf_handler = catcher;
 	/*
 	 * Save necessary hardware state.  Currently this includes:
@@ -779,18 +771,18 @@ sendsig(catcher, sig, mask, code)
 	 *	- FP coprocessor state
 	 */
 	kfp->sf_state.ss_flags = SS_USERREGS;
-	bcopy((caddr_t)frame->f_regs,
-	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT7) {
+	bcopy((caddr_t) frame->f_regs,
+	      (caddr_t) kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
+	if(ft >= FMT7) {
 #ifdef DEBUG
-		if (ft > 15 || exframesize[ft] < 0)
+		if(ft > 15 || exframesize[ft] < 0)
 			panic("sendsig: bogus frame type");
 #endif
 		kfp->sf_state.ss_flags |= SS_RTEFRAME;
 		kfp->sf_state.ss_frame.f_format = frame->f_format;
 		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
-		bcopy((caddr_t)&frame->F_u,
-		      (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
+		bcopy((caddr_t) &frame->F_u,
+		      (caddr_t) &kfp->sf_state.ss_frame.F_u, exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
 		 * stack.  We do this by setting the "pad word" above the
@@ -804,7 +796,7 @@ sendsig(catcher, sig, mask, code)
 		frame->f_stackadj += exframesize[ft];
 		frame->f_format = frame->f_vector = 0;
 #ifdef DEBUG
-		if (sigdebug & SDB_FOLLOW)
+		if(sigdebug & SDB_FOLLOW)
 			printf("sendsig(%d): copy out %d of frame %d\n",
 			       p->p_pid, exframesize[ft], ft);
 #endif
@@ -813,9 +805,9 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_state.ss_flags |= SS_FPSTATE;
 	m68881_save(&kfp->sf_state.ss_fpstate);
 #ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
+	if((sigdebug & SDB_FPSTATE) && *(char *) &kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %x\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
+		       p->p_pid, *(u_int *) &kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
 #endif
@@ -823,46 +815,45 @@ sendsig(catcher, sig, mask, code)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	kfp->sf_sc.sc_onstack = oonstack;
-	kfp->sf_sc.sc_mask = mask;
-	kfp->sf_sc.sc_sp = frame->f_regs[SP];
-	kfp->sf_sc.sc_fp = frame->f_regs[A6];
-	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
-	kfp->sf_sc.sc_pc = frame->f_pc;
-	kfp->sf_sc.sc_ps = frame->f_sr;
+	kfp->sf_sc.sc_mask    = mask;
+	kfp->sf_sc.sc_sp      = frame->f_regs[SP];
+	kfp->sf_sc.sc_fp      = frame->f_regs[A6];
+	kfp->sf_sc.sc_ap      = (int) &fp->sf_state;
+	kfp->sf_sc.sc_pc      = frame->f_pc;
+	kfp->sf_sc.sc_ps      = frame->f_sr;
 #ifdef HPUXCOMPAT
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
-	if (p->p_md.md_flags & MDP_HPUX) {
+	if(p->p_md.md_flags & MDP_HPUX) {
 		register struct hpuxsigframe *hkfp;
 
-		hkfp = (struct hpuxsigframe *)&kfp[1];
-		hkfp->hsf_signum = bsdtohpuxsig(kfp->sf_signum);
-		hkfp->hsf_code = kfp->sf_code;
-		hkfp->hsf_scp = (struct sigcontext *)
-			&((struct hpuxsigframe *)(&fp[1]))->hsf_sc;
-		hkfp->hsf_sc.hsc_syscall = 0;		/* XXX */
-		hkfp->hsf_sc.hsc_action = 0;		/* XXX */
+		hkfp                     = (struct hpuxsigframe *) &kfp[1];
+		hkfp->hsf_signum         = bsdtohpuxsig(kfp->sf_signum);
+		hkfp->hsf_code           = kfp->sf_code;
+		hkfp->hsf_scp            = (struct sigcontext *) &((struct hpuxsigframe *) (&fp[1]))->hsf_sc;
+		hkfp->hsf_sc.hsc_syscall = 0; /* XXX */
+		hkfp->hsf_sc.hsc_action  = 0; /* XXX */
 		hkfp->hsf_sc.hsc_pad1 = hkfp->hsf_sc.hsc_pad2 = 0;
-		hkfp->hsf_sc.hsc_onstack = kfp->sf_sc.sc_onstack;
-		hkfp->hsf_sc.hsc_mask = kfp->sf_sc.sc_mask;
-		hkfp->hsf_sc.hsc_sp = kfp->sf_sc.sc_sp;
-		hkfp->hsf_sc.hsc_ps = kfp->sf_sc.sc_ps;
-		hkfp->hsf_sc.hsc_pc = kfp->sf_sc.sc_pc;
-		hkfp->hsf_sc.hsc_pad = 0;
-		hkfp->hsf_sc.hsc_magic = 0xdeadbeef;
-		hkfp->hsf_sc.hsc_realsc = kfp->sf_scp;
-		bcopy((caddr_t)frame->f_regs, (caddr_t)hkfp->hsf_regs,
-		      sizeof (hkfp->hsf_regs));
+		hkfp->hsf_sc.hsc_onstack                      = kfp->sf_sc.sc_onstack;
+		hkfp->hsf_sc.hsc_mask                         = kfp->sf_sc.sc_mask;
+		hkfp->hsf_sc.hsc_sp                           = kfp->sf_sc.sc_sp;
+		hkfp->hsf_sc.hsc_ps                           = kfp->sf_sc.sc_ps;
+		hkfp->hsf_sc.hsc_pc                           = kfp->sf_sc.sc_pc;
+		hkfp->hsf_sc.hsc_pad                          = 0;
+		hkfp->hsf_sc.hsc_magic                        = 0xdeadbeef;
+		hkfp->hsf_sc.hsc_realsc                       = kfp->sf_scp;
+		bcopy((caddr_t) frame->f_regs, (caddr_t) hkfp->hsf_regs,
+		      sizeof(hkfp->hsf_regs));
 
 		kfp->sf_signum = hkfp->hsf_signum;
-		kfp->sf_scp = hkfp->hsf_scp;
+		kfp->sf_scp    = hkfp->hsf_scp;
 	}
 #endif
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
-	frame->f_regs[SP] = (int)fp;
+	(void) copyout((caddr_t) kfp, (caddr_t) fp, fsize);
+	frame->f_regs[SP] = (int) fp;
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if(sigdebug & SDB_FOLLOW)
 		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
 		       p->p_pid, sig, kfp->sf_scp, fp,
 		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
@@ -870,13 +861,13 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
+	frame->f_pc = (int) PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	if((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
-	free((caddr_t)kfp, M_TEMP);
+	free((caddr_t) kfp, M_TEMP);
 }
 
 /*
@@ -893,10 +884,9 @@ struct sigreturn_args {
 	struct sigcontext *sigcntxp;
 };
 /* ARGSUSED */
-sigreturn(p, uap, retval)
-	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+sigreturn(p, uap, retval) struct proc *p;
+struct sigreturn_args *uap;
+int *retval;
 {
 	register struct sigcontext *scp;
 	register struct frame *frame;
@@ -907,22 +897,22 @@ sigreturn(p, uap, retval)
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if(sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
-	if ((int)scp & 1)
+	if((int) scp & 1)
 		return (EINVAL);
 #ifdef HPUXCOMPAT
 	/*
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
 	 */
-	if (p->p_md.md_flags & MDP_HPUX) {
-		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
+	if(p->p_md.md_flags & MDP_HPUX) {
+		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *) scp;
 		struct hpuxsigcontext htsigc;
 
-		if (useracc((caddr_t)hscp, sizeof (*hscp), B_WRITE) == 0 ||
-		    copyin((caddr_t)hscp, (caddr_t)&htsigc, sizeof htsigc))
+		if(useracc((caddr_t) hscp, sizeof(*hscp), B_WRITE) == 0 ||
+		   copyin((caddr_t) hscp, (caddr_t) &htsigc, sizeof htsigc))
 			return (EINVAL);
 		/*
 		 * If not generated by sendsig or we cannot restore the
@@ -930,19 +920,19 @@ sigreturn(p, uap, retval)
 		 * will be lost, but them's the breaks.
 		 */
 		hscp = &htsigc;
-		if (hscp->hsc_magic != 0xdeadbeef ||
-		    (scp = hscp->hsc_realsc) == 0 ||
-		    useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-		    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc)) {
-			if (hscp->hsc_onstack & 01)
+		if(hscp->hsc_magic != 0xdeadbeef ||
+		   (scp = hscp->hsc_realsc) == 0 ||
+		   useracc((caddr_t) scp, sizeof(*scp), B_WRITE) == 0 ||
+		   copyin((caddr_t) scp, (caddr_t) &tsigc, sizeof tsigc)) {
+			if(hscp->hsc_onstack & 01)
 				p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
 			else
 				p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-			p->p_sigmask = hscp->hsc_mask &~ sigcantmask;
-			frame = (struct frame *) p->p_md.md_regs;
+			p->p_sigmask      = hscp->hsc_mask & ~sigcantmask;
+			frame             = (struct frame *) p->p_md.md_regs;
 			frame->f_regs[SP] = hscp->hsc_sp;
-			frame->f_pc = hscp->hsc_pc;
-			frame->f_sr = hscp->hsc_ps &~ PSL_USERCLR;
+			frame->f_pc       = hscp->hsc_pc;
+			frame->f_sr       = hscp->hsc_ps & ~PSL_USERCLR;
 			return (EJUSTRETURN);
 		}
 		/*
@@ -950,89 +940,89 @@ sigreturn(p, uap, retval)
 		 * HP-UX values.
 		 */
 		tsigc.sc_onstack = hscp->hsc_onstack;
-		tsigc.sc_mask = hscp->hsc_mask;
-		tsigc.sc_sp = hscp->hsc_sp;
-		tsigc.sc_ps = hscp->hsc_ps;
-		tsigc.sc_pc = hscp->hsc_pc;
+		tsigc.sc_mask    = hscp->hsc_mask;
+		tsigc.sc_sp      = hscp->hsc_sp;
+		tsigc.sc_ps      = hscp->hsc_ps;
+		tsigc.sc_pc      = hscp->hsc_pc;
 	} else
 #endif
-	/*
+		/*
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
-		return (EINVAL);
+		if(useracc((caddr_t) scp, sizeof(*scp), B_WRITE) == 0 ||
+		   copyin((caddr_t) scp, (caddr_t) &tsigc, sizeof tsigc))
+			return (EINVAL);
 	scp = &tsigc;
-	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+	if((scp->sc_ps & (PSL_MBZ | PSL_IPL | PSL_S)) != 0)
 		return (EINVAL);
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & 01)
+	if(scp->sc_onstack & 01)
 		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_md.md_regs;
+	p->p_sigmask      = scp->sc_mask & ~sigcantmask;
+	frame             = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_regs[A6] = scp->sc_fp;
-	frame->f_pc = scp->sc_pc;
-	frame->f_sr = scp->sc_ps;
+	frame->f_pc       = scp->sc_pc;
+	frame->f_sr       = scp->sc_ps;
 	/*
 	 * Grab pointer to hardware state information.
 	 * If zero, the user is probably doing a longjmp.
 	 */
-	if ((rf = scp->sc_ap) == 0)
+	if((rf = scp->sc_ap) == 0)
 		return (EJUSTRETURN);
 	/*
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
 	 */
-	flags = fuword((caddr_t)rf);
+	flags = fuword((caddr_t) rf);
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if(sigdebug & SDB_FOLLOW)
 		printf("sigreturn(%d): sc_ap %x flags %x\n",
 		       p->p_pid, rf, flags);
 #endif
 	/*
 	 * fuword failed (bogus sc_ap value).
 	 */
-	if (flags == -1)
+	if(flags == -1)
 		return (EINVAL);
-	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
+	if(flags == 0 || copyin((caddr_t) rf, (caddr_t) &tstate, sizeof tstate))
 		return (EJUSTRETURN);
 #ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	if((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
-		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+		       (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
 	 * Restore most of the users registers except for A6 and SP
 	 * which were handled above.
 	 */
-	if (flags & SS_USERREGS)
-		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+	if(flags & SS_USERREGS)
+		bcopy((caddr_t) tstate.ss_frame.f_regs,
+		      (caddr_t) frame->f_regs, sizeof(frame->f_regs) - 2 * NBPW);
 	/*
 	 * Restore long stack frames.  Note that we do not copy
 	 * back the saved SR or PC, they were picked up above from
 	 * the sigcontext structure.
 	 */
-	if (flags & SS_RTEFRAME) {
+	if(flags & SS_RTEFRAME) {
 		register int sz;
-		
+
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
-		if (sz > 15 || (sz = exframesize[sz]) < 0)
+		if(sz > 15 || (sz = exframesize[sz]) < 0)
 			return (EINVAL);
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.ss_frame.f_format;
 		frame->f_vector = tstate.ss_frame.f_vector;
-		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
+		bcopy((caddr_t) &tstate.ss_frame.F_u, (caddr_t) &frame->F_u, sz);
 #ifdef DEBUG
-		if (sigdebug & SDB_FOLLOW)
+		if(sigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
@@ -1041,36 +1031,35 @@ sigreturn(p, uap, retval)
 	/*
 	 * Finally we restore the original FP context
 	 */
-	if (flags & SS_FPSTATE)
+	if(flags & SS_FPSTATE)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
+	if((sigdebug & SDB_FPSTATE) && *(char *) &tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
+		       p->p_pid, *(u_int *) &tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
 #endif
 #endif
 #ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
+	if((sigdebug & SDB_FOLLOW) ||
+	   ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }
 
-int	waittime = -1;
+int waittime = -1;
 
-boot(howto)
-	register int howto;
+boot(howto) register int howto;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc; /* XXX */
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->p_addr)
+	if(curproc && curproc->p_addr)
 		savectx(curproc->p_addr, 0);
 
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	if((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
@@ -1080,7 +1069,7 @@ boot(howto)
 		/*
 		 * Release vnodes held by texts before sync.
 		 */
-		if (panicstr == 0)
+		if(panicstr == 0)
 			vnode_pager_umount(NULL);
 #ifdef notdef
 #include "vn.h"
@@ -1088,24 +1077,24 @@ boot(howto)
 		vnshutdown();
 #endif
 #endif
-		sync(p, (void *)NULL, (int *)NULL);
+		sync(p, (void *) NULL, (int *) NULL);
 		/*
 		 * Unmount filesystems
 		 */
-		if (panicstr == 0)
+		if(panicstr == 0)
 			vfs_unmountall();
 
-		for (iter = 0; iter < 20; iter++) {
+		for(iter = 0; iter < 20; iter++) {
 			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+			for(bp = &buf[nbuf]; --bp >= buf;)
+				if((bp->b_flags & (B_BUSY | B_INVAL)) == B_BUSY)
 					nbusy++;
-			if (nbusy == 0)
+			if(nbusy == 0)
 				break;
 			printf("%d ", nbusy);
 			DELAY(40000 * iter);
 		}
-		if (nbusy)
+		if(nbusy)
 			printf("giving up\n");
 		else
 			printf("done\n");
@@ -1115,12 +1104,12 @@ boot(howto)
 		 */
 		resettodr();
 	}
-	splhigh();			/* extreme priority */
-	if (howto&RB_HALT) {
+	splhigh(); /* extreme priority */
+	if(howto & RB_HALT) {
 		printf("halted\n\n");
 		asm("	stop	#0x2700");
 	} else {
-		if (howto & RB_DUMP)
+		if(howto & RB_DUMP)
 			dumpsys();
 		doboot();
 		/*NOTREACHED*/
@@ -1128,30 +1117,29 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
+int dumpmag  = 0x8fca0101; /* magic number for savecore */
+int dumpsize = 0;          /* also for savecore */
+long dumplo  = 0;
 
-dumpconf()
-{
+dumpconf() {
 	int nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	dumpsize = physmem + 1;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
+	if(dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
+		if(dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
+		else if(dumplo == 0)
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
+	if(dumplo < btodb(CLBYTES))
 		dumplo = btodb(CLBYTES);
 }
 
@@ -1160,48 +1148,46 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-dumpsys()
-{
+dumpsys() {
 
 	msgbufmapped = 0;
-	if (dumpdev == NODEV)
+	if(dumpdev == NODEV)
 		return;
 	/*
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
 	 */
-	if (dumpsize == 0)
+	if(dumpsize == 0)
 		dumpconf();
-	if (dumplo < 0)
+	if(dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	switch((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
+		case ENXIO:
+			printf("device bad\n");
+			break;
 
-	case EFAULT:
-		printf("device not ready\n");
-		break;
+		case EFAULT:
+			printf("device not ready\n");
+			break;
 
-	case EINVAL:
-		printf("area improper\n");
-		break;
+		case EINVAL:
+			printf("area improper\n");
+			break;
 
-	case EIO:
-		printf("i/o error\n");
-		break;
+		case EIO:
+			printf("i/o error\n");
+			break;
 
-	default:
-		printf("succeeded\n");
-		break;
+		default:
+			printf("succeeded\n");
+			break;
 	}
 }
 
-initcpu()
-{
+initcpu() {
 #ifdef MAPPEDCOPY
 	extern u_int mappedcopysize;
 
@@ -1210,8 +1196,8 @@ initcpu()
 	 * page mapping (if not already set).  We don't do this on
 	 * VAC machines as it loses big time.
 	 */
-	if (mappedcopysize == 0) {
-		if (ectype == EC_VIRT)
+	if(mappedcopysize == 0) {
+		if(ectype == EC_VIRT)
 			mappedcopysize = (u_int) -1;
 		else
 			mappedcopysize = NBPG;
@@ -1223,88 +1209,87 @@ initcpu()
 #endif
 }
 
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(pc, evec) int pc;
+u_short evec;
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
 }
 
-int	*nofault;
+int *nofault;
 
-badaddr(addr)
-	register caddr_t addr;
+badaddr(addr) register caddr_t addr;
 {
 	register int i;
-	label_t	faultbuf;
+	label_t faultbuf;
 
 #ifdef lint
-	i = *addr; if (i) return(0);
+	i = *addr;
+	if(i)
+		return (0);
 #endif
 	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	if(setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return (1);
 	}
-	i = *(volatile short *)addr;
+	i       = *(volatile short *) addr;
 	nofault = (int *) 0;
-	return(0);
+	return (0);
 }
 
-badbaddr(addr)
-	register caddr_t addr;
+badbaddr(addr) register caddr_t addr;
 {
 	register int i;
-	label_t	faultbuf;
+	label_t faultbuf;
 
 #ifdef lint
-	i = *addr; if (i) return(0);
+	i = *addr;
+	if(i)
+		return (0);
 #endif
 	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	if(setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return (1);
 	}
-	i = *(volatile char *)addr;
+	i       = *(volatile char *) addr;
 	nofault = (int *) 0;
-	return(0);
+	return (0);
 }
 
-netintr()
-{
+netintr() {
 #ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
+	if(netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
 	}
-	if (netisr & (1 << NETISR_IP)) {
+	if(netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
 	}
 #endif
 #ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
+	if(netisr & (1 << NETISR_NS)) {
 		netisr &= ~(1 << NETISR_NS);
 		nsintr();
 	}
 #endif
 #ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
+	if(netisr & (1 << NETISR_ISO)) {
 		netisr &= ~(1 << NETISR_ISO);
 		clnlintr();
 	}
 #endif
 #ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
+	if(netisr & (1 << NETISR_CCITT)) {
 		netisr &= ~(1 << NETISR_CCITT);
 		ccittintr();
 	}
 #endif
 }
 
-intrhand(sr)
-	int sr;
+intrhand(sr) int sr;
 {
 	register struct isr *isr;
 	register int found = 0;
@@ -1313,37 +1298,37 @@ intrhand(sr)
 	static int straycount;
 
 	ipl = (sr >> 8) & 7;
-	switch (ipl) {
+	switch(ipl) {
 
-	case 3:
-	case 4:
-	case 5:
-		ipl = ISRIPL(ipl);
-		isr = isrqueue[ipl].isr_forw;
-		for (; isr != &isrqueue[ipl]; isr = isr->isr_forw) {
-			if ((isr->isr_intr)(isr->isr_arg)) {
-				found++;
-				break;
+		case 3:
+		case 4:
+		case 5:
+			ipl = ISRIPL(ipl);
+			isr = isrqueue[ipl].isr_forw;
+			for(; isr != &isrqueue[ipl]; isr = isr->isr_forw) {
+				if((isr->isr_intr)(isr->isr_arg)) {
+					found++;
+					break;
+				}
 			}
-		}
-		if (found)
-			straycount = 0;
-		else if (++straycount > 50)
-			panic("intrhand: stray interrupt");
-		else
-			printf("stray interrupt, sr 0x%x\n", sr);
-		break;
+			if(found)
+				straycount = 0;
+			else if(++straycount > 50)
+				panic("intrhand: stray interrupt");
+			else
+				printf("stray interrupt, sr 0x%x\n", sr);
+			break;
 
-	case 0:
-	case 1:
-	case 2:
-	case 6:
-	case 7:
-		if (++straycount > 50)
-			panic("intrhand: unexpected sr");
-		else
-			printf("intrhand: unexpected sr 0x%x\n", sr);
-		break;
+		case 0:
+		case 1:
+		case 2:
+		case 6:
+		case 7:
+			if(++straycount > 50)
+				panic("intrhand: unexpected sr");
+			else
+				printf("intrhand: unexpected sr 0x%x\n", sr);
+			break;
 	}
 }
 
@@ -1352,13 +1337,12 @@ intrhand(sr)
 #endif
 
 #ifdef PANICBUTTON
-int panicbutton = 1;	/* non-zero if panic buttons are enabled */
+int panicbutton  = 1; /* non-zero if panic buttons are enabled */
 int crashandburn = 0;
-int candbdelay = 50;	/* give em half a second */
+int candbdelay   = 50; /* give em half a second */
 
 void
-candbtimer(arg)
-	void *arg;
+        candbtimer(arg) void *arg;
 {
 
 	crashandburn = 0;
@@ -1368,10 +1352,9 @@ candbtimer(arg)
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
-nmihand(frame)
-	struct frame frame;
+nmihand(frame) struct frame frame;
 {
-	if (kbdnmi()) {
+	if(kbdnmi()) {
 #ifdef PANICBUTTON
 		static int innmihand = 0;
 
@@ -1379,24 +1362,23 @@ nmihand(frame)
 		 * Attempt to reduce the window of vulnerability for recursive
 		 * NMIs (e.g. someone holding down the keyboard reset button).
 		 */
-		if (innmihand == 0) {
+		if(innmihand == 0) {
 			innmihand = 1;
 			printf("Got a keyboard NMI\n");
 			innmihand = 0;
 		}
-		if (panicbutton) {
-			if (crashandburn) {
+		if(panicbutton) {
+			if(crashandburn) {
 				crashandburn = 0;
-				panic(panicstr ?
-				      "forced crash, nosync" : "forced crash");
+				panic(panicstr ? "forced crash, nosync" : "forced crash");
 			}
 			crashandburn++;
-			timeout(candbtimer, (void *)0, candbdelay);
+			timeout(candbtimer, (void *) 0, candbdelay);
 		}
 #endif
 		return;
 	}
-	if (parityerror(&frame))
+	if(parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
@@ -1405,29 +1387,28 @@ nmihand(frame)
 /*
  * Parity error section.  Contains magic.
  */
-#define PARREG		((volatile short *)IIOV(0x5B0000))
+#define PARREG ((volatile short *) IIOV(0x5B0000))
 static int gotparmem = 0;
 #ifdef DEBUG
-int ignorekperr = 0;	/* ignore kernel parity errors */
+int ignorekperr = 0; /* ignore kernel parity errors */
 #endif
 
 /*
  * Enable parity detection
  */
-parityenable()
-{
-	label_t	faultbuf;
+parityenable() {
+	label_t faultbuf;
 
 	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	if(setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
 #ifdef DEBUG
 		printf("No parity memory\n");
 #endif
 		return;
 	}
-	*PARREG = 1;
-	nofault = (int *) 0;
+	*PARREG   = 1;
+	nofault   = (int *) 0;
 	gotparmem = 1;
 #ifdef DEBUG
 	printf("Parity detection enabled\n");
@@ -1438,42 +1419,40 @@ parityenable()
  * Determine if level 7 interrupt was caused by a parity error
  * and deal with it if it was.  Returns 1 if it was a parity error.
  */
-parityerror(fp)
-	struct frame *fp;
+parityerror(fp) struct frame *fp;
 {
-	if (!gotparmem)
-		return(0);
+	if(!gotparmem)
+		return (0);
 	*PARREG = 0;
 	DELAY(10);
 	*PARREG = 1;
-	if (panicstr) {
+	if(panicstr) {
 		printf("parity error after panic ignored\n");
-		return(1);
+		return (1);
 	}
-	if (!findparerror())
+	if(!findparerror())
 		printf("WARNING: transient parity error ignored\n");
-	else if (USERMODE(fp->f_sr)) {
+	else if(USERMODE(fp->f_sr)) {
 		printf("pid %d: parity error\n", curproc->p_pid);
 		uprintf("sorry, pid %d killed due to memory parity error\n",
-			curproc->p_pid);
+		        curproc->p_pid);
 		psignal(curproc, SIGKILL);
 #ifdef DEBUG
-	} else if (ignorekperr) {
+	} else if(ignorekperr) {
 		printf("WARNING: kernel parity error ignored\n");
 #endif
 	} else {
 		regdump(fp, 128);
 		panic("kernel parity error");
 	}
-	return(1);
+	return (1);
 }
 
 /*
  * Yuk!  There has got to be a better way to do this!
  * Searching all of memory with interrupts blocked can lead to disaster.
  */
-findparerror()
-{
+findparerror() {
 	static label_t parcatch;
 	static int looking = 0;
 	volatile int pg, o, s;
@@ -1482,22 +1461,24 @@ findparerror()
 	int found;
 
 #ifdef lint
-	i = o = pg = 0; if (i) return(0);
+	i = o = pg = 0;
+	if(i)
+		return (0);
 #endif
 	/*
 	 * If looking is true we are searching for a known parity error
 	 * and it has just occured.  All we do is return to the higher
 	 * level invocation.
 	 */
-	if (looking)
+	if(looking)
 		longjmp(&parcatch);
 	s = splhigh();
 	/*
 	 * If setjmp returns true, the parity error we were searching
 	 * for has just occured (longjmp above) at the current pg+o
 	 */
-	if (setjmp(&parcatch)) {
-		printf("Parity error at 0x%x\n", ctob(pg)|o);
+	if(setjmp(&parcatch)) {
+		printf("Parity error at 0x%x\n", ctob(pg) | o);
 		found = 1;
 		goto done;
 	}
@@ -1510,11 +1491,11 @@ findparerror()
 	 */
 	looking = 1;
 	ecacheoff();
-	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
-		pmap_enter(kernel_pmap, (vm_offset_t)vmmap, ctob(pg),
-		    VM_PROT_READ, TRUE);
-		ip = (int *)vmmap;
-		for (o = 0; o < NBPG; o += sizeof(int))
+	for(pg = btoc(lowram); pg < btoc(lowram) + physmem; pg++) {
+		pmap_enter(kernel_pmap, (vm_offset_t) vmmap, ctob(pg),
+		           VM_PROT_READ, TRUE);
+		ip = (int *) vmmap;
+		for(o = 0; o < NBPG; o += sizeof(int))
 			i = *ip++;
 	}
 	/*
@@ -1524,24 +1505,23 @@ findparerror()
 	found = 0;
 done:
 	looking = 0;
-	pmap_remove(kernel_pmap, (vm_offset_t)vmmap, (vm_offset_t)&vmmap[NBPG]);
+	pmap_remove(kernel_pmap, (vm_offset_t) vmmap, (vm_offset_t) &vmmap[NBPG]);
 	ecacheon();
 	splx(s);
-	return(found);
+	return (found);
 }
 
-regdump(fp, sbytes)
-	struct frame *fp; /* must not be register */
-	int sbytes;
+regdump(fp, sbytes) struct frame *fp; /* must not be register */
+int sbytes;
 {
 	static int doingdump = 0;
 	register int i;
 	int s;
 	extern char *hexstr();
 
-	if (doingdump)
+	if(doingdump)
 		return;
-	s = splhigh();
+	s         = splhigh();
 	doingdump = 1;
 	printf("pid = %d, pc = %s, ",
 	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
@@ -1549,22 +1529,22 @@ regdump(fp, sbytes)
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
 	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
+	for(i = 0; i < 8; i++)
 		printf("        %d", i);
 	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
+	for(i = 0; i < 8; i++)
 		printf(" %s", hexstr(fp->f_regs[i], 8));
 	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
-	if (sbytes > 0) {
-		if (fp->f_sr & PSL_S) {
+	for(i = 0; i < 8; i++)
+		printf(" %s", hexstr(fp->f_regs[i + 8], 8));
+	if(sbytes > 0) {
+		if(fp->f_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&fp)-1), 8));
-			dumpmem(((int *)&fp)-1, sbytes, 0);
+			       hexstr((int) (((int *) &fp) - 1), 8));
+			dumpmem(((int *) &fp) - 1, sbytes, 0);
 		} else {
 			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
-			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
+			dumpmem((int *) fp->f_regs[SP], sbytes, 1);
 		}
 	}
 	doingdump = 0;
@@ -1572,26 +1552,25 @@ regdump(fp, sbytes)
 }
 
 extern char kstack[];
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
+#define KSADDR ((int *) &(kstack[(UPAGES - 1) * NBPG]))
 
-dumpmem(ptr, sz, ustack)
-	register int *ptr;
-	int sz, ustack;
+dumpmem(ptr, sz, ustack) register int *ptr;
+int sz, ustack;
 {
 	register int i, val;
 	extern char *hexstr();
 
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
+	for(i = 0; i < sz; i++) {
+		if((i & 7) == 0)
+			printf("\n%s: ", hexstr((int) ptr, 6));
 		else
 			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
+		if(ustack == 1) {
+			if((val = fuword(ptr++)) == -1)
 				break;
 		} else {
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
+			if(ustack == 0 &&
+			   (ptr < KSADDR || ptr > KSADDR + (NBPG / 4 - 1)))
 				break;
 			val = *ptr++;
 		}
@@ -1602,37 +1581,36 @@ dumpmem(ptr, sz, ustack)
 
 char *
 hexstr(val, len)
-	register int val;
-	int len;
+register int val;
+int len;
 {
 	static char nbuf[9];
 	register int x, i;
 
-	if (len > 8)
-		return("");
+	if(len > 8)
+		return ("");
 	nbuf[len] = '\0';
-	for (i = len-1; i >= 0; --i) {
+	for(i = len - 1; i >= 0; --i) {
 		x = val & 0xF;
-		if (x > 9)
+		if(x > 9)
 			nbuf[i] = x - 10 + 'A';
 		else
 			nbuf[i] = x + '0';
 		val >>= 4;
 	}
-	return(nbuf);
+	return (nbuf);
 }
 
 #ifdef DEBUG
 char oflowmsg[] = "k-stack overflow";
 char uflowmsg[] = "k-stack underflow";
 
-badkstack(oflow, fr)
-	int oflow;
-	struct frame fr;
+badkstack(oflow, fr) int oflow;
+struct frame fr;
 {
 	extern char kstackatbase[];
 
-	printf("%s: sp should be %x\n", 
+	printf("%s: sp should be %x\n",
 	       oflow ? oflowmsg : uflowmsg,
 	       kstackatbase - (exframesize[fr.f_format] + 8));
 	regdump(&fr, 0);
@@ -1642,40 +1620,40 @@ badkstack(oflow, fr)
 /*
  * print a primitive backtrace for the requested process.
  */
-backtrace(p)
-	struct proc *p;
+backtrace(p) struct proc *p;
 {
 	long fix, arg, pc, *lfp;
 	caddr_t fp;
 	char *fmt;
 	int i;
 
-	if (p != curproc) {
-		pc = *((long *)(p->p_addr->u_pcb.pcb_regs[11] + fix));
-		fp = (caddr_t)p->p_addr->u_pcb.pcb_regs[10];
-		fix = ((caddr_t)p->p_addr - kstack);
+	if(p != curproc) {
+		pc  = *((long *) (p->p_addr->u_pcb.pcb_regs[11] + fix));
+		fp  = (caddr_t) p->p_addr->u_pcb.pcb_regs[10];
+		fix = ((caddr_t) p->p_addr - kstack);
 	} else {
 		/*
 		 * Have to grab current frame pointer; start with function
 		 * that called backtrace.
 		 */
-		asm("movl a6, %0" : "=r" (fp));
-		lfp = (long *)fp;
-		pc = lfp[1];
-		fp = (caddr_t)lfp[0];
+		asm("movl a6, %0"
+		    : "=r"(fp));
+		lfp = (long *) fp;
+		pc  = lfp[1];
+		fp  = (caddr_t) lfp[0];
 		fix = 0;
 	}
 
 	printf("Process %s\n", p->p_comm);
-	while (fp > kstack) {
+	while(fp > kstack) {
 		fp += fix;
-		if (kernacc(fp, 6 * sizeof(*lfp), B_READ) == 0)
+		if(kernacc(fp, 6 * sizeof(*lfp), B_READ) == 0)
 			return;
-		lfp = (long *)fp;
+		lfp = (long *) fp;
 		printf("Function: 0x%x(0x%x, 0x%x, 0x%x, 0x%x)\n",
-		    pc, lfp[2], lfp[3], lfp[4], lfp[5]);
+		       pc, lfp[2], lfp[3], lfp[4], lfp[5]);
 		pc = lfp[1];
-		fp = (caddr_t)lfp[0];
+		fp = (caddr_t) lfp[0];
 	}
 }
 #endif /* DEBUG */

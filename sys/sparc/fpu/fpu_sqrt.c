@@ -188,7 +188,7 @@
  */
 struct fpn *
 fpu_sqrt(fe)
-	struct fpemu *fe;
+struct fpemu *fe;
 {
 	register struct fpn *x = &fe->fe_f1;
 	register u_int bit, q, tt;
@@ -208,46 +208,52 @@ fpu_sqrt(fe)
 	 *
 	 * Then all that remains are numbers with mantissas in [1..2).
 	 */
-	if (ISNAN(x) || ISZERO(x))
+	if(ISNAN(x) || ISZERO(x))
 		return (x);
-	if (x->fp_sign)
+	if(x->fp_sign)
 		return (fpu_newnan(fe));
-	if (ISINF(x))
+	if(ISINF(x))
 		return (x);
 
-	/*
+		/*
 	 * Calculate result exponent.  As noted above, this may involve
 	 * doubling the mantissa.  We will also need to double x each
 	 * time around the loop, so we define a macro for this here, and
 	 * we break out the multiword mantissa.
 	 */
 #ifdef FPU_SHL1_BY_ADD
-#define	DOUBLE_X { \
-	FPU_ADDS(x3, x3, x3); FPU_ADDCS(x2, x2, x2); \
-	FPU_ADDCS(x1, x1, x1); FPU_ADDC(x0, x0, x0); \
-}
+#define DOUBLE_X               \
+	{                          \
+		FPU_ADDS(x3, x3, x3);  \
+		FPU_ADDCS(x2, x2, x2); \
+		FPU_ADDCS(x1, x1, x1); \
+		FPU_ADDC(x0, x0, x0);  \
+	}
 #else
-#define	DOUBLE_X { \
-	x0 = (x0 << 1) | (x1 >> 31); x1 = (x1 << 1) | (x2 >> 31); \
-	x2 = (x2 << 1) | (x3 >> 31); x3 <<= 1; \
-}
+#define DOUBLE_X                     \
+	{                                \
+		x0 = (x0 << 1) | (x1 >> 31); \
+		x1 = (x1 << 1) | (x2 >> 31); \
+		x2 = (x2 << 1) | (x3 >> 31); \
+		x3 <<= 1;                    \
+	}
 #endif
-#if (FP_NMANT & 1) != 0
-# define ODD_DOUBLE	DOUBLE_X
-# define EVEN_DOUBLE	/* nothing */
+#if(FP_NMANT & 1) != 0
+#define ODD_DOUBLE DOUBLE_X
+#define EVEN_DOUBLE /* nothing */
 #else
-# define ODD_DOUBLE	/* nothing */
-# define EVEN_DOUBLE	DOUBLE_X
+#define ODD_DOUBLE /* nothing */
+#define EVEN_DOUBLE DOUBLE_X
 #endif
 	x0 = x->fp_mant[0];
 	x1 = x->fp_mant[1];
 	x2 = x->fp_mant[2];
 	x3 = x->fp_mant[3];
-	e = x->fp_exp;
-	if (e & 1)		/* exponent is odd; use sqrt(2mant) */
+	e  = x->fp_exp;
+	if(e & 1) /* exponent is odd; use sqrt(2mant) */
 		DOUBLE_X;
 	/* THE FOLLOWING ASSUMES THAT RIGHT SHIFT DOES SIGN EXTENSION */
-	x->fp_exp = e >> 1;	/* calculates (e&1 ? (e-1)/2 : e/2 */
+	x->fp_exp = e >> 1; /* calculates (e&1 ? (e-1)/2 : e/2 */
 
 	/*
 	 * Now calculate the mantissa root.  Since x is now in [1..4),
@@ -268,22 +274,22 @@ fpu_sqrt(fe)
 	 */
 
 	/* calculate q0 */
-#define	t0 tt
+#define t0 tt
 	bit = FP_1;
 	EVEN_DOUBLE;
-	/* if (x >= (t0 = y0 | bit)) { */	/* always true */
-		q = bit;
-		x0 -= bit;
-		y0 = bit << 1;
+	/* if (x >= (t0 = y0 | bit)) { */ /* always true */
+	q = bit;
+	x0 -= bit;
+	y0 = bit << 1;
 	/* } */
 	ODD_DOUBLE;
-	while ((bit >>= 1) != 0) {	/* for remaining bits in q0 */
+	while((bit >>= 1) != 0) { /* for remaining bits in q0 */
 		EVEN_DOUBLE;
-		t0 = y0 | bit;		/* t = y + bit */
-		if (x0 >= t0) {		/* if x >= t then */
-			x0 -= t0;	/*	x -= t */
-			q |= bit;	/*	q += bit */
-			y0 |= bit << 1;	/*	y += bit << 1 */
+		t0 = y0 | bit;      /* t = y + bit */
+		if(x0 >= t0) {      /* if x >= t then */
+			x0 -= t0;       /*	x -= t */
+			q |= bit;       /*	q += bit */
+			y0 |= bit << 1; /*	y += bit << 1 */
 		}
 		ODD_DOUBLE;
 	}
@@ -293,25 +299,25 @@ fpu_sqrt(fe)
 	/* calculate q1.  note (y0&1)==0. */
 #define t0 y0
 #define t1 tt
-	q = 0;
-	y1 = 0;
+	q   = 0;
+	y1  = 0;
 	bit = 1 << 31;
 	EVEN_DOUBLE;
 	t1 = bit;
 	FPU_SUBS(d1, x1, t1);
-	FPU_SUBC(d0, x0, t0);		/* d = x - t */
-	if ((int)d0 >= 0) {		/* if d >= 0 (i.e., x >= t) then */
-		x0 = d0, x1 = d1;	/*	x -= t */
-		q = bit;		/*	q += bit */
-		y0 |= 1;		/*	y += bit << 1 */
+	FPU_SUBC(d0, x0, t0); /* d = x - t */
+	if((int) d0 >= 0) {   /* if d >= 0 (i.e., x >= t) then */
+		x0 = d0, x1 = d1; /*	x -= t */
+		q = bit;          /*	q += bit */
+		y0 |= 1;          /*	y += bit << 1 */
 	}
 	ODD_DOUBLE;
-	while ((bit >>= 1) != 0) {	/* for remaining bits in q1 */
-		EVEN_DOUBLE;		/* as before */
+	while((bit >>= 1) != 0) { /* for remaining bits in q1 */
+		EVEN_DOUBLE;          /* as before */
 		t1 = y1 | bit;
 		FPU_SUBS(d1, x1, t1);
 		FPU_SUBC(d0, x0, t0);
-		if ((int)d0 >= 0) {
+		if((int) d0 >= 0) {
 			x0 = d0, x1 = d1;
 			q |= bit;
 			y1 |= bit << 1;
@@ -324,27 +330,27 @@ fpu_sqrt(fe)
 	/* calculate q2.  note (y1&1)==0; y0 (aka t0) is fixed. */
 #define t1 y1
 #define t2 tt
-	q = 0;
-	y2 = 0;
+	q   = 0;
+	y2  = 0;
 	bit = 1 << 31;
 	EVEN_DOUBLE;
 	t2 = bit;
 	FPU_SUBS(d2, x2, t2);
 	FPU_SUBCS(d1, x1, t1);
 	FPU_SUBC(d0, x0, t0);
-	if ((int)d0 >= 0) {
+	if((int) d0 >= 0) {
 		x0 = d0, x1 = d1, x2 = d2;
 		q |= bit;
-		y1 |= 1;		/* now t1, y1 are set in concrete */
+		y1 |= 1; /* now t1, y1 are set in concrete */
 	}
 	ODD_DOUBLE;
-	while ((bit >>= 1) != 0) {
+	while((bit >>= 1) != 0) {
 		EVEN_DOUBLE;
 		t2 = y2 | bit;
 		FPU_SUBS(d2, x2, t2);
 		FPU_SUBCS(d1, x1, t1);
 		FPU_SUBC(d0, x0, t0);
-		if ((int)d0 >= 0) {
+		if((int) d0 >= 0) {
 			x0 = d0, x1 = d1, x2 = d2;
 			q |= bit;
 			y2 |= bit << 1;
@@ -357,8 +363,8 @@ fpu_sqrt(fe)
 	/* calculate q3.  y0, t0, y1, t1 all fixed; y2, t2, almost done. */
 #define t2 y2
 #define t3 tt
-	q = 0;
-	y3 = 0;
+	q   = 0;
+	y3  = 0;
 	bit = 1 << 31;
 	EVEN_DOUBLE;
 	t3 = bit;
@@ -367,19 +373,19 @@ fpu_sqrt(fe)
 	FPU_SUBCS(d1, x1, t1);
 	FPU_SUBC(d0, x0, t0);
 	ODD_DOUBLE;
-	if ((int)d0 >= 0) {
+	if((int) d0 >= 0) {
 		x0 = d0, x1 = d1, x2 = d2;
 		q |= bit;
 		y2 |= 1;
 	}
-	while ((bit >>= 1) != 0) {
+	while((bit >>= 1) != 0) {
 		EVEN_DOUBLE;
 		t3 = y3 | bit;
 		FPU_SUBS(d3, x3, t3);
 		FPU_SUBCS(d2, x2, t2);
 		FPU_SUBCS(d1, x1, t1);
 		FPU_SUBC(d0, x0, t0);
-		if ((int)d0 >= 0) {
+		if((int) d0 >= 0) {
 			x0 = d0, x1 = d1, x2 = d2;
 			q |= bit;
 			y3 |= bit << 1;

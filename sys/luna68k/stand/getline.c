@@ -42,9 +42,8 @@
  * 	by A.Fujita, Dec-11-1992
  */
 
-int
-getline(prompt, buff)
-	char *prompt, *buff;
+int getline(prompt, buff)
+char *prompt, *buff;
 {
 	register int c;
 	register char *p = buff;
@@ -54,31 +53,31 @@ getline(prompt, buff)
 	for(;;) {
 		c = cngetc() & 0x7F;
 
-		switch (c) {
-		case 0x0a:
-		case 0x0d:
-			cnputc('\r');
-			cnputc('\n');
-			*p = '\0';
-			goto outloop;
+		switch(c) {
+			case 0x0a:
+			case 0x0d:
+				cnputc('\r');
+				cnputc('\n');
+				*p = '\0';
+				goto outloop;
 
-		case 0x08:
-		case 0x7f:
-			if (p > buff) {
-				cnputc(0x08);
-				cnputc(' ');
-				cnputc(0x08);
-				p--;
-			}
-			break;
+			case 0x08:
+			case 0x7f:
+				if(p > buff) {
+					cnputc(0x08);
+					cnputc(' ');
+					cnputc(0x08);
+					p--;
+				}
+				break;
 
-		default:
-			*p++ = c;
-			cnputc(c);
-			break;
+			default:
+				*p++ = c;
+				cnputc(c);
+				break;
 		}
 	}
 
- outloop:
-	return(strlen(buff));
+outloop:
+	return (strlen(buff));
 }

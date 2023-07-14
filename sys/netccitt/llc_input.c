@@ -66,9 +66,7 @@
  * llcintr() handles all LLC frames (except ISO CLNS ones for the time being)
  *           and tries to pass them on to the appropriate network layer entity.
  */
-void
-llcintr()
-{
+void llcintr() {
 	register struct mbuf *m;
 	register int i;
 	register int frame_kind;
@@ -81,18 +79,18 @@ llcintr()
 	char *c;
 	long expected_len;
 
-	struct ifnet   *ifp;
+	struct ifnet *ifp;
 	struct rtentry *llrt;
 	struct rtentry *nlrt;
 
-	for (;;) {
+	for(;;) {
 		i = splimp();
 		IF_DEQUEUE(&llcintrq, m);
 		splx(i);
-		if (m == 0)
+		if(m == 0)
 			break;
-#ifdef		DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0)
+#ifdef DIAGNOSTIC
+		if((m->m_flags & M_PKTHDR) == 0)
 			panic("llcintr no HDR");
 #endif
 		/*
@@ -137,13 +135,13 @@ llcintr()
 		 */
 		expected_len = sdlhdr->sdlhdr_len + sizeof(struct sdl_hdr);
 
-		if (m->m_pkthdr.len < expected_len) {
+		if(m->m_pkthdr.len < expected_len) {
 			m_freem(m);
 			continue;
 		}
-		if (m->m_pkthdr.len > expected_len) {
-			if (m->m_len == m->m_pkthdr.len) {
-				m->m_len = expected_len;
+		if(m->m_pkthdr.len > expected_len) {
+			if(m->m_len == m->m_pkthdr.len) {
+				m->m_len        = expected_len;
 				m->m_pkthdr.len = expected_len;
 			} else
 				m_adj(m, expected_len - m->m_pkthdr.len);
@@ -152,11 +150,12 @@ llcintr()
 		/*
 		 * Get llc header
 		 */
-		if (m->m_len > sizeof(struct sdl_hdr))
-			frame = mtod((struct mbuf *)((struct sdl_hdr*)(m+1)),
-			     	     struct llc *);
-		else frame = mtod(m->m_next, struct llc *);
-		if (frame == (struct llc *) NULL)
+		if(m->m_len > sizeof(struct sdl_hdr))
+			frame = mtod((struct mbuf *) ((struct sdl_hdr *) (m + 1)),
+			             struct llc *);
+		else
+			frame = mtod(m->m_next, struct llc *);
+		if(frame == (struct llc *) NULL)
 			panic("llcintr no llc header");
 
 		/*
@@ -165,8 +164,7 @@ llcintr()
 		 * is less than the established I/S frame length (DSAP + SSAP +
 		 * control + N(R)&P/F = 4) --- we drop those suckers
 		 */
-		if (((frame->llc_control & 0x03) != 0x03) 
-		    && ((expected_len - sizeof(struct sdl_hdr)) < LLC_ISFRAMELEN)) {
+		if(((frame->llc_control & 0x03) != 0x03) && ((expected_len - sizeof(struct sdl_hdr)) < LLC_ISFRAMELEN)) {
 			m_freem(m);
 			printf("llc: hurz error\n");
 			continue;
@@ -178,10 +176,11 @@ llcintr()
 		 */
 		cmdrsp = (frame->llc_ssap & 0x01);
 		frame->llc_ssap &= ~0x01;
-		if (llrt = rtalloc1((struct sockaddr *)&sdlhdr->sdlhdr_src, 0))
+		if(llrt = rtalloc1((struct sockaddr *) &sdlhdr->sdlhdr_src, 0))
 			llrt->rt_refcnt--;
 #ifdef notyet
-		else llrt = npaidb_enter(&sdlhdr->sdlhdr_src, 0, 0, 0);
+		else
+			llrt = npaidb_enter(&sdlhdr->sdlhdr_src, 0, 0, 0);
 #endif /* notyet */
 		else {
 			/* 
@@ -191,14 +190,14 @@ llcintr()
 			m_freem(m);
 			continue;
 		}
-		linkp = ((struct npaidbentry *)(llrt->rt_llinfo))->np_link;
-		nlrt = ((struct npaidbentry *)(llrt->rt_llinfo))->np_rt;
+		linkp = ((struct npaidbentry *) (llrt->rt_llinfo))->np_link;
+		nlrt  = ((struct npaidbentry *) (llrt->rt_llinfo))->np_rt;
 
 		/*
 		 * If the link is not existing right now, we can try and look up
 		 * the SAP info block.
 		 */
-		if ((linkp == 0) && frame->llc_ssap) 
+		if((linkp == 0) && frame->llc_ssap)
 			sapinfo = llc_getsapinfo(frame->llc_dsap, ifp);
 
 		/*
@@ -217,51 +216,52 @@ llcintr()
 		 *
 		 * Is this behaviour correct? Check ISO 8802-2 (90)!
 		 */
-		frame_kind = llc_decode(frame, (struct llc_linkcb *)0);
+		frame_kind = llc_decode(frame, (struct llc_linkcb *) 0);
 		switch(frame_kind) {
-		case LLCFT_XID:
-			if (linkp || sapinfo) {
-				if (linkp)
-			   		frame->llc_window = linkp->llcl_window;
-			   	else frame->llc_window = sapinfo->si_window;
-			 	frame->llc_fid = 9;			/* XXX */
-			  	frame->llc_class = sapinfo->si_class;
-			 	frame->llc_ssap = frame->llc_dsap;
-			} else {
-			 	frame->llc_window = 0;
-			     	frame->llc_fid = 9;
-				frame->llc_class = 1;
-				frame->llc_dsap = frame->llc_ssap = 0;
-			}
+			case LLCFT_XID:
+				if(linkp || sapinfo) {
+					if(linkp)
+						frame->llc_window = linkp->llcl_window;
+					else
+						frame->llc_window = sapinfo->si_window;
+					frame->llc_fid   = 9; /* XXX */
+					frame->llc_class = sapinfo->si_class;
+					frame->llc_ssap  = frame->llc_dsap;
+				} else {
+					frame->llc_window = 0;
+					frame->llc_fid    = 9;
+					frame->llc_class  = 1;
+					frame->llc_dsap = frame->llc_ssap = 0;
+				}
 
-			/* fall thru to */
-		case LLCFT_TEST:
-			sdl_swapaddr(&(mtod(m, struct sdl_hdr *)->sdlhdr_dst),
-				     &(mtod(m, struct sdl_hdr *)->sdlhdr_src));
+				/* fall thru to */
+			case LLCFT_TEST:
+				sdl_swapaddr(&(mtod(m, struct sdl_hdr *)->sdlhdr_dst),
+				             &(mtod(m, struct sdl_hdr *)->sdlhdr_src));
 
-			/* Now set the CMD/RESP bit */
-			frame->llc_ssap |= (cmdrsp == 0x0 ? 0x1 : 0x0);
+				/* Now set the CMD/RESP bit */
+				frame->llc_ssap |= (cmdrsp == 0x0 ? 0x1 : 0x0);
 
-			/* Ship it out again */
-			(*ifp->if_output)(ifp, m,
-					  (struct sockaddr *) &(mtod(m, struct sdl_hdr *)->sdlhdr_dst),
-					  (struct rtentry *) 0);
-			continue;
+				/* Ship it out again */
+				(*ifp->if_output)(ifp, m,
+				                  (struct sockaddr *) &(mtod(m, struct sdl_hdr *)->sdlhdr_dst),
+				                  (struct rtentry *) 0);
+				continue;
 		}
 
 		/*
 		 * Create link control block in case it is not existing
 		 */
-		if (linkp == 0 && sapinfo) {
-			if ((linkp = llc_newlink(&sdlhdr->sdlhdr_src, ifp, nlrt,
-						     (nlrt == 0) ? 0 : nlrt->rt_llinfo,
-						     llrt)) == 0) {
+		if(linkp == 0 && sapinfo) {
+			if((linkp = llc_newlink(&sdlhdr->sdlhdr_src, ifp, nlrt,
+			                        (nlrt == 0) ? 0 : nlrt->rt_llinfo,
+			                        llrt)) == 0) {
 				printf("llcintr: couldn't create new link\n");
 				m_freem(m);
 				continue;
 			}
-			((struct npaidbentry *)llrt->rt_llinfo)->np_link = linkp;
-		} else if (linkp == 0) {
+			((struct npaidbentry *) llrt->rt_llinfo)->np_link = linkp;
+		} else if(linkp == 0) {
 			/* The link is not known to us, drop the frame and continue */
 			m_freem(m);
 			continue;
@@ -277,7 +277,7 @@ llcintr()
 		 * the min(m->m_len, maxprotohdr_len [=40]) thus doing
 		 * the trick ...
 		 */
-		if ((m = m_pullup(m, LLC_UFRAMELEN)))
+		if((m = m_pullup(m, LLC_UFRAMELEN)))
 			/*
 			 * Pass it on thru the elements of procedure
 			 */
@@ -300,40 +300,37 @@ llcintr()
  *                         o ...
  *                 are then enacted accordingly.
  */
-llc_input(struct llc_linkcb *linkp, struct mbuf *m, u_char cmdrsp)
-{
+llc_input(struct llc_linkcb *linkp, struct mbuf *m, u_char cmdrsp) {
 	int frame_kind;
 	int pollfinal;
 	int action = 0;
 	struct llc *frame;
 	struct ifnet *ifp = linkp->llcl_if;
 
-	if ((frame = mtod(m, struct llc *)) == (struct llc *) 0) {
+	if((frame = mtod(m, struct llc *)) == (struct llc *) 0) {
 		m_freem(m);
 		return 0;
 	}
-	pollfinal = ((frame->llc_control & 0x03) == 0x03) ? 
-		LLCGBITS(frame->llc_control, u_pf) :
-			LLCGBITS(frame->llc_control_ext, s_pf);
+	pollfinal = ((frame->llc_control & 0x03) == 0x03) ? LLCGBITS(frame->llc_control, u_pf) : LLCGBITS(frame->llc_control_ext, s_pf);
 
 	/*
 	 * first decode the frame
 	 */
 	frame_kind = llc_decode(frame, linkp);
 
-	switch (action = llc_statehandler(linkp, frame, frame_kind, cmdrsp, 
-					  pollfinal)) {
-	case LLC_DATA_INDICATION:
-		m_adj(m, LLC_ISFRAMELEN);
-		if (m = m_pullup(m, NLHDRSIZEGUESS)) {
-			m->m_pkthdr.rcvif = (struct ifnet *)linkp->llcl_nlnext;
-			(*linkp->llcl_sapinfo->si_input)(m);
-		}
-		break;
+	switch(action = llc_statehandler(linkp, frame, frame_kind, cmdrsp,
+	                                 pollfinal)) {
+		case LLC_DATA_INDICATION:
+			m_adj(m, LLC_ISFRAMELEN);
+			if(m = m_pullup(m, NLHDRSIZEGUESS)) {
+				m->m_pkthdr.rcvif = (struct ifnet *) linkp->llcl_nlnext;
+				(*linkp->llcl_sapinfo->si_input)(m);
+			}
+			break;
 	}
 
 	/* release mbuf if not an info frame */
-	if (action != LLC_DATA_INDICATION && m)
+	if(action != LLC_DATA_INDICATION && m)
 		m_freem(m);
 
 	/* try to get frames out ... */
@@ -347,11 +344,10 @@ llc_input(struct llc_linkcb *linkp, struct mbuf *m, u_char cmdrsp)
  * block and notifies all registered upper level protocols.
  */
 caddr_t
-llc_ctlinput(int prc, struct sockaddr *addr, caddr_t info)
-{
+llc_ctlinput(int prc, struct sockaddr *addr, caddr_t info) {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-	struct dll_ctlinfo *ctlinfo = (struct dll_ctlinfo *)info;
+	struct dll_ctlinfo *ctlinfo = (struct dll_ctlinfo *) info;
 	u_char sap;
 	struct dllconfig *config;
 	caddr_t pcb;
@@ -361,108 +357,108 @@ llc_ctlinput(int prc, struct sockaddr *addr, caddr_t info)
 	register int i;
 
 	/* info must point to something valid at all times */
-	if (info == 0)
+	if(info == 0)
 		return 0;
 
-	if (prc == PRC_IFUP || prc == PRC_IFDOWN) {
+	if(prc == PRC_IFUP || prc == PRC_IFDOWN) {
 		/* we use either this set ... */
 		ifa = ifa_ifwithaddr(addr);
 		ifp = ifa ? ifa->ifa_ifp : 0;
-		if (ifp == 0)
+		if(ifp == 0)
 			return 0;
 
-		sap = ctlinfo->dlcti_lsap;
+		sap    = ctlinfo->dlcti_lsap;
 		config = ctlinfo->dlcti_cfg;
-		pcb = (caddr_t) 0;
-		nlrt = (struct rtentry *) 0;
+		pcb    = (caddr_t) 0;
+		nlrt   = (struct rtentry *) 0;
 	} else {
 		/* or this one */
-		sap = 0; 
+		sap    = 0;
 		config = (struct dllconfig *) 0;
-		pcb = ctlinfo->dlcti_pcb;
-		nlrt = ctlinfo->dlcti_rt;
+		pcb    = ctlinfo->dlcti_pcb;
+		nlrt   = ctlinfo->dlcti_rt;
 
-		if ((llrt = rtalloc1(nlrt->rt_gateway, 0)))
+		if((llrt = rtalloc1(nlrt->rt_gateway, 0)))
 			llrt->rt_refcnt--;
-		else return 0;
+		else
+			return 0;
 
-		linkp = ((struct npaidbentry *)llrt->rt_llinfo)->np_link;
+		linkp = ((struct npaidbentry *) llrt->rt_llinfo)->np_link;
 	}
-	
-	switch (prc) {
-	case PRC_IFUP:
-		(void) llc_setsapinfo(ifp, addr->sa_family, sap, config);
-		return 0;
 
-	case PRC_IFDOWN: {
-		register struct llc_linkcb *linkp;
-		register struct llc_linkcb *nlinkp;
-		register int i;
+	switch(prc) {
+		case PRC_IFUP:
+			(void) llc_setsapinfo(ifp, addr->sa_family, sap, config);
+			return 0;
 
-		/*
+		case PRC_IFDOWN: {
+			register struct llc_linkcb *linkp;
+			register struct llc_linkcb *nlinkp;
+			register int i;
+
+			/*
 		 * All links are accessible over the doubly linked list llccb_q
 		 */
-		if (!LQEMPTY) {
-			/*
+			if(!LQEMPTY) {
+				/*
 			 * A for-loop is not that great an idea as the linkp
 			 * will get deleted by llc_timer()
 			 */
-			linkp = LQFIRST;
-			while (LQVALID(linkp)) {
-				nlinkp = LQNEXT(linkp);
-				if (linkp->llcl_if = ifp) {
-					i = splimp();
-					(void)llc_statehandler(linkp, (struct llc *)0,
-							       NL_DISCONNECT_REQUEST,
-							       0, 1);
-					splx(i);
+				linkp = LQFIRST;
+				while(LQVALID(linkp)) {
+					nlinkp = LQNEXT(linkp);
+					if(linkp->llcl_if = ifp) {
+						i = splimp();
+						(void) llc_statehandler(linkp, (struct llc *) 0,
+						                        NL_DISCONNECT_REQUEST,
+						                        0, 1);
+						splx(i);
+					}
+					linkp = nlinkp;
 				}
-				linkp = nlinkp;
 			}
 		}
-	}
-	
-	case PRC_CONNECT_REQUEST: 
-		if (linkp == 0) {
-			if ((linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway, 
-						 nlrt->rt_ifp, nlrt, 
-						 pcb, llrt)) == 0)
-				return (0);
-			((struct npaidbentry *)llrt->rt_llinfo)->np_link = linkp;
+
+		case PRC_CONNECT_REQUEST:
+			if(linkp == 0) {
+				if((linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway,
+				                        nlrt->rt_ifp, nlrt,
+				                        pcb, llrt)) == 0)
+					return (0);
+				((struct npaidbentry *) llrt->rt_llinfo)->np_link = linkp;
+				i                                                 = splimp();
+				(void) llc_statehandler(linkp, (struct llc *) 0,
+				                        NL_CONNECT_REQUEST, 0, 1);
+				splx(i);
+			}
+			return ((caddr_t) linkp);
+
+		case PRC_DISCONNECT_REQUEST:
+			if(linkp == 0)
+				panic("no link control block!");
+
 			i = splimp();
-			(void)llc_statehandler(linkp, (struct llc *) 0,
-						NL_CONNECT_REQUEST, 0, 1);
+			(void) llc_statehandler(linkp, (struct llc *) 0,
+			                        NL_DISCONNECT_REQUEST, 0, 1);
 			splx(i);
-		}
-		return ((caddr_t)linkp);
-	
-	case PRC_DISCONNECT_REQUEST:
-		if (linkp == 0) 
-			panic("no link control block!");
 
-		i = splimp();
-		(void)llc_statehandler(linkp, (struct llc *) 0,
-				       NL_DISCONNECT_REQUEST, 0, 1);
-		splx(i);
-
-		/*
+			/*
 		 * The actual removal of the link control block is done by the
 		 * cleaning neutrum (i.e. llc_timer()).
 		 */
-		break;
-	
-	case PRC_RESET_REQUEST:
-		if (linkp == 0) 
-			panic("no link control block!");
+			break;
 
-		i = splimp();
-		(void)llc_statehandler(linkp, (struct llc *) 0,
-				       NL_RESET_REQUEST, 0, 1);
-		splx(i);
+		case PRC_RESET_REQUEST:
+			if(linkp == 0)
+				panic("no link control block!");
 
-		break;
+			i = splimp();
+			(void) llc_statehandler(linkp, (struct llc *) 0,
+			                        NL_RESET_REQUEST, 0, 1);
+			splx(i);
 
+			break;
 	}
-	
+
 	return 0;
 }

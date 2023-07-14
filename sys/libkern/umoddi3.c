@@ -46,10 +46,10 @@ static char sccsid[] = "@(#)umoddi3.c	8.1 (Berkeley) 6/4/93";
  */
 u_quad_t
 __umoddi3(a, b)
-	u_quad_t a, b;
+u_quad_t a, b;
 {
 	u_quad_t r;
 
-	(void)__qdivrem(a, b, &r);
+	(void) __qdivrem(a, b, &r);
 	return (r);
 }

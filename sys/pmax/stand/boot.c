@@ -40,7 +40,7 @@
 #include <sys/exec.h>
 #include <pmax/stand/dec_prom.h>
 
-char	line[1024];
+char line[1024];
 
 /*
  * This gets arguments from the PROM, calls other routines to open
@@ -51,9 +51,8 @@ char	line[1024];
  * The argument "-a" means vmunix should do an automatic reboot.
  */
 void
-main(argc, argv)
-	int argc;
-	char **argv;
+        main(argc, argv) int argc;
+char **argv;
 {
 	register char *cp;
 	int ask, entry;
@@ -62,71 +61,70 @@ main(argc, argv)
 	ask = 1;
 #else
 	/* check for DS5000 boot */
-	if (strcmp(argv[0], "boot") == 0) {
+	if(strcmp(argv[0], "boot") == 0) {
 		argc--;
 		argv++;
 	}
-	cp = *argv;
+	cp  = *argv;
 	ask = 0;
 #endif /* JUSTASK */
-	for (;;) {
-		if (ask) {
+	for(;;) {
+		if(ask) {
 			printf("Boot: ");
 			gets(line);
-			if (line[0] == '\0')
+			if(line[0] == '\0')
 				continue;
-			cp = line;
+			cp      = line;
 			argv[0] = cp;
-			argc = 1;
+			argc    = 1;
 		} else
 			printf("Boot: %s\n", cp);
 		entry = loadfile(cp);
-		if (entry != -1)
+		if(entry != -1)
 			break;
 		ask = 1;
 	}
 	printf("Starting at 0x%x\n\n", entry);
-	if (callv == &callvec)
-		((void (*)())entry)(argc, argv, 0, 0);
+	if(callv == &callvec)
+		((void (*)()) entry)(argc, argv, 0, 0);
 	else
-		((void (*)())entry)(argc, argv, DEC_PROM_MAGIC, callv);
+		((void (*)()) entry)(argc, argv, DEC_PROM_MAGIC, callv);
 }
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
-loadfile(fname)
-	register char *fname;
+loadfile(fname) register char *fname;
 {
 	register struct devices *dp;
 	register int fd, i, n;
 	struct exec aout;
 
-	if ((fd = open(fname, 0)) < 0) {
+	if((fd = open(fname, 0)) < 0) {
 		goto err;
 	}
 
 	/* read the exec header */
-	i = read(fd, (char *)&aout, sizeof(aout));
-	if (i != sizeof(aout)) {
+	i = read(fd, (char *) &aout, sizeof(aout));
+	if(i != sizeof(aout)) {
 		goto cerr;
-	} else if (aout.a_magic != OMAGIC) {
+	} else if(aout.a_magic != OMAGIC) {
 		goto cerr;
 	}
 
 	/* read the code and initialized data */
 	printf("Size: %d+%d", aout.a_text, aout.a_data);
-	if (lseek(fd, (off_t)N_TXTOFF(aout), 0) < 0) {
+	if(lseek(fd, (off_t) N_TXTOFF(aout), 0) < 0) {
 		goto cerr;
 	}
 	i = aout.a_text + aout.a_data;
-	n = read(fd, (char *)aout.a_entry, i);
+	n = read(fd, (char *) aout.a_entry, i);
 #ifndef SMALL
 	(void) close(fd);
 #endif
-	if (n < 0) {
+	if(n < 0) {
 		goto err;
-	} else if (n != i) {
+	} else if(n != i) {
 		goto err;
 	}
 
@@ -134,7 +132,7 @@ loadfile(fname)
 	n = aout.a_bss;
 	printf("+%d\n", n);
 
-	return ((int)aout.a_entry);
+	return ((int) aout.a_entry);
 
 cerr:
 #ifndef SMALL

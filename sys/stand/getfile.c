@@ -33,9 +33,8 @@
  *	@(#)getfile.c	8.1 (Berkeley) 6/11/93
  */
 
-getfile(prompt, mode)
-	char *prompt;
-	int mode;
+getfile(prompt, mode) char *prompt;
+int mode;
 {
 	int fd;
 	char buf[100];
@@ -43,7 +42,7 @@ getfile(prompt, mode)
 	do {
 		printf("%s: ", prompt);
 		gets(buf);
-	} while ((fd = open(buf, mode)) < 0);
+	} while((fd = open(buf, mode)) < 0);
 
 	return (fd);
 }

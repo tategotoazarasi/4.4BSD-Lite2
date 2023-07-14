@@ -56,17 +56,16 @@ static char sccsid[] = "@(#)genassym.c	8.2 (Berkeley) 9/23/93";
 #include <vm/vm.h>
 #include <sys/user.h>
 
-main()
-{
-	struct proc *p = (struct proc *)0;
-	struct vmmeter *vm = (struct vmmeter *)0;
-	struct user *up = (struct user *)0;
-	struct rusage *rup = (struct rusage *)0;
-	struct uprof *uprof = (struct uprof *)0;
-	struct vmspace *vms = (struct vmspace *)0;
-	vm_map_t map = (vm_map_t)0;
-	pmap_t pmap = (pmap_t)0;
-	struct pcb *pcb = (struct pcb *)0;
+main() {
+	struct proc *p      = (struct proc *) 0;
+	struct vmmeter *vm  = (struct vmmeter *) 0;
+	struct user *up     = (struct user *) 0;
+	struct rusage *rup  = (struct rusage *) 0;
+	struct uprof *uprof = (struct uprof *) 0;
+	struct vmspace *vms = (struct vmspace *) 0;
+	vm_map_t map        = (vm_map_t) 0;
+	pmap_t pmap         = (pmap_t) 0;
+	struct pcb *pcb     = (struct pcb *) 0;
 	register unsigned i;
 
 	printf("#define\tI386_CR3PAT %d\n", I386_CR3PAT);
@@ -103,7 +102,7 @@ main()
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
-	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
+	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof(struct msgbuf)));
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tMCLBYTES %d\n", MCLBYTES);
 	printf("#define\tPCB_LINK %d\n", &pcb->pcb_tss.tss_link);

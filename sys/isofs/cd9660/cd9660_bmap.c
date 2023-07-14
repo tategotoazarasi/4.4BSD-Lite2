@@ -53,46 +53,46 @@
  * number on the disk. The conversion is done by using the logical block
  * number to index into the data block (extent) for the file.
  */
-int
-cd9660_bmap(ap)
-	struct vop_bmap_args /* {
+int cd9660_bmap(ap)
+struct vop_bmap_args /* {
 		struct vnode *a_vp;
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
 		int *a_runp;
-	} */ *ap;
+	} */
+        *ap;
 {
 	struct iso_node *ip = VTOI(ap->a_vp);
-	daddr_t lblkno = ap->a_bn;
+	daddr_t lblkno      = ap->a_bn;
 	int bshift;
 
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
 	 */
-	if (ap->a_vpp != NULL)
+	if(ap->a_vpp != NULL)
 		*ap->a_vpp = ip->i_devvp;
-	if (ap->a_bnp == NULL)
+	if(ap->a_bnp == NULL)
 		return (0);
 
 	/*
 	 * Compute the requested block number
 	 */
-	bshift = ip->i_mnt->im_bshift;
+	bshift     = ip->i_mnt->im_bshift;
 	*ap->a_bnp = (ip->iso_start + lblkno) << (bshift - DEV_BSHIFT);
 
 	/*
 	 * Determine maximum number of readahead blocks following the
 	 * requested block.
 	 */
-	if (ap->a_runp) {
+	if(ap->a_runp) {
 		int nblk;
 
 		nblk = (ip->i_size >> bshift) - (lblkno + 1);
-		if (nblk <= 0)
+		if(nblk <= 0)
 			*ap->a_runp = 0;
-		else if (nblk >= (MAXBSIZE >> bshift))
+		else if(nblk >= (MAXBSIZE >> bshift))
 			*ap->a_runp = (MAXBSIZE >> bshift) - 1;
 		else
 			*ap->a_runp = nblk;

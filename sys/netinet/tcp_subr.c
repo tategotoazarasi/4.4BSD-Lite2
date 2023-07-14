@@ -60,24 +60,22 @@
 #include <netinet/tcpip.h>
 
 /* patchable/settable parameters for tcp */
-int 	tcp_mssdflt = TCP_MSS;
-int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
-int	tcp_do_rfc1323 = 1;
+int tcp_mssdflt    = TCP_MSS;
+int tcp_rttdflt    = TCPTV_SRTTDFLT / PR_SLOWHZ;
+int tcp_do_rfc1323 = 1;
 
-extern	struct inpcb *tcp_last_inpcb;
+extern struct inpcb *tcp_last_inpcb;
 
 /*
  * Tcp initialization
  */
-void
-tcp_init()
-{
+void tcp_init() {
 
-	tcp_iss = random();	/* wrong, but better than a constant */
+	tcp_iss      = random(); /* wrong, but better than a constant */
 	tcb.inp_next = tcb.inp_prev = &tcb;
-	if (max_protohdr < sizeof(struct tcpiphdr))
+	if(max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
-	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
+	if(max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
 		panic("tcp_init");
 }
 
@@ -89,35 +87,35 @@ tcp_init()
  */
 struct tcpiphdr *
 tcp_template(tp)
-	struct tcpcb *tp;
+struct tcpcb *tp;
 {
 	register struct inpcb *inp = tp->t_inpcb;
 	register struct mbuf *m;
 	register struct tcpiphdr *n;
 
-	if ((n = tp->t_template) == 0) {
+	if((n = tp->t_template) == 0) {
 		m = m_get(M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
+		if(m == NULL)
 			return (0);
-		m->m_len = sizeof (struct tcpiphdr);
-		n = mtod(m, struct tcpiphdr *);
+		m->m_len = sizeof(struct tcpiphdr);
+		n        = mtod(m, struct tcpiphdr *);
 	}
 	n->ti_next = n->ti_prev = 0;
-	n->ti_x1 = 0;
-	n->ti_pr = IPPROTO_TCP;
-	n->ti_len = htons(sizeof (struct tcpiphdr) - sizeof (struct ip));
-	n->ti_src = inp->inp_laddr;
-	n->ti_dst = inp->inp_faddr;
-	n->ti_sport = inp->inp_lport;
-	n->ti_dport = inp->inp_fport;
-	n->ti_seq = 0;
-	n->ti_ack = 0;
-	n->ti_x2 = 0;
-	n->ti_off = 5;
-	n->ti_flags = 0;
-	n->ti_win = 0;
-	n->ti_sum = 0;
-	n->ti_urp = 0;
+	n->ti_x1                = 0;
+	n->ti_pr                = IPPROTO_TCP;
+	n->ti_len               = htons(sizeof(struct tcpiphdr) - sizeof(struct ip));
+	n->ti_src               = inp->inp_laddr;
+	n->ti_dst               = inp->inp_faddr;
+	n->ti_sport             = inp->inp_lport;
+	n->ti_dport             = inp->inp_fport;
+	n->ti_seq               = 0;
+	n->ti_ack               = 0;
+	n->ti_x2                = 0;
+	n->ti_off               = 5;
+	n->ti_flags             = 0;
+	n->ti_win               = 0;
+	n->ti_sum               = 0;
+	n->ti_urp               = 0;
 	return (n);
 }
 
@@ -135,24 +133,23 @@ tcp_template(tp)
  * segment are as specified by the parameters.
  */
 void
-tcp_respond(tp, ti, m, ack, seq, flags)
-	struct tcpcb *tp;
-	register struct tcpiphdr *ti;
-	register struct mbuf *m;
-	tcp_seq ack, seq;
-	int flags;
+        tcp_respond(tp, ti, m, ack, seq, flags) struct tcpcb *tp;
+register struct tcpiphdr *ti;
+register struct mbuf *m;
+tcp_seq ack, seq;
+int flags;
 {
 	register int tlen;
-	int win = 0;
+	int win          = 0;
 	struct route *ro = 0;
 
-	if (tp) {
+	if(tp) {
 		win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
-		ro = &tp->t_inpcb->inp_route;
+		ro  = &tp->t_inpcb->inp_route;
 	}
-	if (m == 0) {
+	if(m == 0) {
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
+		if(m == NULL)
 			return;
 #ifdef TCP_COMPAT_42
 		tlen = 1;
@@ -161,40 +158,46 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 #endif
 		m->m_data += max_linkhdr;
 		*mtod(m, struct tcpiphdr *) = *ti;
-		ti = mtod(m, struct tcpiphdr *);
-		flags = TH_ACK;
+		ti                          = mtod(m, struct tcpiphdr *);
+		flags                       = TH_ACK;
 	} else {
 		m_freem(m->m_next);
 		m->m_next = 0;
-		m->m_data = (caddr_t)ti;
-		m->m_len = sizeof (struct tcpiphdr);
-		tlen = 0;
-#define xchg(a,b,type) { type t; t=a; a=b; b=t; }
+		m->m_data = (caddr_t) ti;
+		m->m_len  = sizeof(struct tcpiphdr);
+		tlen      = 0;
+#define xchg(a, b, type) \
+	{                    \
+		type t;          \
+		t = a;           \
+		a = b;           \
+		b = t;           \
+	}
 		xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_long);
 		xchg(ti->ti_dport, ti->ti_sport, u_short);
 #undef xchg
 	}
-	ti->ti_len = htons((u_short)(sizeof (struct tcphdr) + tlen));
-	tlen += sizeof (struct tcpiphdr);
-	m->m_len = tlen;
-	m->m_pkthdr.len = tlen;
+	ti->ti_len = htons((u_short) (sizeof(struct tcphdr) + tlen));
+	tlen += sizeof(struct tcpiphdr);
+	m->m_len          = tlen;
+	m->m_pkthdr.len   = tlen;
 	m->m_pkthdr.rcvif = (struct ifnet *) 0;
 	ti->ti_next = ti->ti_prev = 0;
-	ti->ti_x1 = 0;
-	ti->ti_seq = htonl(seq);
-	ti->ti_ack = htonl(ack);
-	ti->ti_x2 = 0;
-	ti->ti_off = sizeof (struct tcphdr) >> 2;
-	ti->ti_flags = flags;
-	if (tp)
+	ti->ti_x1                 = 0;
+	ti->ti_seq                = htonl(seq);
+	ti->ti_ack                = htonl(ack);
+	ti->ti_x2                 = 0;
+	ti->ti_off                = sizeof(struct tcphdr) >> 2;
+	ti->ti_flags              = flags;
+	if(tp)
 		ti->ti_win = htons((u_short) (win >> tp->rcv_scale));
 	else
-		ti->ti_win = htons((u_short)win);
-	ti->ti_urp = 0;
-	ti->ti_sum = 0;
-	ti->ti_sum = in_cksum(m, tlen);
-	((struct ip *)ti)->ip_len = tlen;
-	((struct ip *)ti)->ip_ttl = ip_defttl;
+		ti->ti_win = htons((u_short) win);
+	ti->ti_urp                 = 0;
+	ti->ti_sum                 = 0;
+	ti->ti_sum                 = in_cksum(m, tlen);
+	((struct ip *) ti)->ip_len = tlen;
+	((struct ip *) ti)->ip_ttl = ip_defttl;
 	(void) ip_output(m, NULL, ro, 0, NULL);
 }
 
@@ -205,34 +208,34 @@ tcp_respond(tp, ti, m, ack, seq, flags)
  */
 struct tcpcb *
 tcp_newtcpcb(inp)
-	struct inpcb *inp;
+struct inpcb *inp;
 {
 	register struct tcpcb *tp;
 
 	tp = malloc(sizeof(*tp), M_PCB, M_NOWAIT);
-	if (tp == NULL)
-		return ((struct tcpcb *)0);
+	if(tp == NULL)
+		return ((struct tcpcb *) 0);
 	bzero((char *) tp, sizeof(struct tcpcb));
-	tp->seg_next = tp->seg_prev = (struct tcpiphdr *)tp;
-	tp->t_maxseg = tcp_mssdflt;
+	tp->seg_next = tp->seg_prev = (struct tcpiphdr *) tp;
+	tp->t_maxseg                = tcp_mssdflt;
 
-	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE | TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
 	/*
 	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no
 	 * rtt estimate.  Set rttvar so that srtt + 2 * rttvar gives
 	 * reasonable initial retransmit time.
 	 */
-	tp->t_srtt = TCPTV_SRTTBASE;
+	tp->t_srtt   = TCPTV_SRTTBASE;
 	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << 2;
 	tp->t_rttmin = TCPTV_MIN;
-	TCPT_RANGESET(tp->t_rxtcur, 
-	    ((TCPTV_SRTTBASE >> 2) + (TCPTV_SRTTDFLT << 2)) >> 1,
-	    TCPTV_MIN, TCPTV_REXMTMAX);
-	tp->snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT;
-	tp->snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT;
+	TCPT_RANGESET(tp->t_rxtcur,
+	              ((TCPTV_SRTTBASE >> 2) + (TCPTV_SRTTDFLT << 2)) >> 1,
+	              TCPTV_MIN, TCPTV_REXMTMAX);
+	tp->snd_cwnd       = TCP_MAXWIN << TCP_MAX_WINSHIFT;
+	tp->snd_ssthresh   = TCP_MAXWIN << TCP_MAX_WINSHIFT;
 	inp->inp_ip.ip_ttl = ip_defttl;
-	inp->inp_ppcb = (caddr_t)tp;
+	inp->inp_ppcb      = (caddr_t) tp;
 	return (tp);
 }
 
@@ -243,18 +246,18 @@ tcp_newtcpcb(inp)
  */
 struct tcpcb *
 tcp_drop(tp, errno)
-	register struct tcpcb *tp;
-	int errno;
+register struct tcpcb *tp;
+int errno;
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 
-	if (TCPS_HAVERCVDSYN(tp->t_state)) {
+	if(TCPS_HAVERCVDSYN(tp->t_state)) {
 		tp->t_state = TCPS_CLOSED;
 		(void) tcp_output(tp);
 		tcpstat.tcps_drops++;
 	} else
 		tcpstat.tcps_conndrops++;
-	if (errno == ETIMEDOUT && tp->t_softerror)
+	if(errno == ETIMEDOUT && tp->t_softerror)
 		errno = tp->t_softerror;
 	so->so_error = errno;
 	return (tcp_close(tp));
@@ -268,7 +271,7 @@ tcp_drop(tp, errno)
  */
 struct tcpcb *
 tcp_close(tp)
-	register struct tcpcb *tp;
+register struct tcpcb *tp;
 {
 	register struct tcpiphdr *t;
 	struct inpcb *inp = tp->t_inpcb;
@@ -289,15 +292,15 @@ tcp_close(tp)
 	 * Don't update the default route's characteristics and don't
 	 * update anything that the user "locked".
 	 */
-	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
-	    (rt = inp->inp_route.ro_rt) &&
-	    ((struct sockaddr_in *)rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
+	if(SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
+	   (rt = inp->inp_route.ro_rt) &&
+	   ((struct sockaddr_in *) rt_key(rt))->sin_addr.s_addr != INADDR_ANY) {
 		register u_long i;
 
-		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
+		if((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {
 			i = tp->t_srtt *
 			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
-			if (rt->rt_rmx.rmx_rtt && i)
+			if(rt->rt_rmx.rmx_rtt && i)
 				/*
 				 * filter this update to half the old & half
 				 * the new values, converting scale.
@@ -305,16 +308,16 @@ tcp_close(tp)
 				 * description of the scaling constants.
 				 */
 				rt->rt_rmx.rmx_rtt =
-				    (rt->rt_rmx.rmx_rtt + i) / 2;
+				        (rt->rt_rmx.rmx_rtt + i) / 2;
 			else
 				rt->rt_rmx.rmx_rtt = i;
 		}
-		if ((rt->rt_rmx.rmx_locks & RTV_RTTVAR) == 0) {
+		if((rt->rt_rmx.rmx_locks & RTV_RTTVAR) == 0) {
 			i = tp->t_rttvar *
 			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTTVAR_SCALE));
-			if (rt->rt_rmx.rmx_rttvar && i)
+			if(rt->rt_rmx.rmx_rttvar && i)
 				rt->rt_rmx.rmx_rttvar =
-				    (rt->rt_rmx.rmx_rttvar + i) / 2;
+				        (rt->rt_rmx.rmx_rttvar + i) / 2;
 			else
 				rt->rt_rmx.rmx_rttvar = i;
 		}
@@ -325,20 +328,20 @@ tcp_close(tp)
 		 * before we start updating, then update on both good
 		 * and bad news.
 		 */
-		if ((rt->rt_rmx.rmx_locks & RTV_SSTHRESH) == 0 &&
-		    (i = tp->snd_ssthresh) && rt->rt_rmx.rmx_ssthresh ||
-		    i < (rt->rt_rmx.rmx_sendpipe / 2)) {
+		if((rt->rt_rmx.rmx_locks & RTV_SSTHRESH) == 0 &&
+		           (i = tp->snd_ssthresh) && rt->rt_rmx.rmx_ssthresh ||
+		   i < (rt->rt_rmx.rmx_sendpipe / 2)) {
 			/*
 			 * convert the limit from user data bytes to
 			 * packets then to packet data bytes.
 			 */
 			i = (i + tp->t_maxseg / 2) / tp->t_maxseg;
-			if (i < 2)
+			if(i < 2)
 				i = 2;
-			i *= (u_long)(tp->t_maxseg + sizeof (struct tcpiphdr));
-			if (rt->rt_rmx.rmx_ssthresh)
+			i *= (u_long) (tp->t_maxseg + sizeof(struct tcpiphdr));
+			if(rt->rt_rmx.rmx_ssthresh)
 				rt->rt_rmx.rmx_ssthresh =
-				    (rt->rt_rmx.rmx_ssthresh + i) / 2;
+				        (rt->rt_rmx.rmx_ssthresh + i) / 2;
 			else
 				rt->rt_rmx.rmx_ssthresh = i;
 		}
@@ -346,29 +349,26 @@ tcp_close(tp)
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
 	t = tp->seg_next;
-	while (t != (struct tcpiphdr *)tp) {
-		t = (struct tcpiphdr *)t->ti_next;
-		m = REASS_MBUF((struct tcpiphdr *)t->ti_prev);
+	while(t != (struct tcpiphdr *) tp) {
+		t = (struct tcpiphdr *) t->ti_next;
+		m = REASS_MBUF((struct tcpiphdr *) t->ti_prev);
 		remque(t->ti_prev);
 		m_freem(m);
 	}
-	if (tp->t_template)
+	if(tp->t_template)
 		(void) m_free(dtom(tp->t_template));
 	free(tp, M_PCB);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
 	/* clobber input pcb cache if we're closing the cached connection */
-	if (inp == tcp_last_inpcb)
+	if(inp == tcp_last_inpcb)
 		tcp_last_inpcb = &tcb;
 	in_pcbdetach(inp);
 	tcpstat.tcps_closed++;
-	return ((struct tcpcb *)0);
+	return ((struct tcpcb *) 0);
 }
 
-void
-tcp_drain()
-{
-
+void tcp_drain() {
 }
 
 /*
@@ -377,11 +377,10 @@ tcp_drain()
  * (for now, won't do anything until can select for soft error).
  */
 void
-tcp_notify(inp, error)
-	struct inpcb *inp;
-	int error;
+        tcp_notify(inp, error) struct inpcb *inp;
+int error;
 {
-	register struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
+	register struct tcpcb *tp  = (struct tcpcb *) inp->inp_ppcb;
 	register struct socket *so = inp->inp_socket;
 
 	/*
@@ -391,14 +390,14 @@ tcp_notify(inp, error)
 	 * than waiting a long time to establish a connection that
 	 * can never complete.
 	 */
-	if (tp->t_state == TCPS_ESTABLISHED &&
-	     (error == EHOSTUNREACH || error == ENETUNREACH ||
-	      error == EHOSTDOWN)) {
+	if(tp->t_state == TCPS_ESTABLISHED &&
+	   (error == EHOSTUNREACH || error == ENETUNREACH ||
+	    error == EHOSTDOWN)) {
 		return;
-	} else if (tp->t_state < TCPS_ESTABLISHED && tp->t_rxtshift > 3 &&
-	    tp->t_softerror)
+	} else if(tp->t_state < TCPS_ESTABLISHED && tp->t_rxtshift > 3 &&
+	          tp->t_softerror)
 		so->so_error = error;
-	else 
+	else
 		tp->t_softerror = error;
 	wakeup((caddr_t) &so->so_timeo);
 	sorwakeup(so);
@@ -406,25 +405,24 @@ tcp_notify(inp, error)
 }
 
 void
-tcp_ctlinput(cmd, sa, ip)
-	int cmd;
-	struct sockaddr *sa;
-	register struct ip *ip;
+        tcp_ctlinput(cmd, sa, ip) int cmd;
+struct sockaddr *sa;
+register struct ip *ip;
 {
 	register struct tcphdr *th;
 	extern struct in_addr zeroin_addr;
 	extern u_char inetctlerrmap[];
-	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	void(*notify) __P((struct inpcb *, int) ) = tcp_notify;
 
-	if (cmd == PRC_QUENCH)
+	if(cmd == PRC_QUENCH)
 		notify = tcp_quench;
-	else if (!PRC_IS_REDIRECT(cmd) &&
-		 ((unsigned)cmd > PRC_NCMDS || inetctlerrmap[cmd] == 0))
+	else if(!PRC_IS_REDIRECT(cmd) &&
+	        ((unsigned) cmd > PRC_NCMDS || inetctlerrmap[cmd] == 0))
 		return;
-	if (ip) {
-		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+	if(ip) {
+		th = (struct tcphdr *) ((caddr_t) ip + (ip->ip_hl << 2));
 		in_pcbnotify(&tcb, sa, th->th_dport, ip->ip_src, th->th_sport,
-			cmd, notify);
+		             cmd, notify);
 	} else
 		in_pcbnotify(&tcb, sa, 0, zeroin_addr, 0, cmd, notify);
 }
@@ -434,12 +432,11 @@ tcp_ctlinput(cmd, sa, ip)
  * to one segment.  We will gradually open it again as we proceed.
  */
 void
-tcp_quench(inp, errno)
-	struct inpcb *inp;
-	int errno;
+        tcp_quench(inp, errno) struct inpcb *inp;
+int errno;
 {
 	struct tcpcb *tp = intotcpcb(inp);
 
-	if (tp)
+	if(tp)
 		tp->snd_cwnd = tp->t_maxseg;
 }

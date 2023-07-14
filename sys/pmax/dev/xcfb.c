@@ -139,9 +139,12 @@ extern int pmax_boardtype;
 extern u_short defCursor[32];
 extern struct consdev cn_tab;
 
-int	xcfbprobe();
-struct	driver xcfbdriver = {
-	"xcfb", xcfbprobe, 0, 0,
+int xcfbprobe();
+struct driver xcfbdriver = {
+        "xcfb",
+        xcfbprobe,
+        0,
+        0,
 };
 
 /*
@@ -149,14 +152,13 @@ struct	driver xcfbdriver = {
  * Return true if found and initialized ok.
  */
 /*ARGSUSED*/
-xcfbprobe(cp)
-	register struct pmax_ctlr *cp;
+xcfbprobe(cp) register struct pmax_ctlr *cp;
 {
 	register struct pmax_fb *fp = &xcfbfb;
 
-	if (pmax_boardtype != DS_MAXINE)
+	if(pmax_boardtype != DS_MAXINE)
 		return (0);
-	if (!fp->initialized && !xcfbinit())
+	if(!fp->initialized && !xcfbinit())
 		return (0);
 	printf("xcfb0 (color display)\n");
 	return (1);
@@ -164,15 +166,15 @@ xcfbprobe(cp)
 
 /*ARGSUSED*/
 xcfbopen(dev, flag)
-	dev_t dev;
-	int flag;
+        dev_t dev;
+int flag;
 {
 	register struct pmax_fb *fp = &xcfbfb;
 	int s;
 
-	if (!fp->initialized)
+	if(!fp->initialized)
 		return (ENXIO);
-	if (fp->GraphicsOpen)
+	if(fp->GraphicsOpen)
 		return (EBUSY);
 
 	fp->GraphicsOpen = 1;
@@ -182,134 +184,133 @@ xcfbopen(dev, flag)
 	 */
 	fp->fbu->scrInfo.qe.eSize = PM_MAXEVQ;
 	fp->fbu->scrInfo.qe.eHead = fp->fbu->scrInfo.qe.eTail = 0;
-	fp->fbu->scrInfo.qe.tcSize = MOTION_BUFFER_SIZE;
-	fp->fbu->scrInfo.qe.tcNext = 0;
-	fp->fbu->scrInfo.qe.timestamp_ms = TO_MS(time);
-	s = spltty();
-	dtopDivertXInput = xcfbKbdEvent;
-	dtopMouseEvent = xcfbMouseEvent;
-	dtopMouseButtons = xcfbMouseButtons;
+	fp->fbu->scrInfo.qe.tcSize                            = MOTION_BUFFER_SIZE;
+	fp->fbu->scrInfo.qe.tcNext                            = 0;
+	fp->fbu->scrInfo.qe.timestamp_ms                      = TO_MS(time);
+	s                                                     = spltty();
+	dtopDivertXInput                                      = xcfbKbdEvent;
+	dtopMouseEvent                                        = xcfbMouseEvent;
+	dtopMouseButtons                                      = xcfbMouseButtons;
 	splx(s);
 	return (0);
 }
 
 /*ARGSUSED*/
 xcfbclose(dev, flag)
-	dev_t dev;
-	int flag;
+        dev_t dev;
+int flag;
 {
 	register struct pmax_fb *fp = &xcfbfb;
 	int s;
 
-	if (!fp->GraphicsOpen)
+	if(!fp->GraphicsOpen)
 		return (EBADF);
 
 	fp->GraphicsOpen = 0;
 	xcfbInitColorMap();
-	s = spltty();
-	dtopDivertXInput = (void (*)())0;
-	dtopMouseEvent = (void (*)())0;
-	dtopMouseButtons = (void (*)())0;
+	s                = spltty();
+	dtopDivertXInput = (void (*)()) 0;
+	dtopMouseEvent   = (void (*)()) 0;
+	dtopMouseButtons = (void (*)()) 0;
 	splx(s);
 	xcfbScreenInit();
-	bzero((caddr_t)fp->fr_addr, 1024 * 768);
+	bzero((caddr_t) fp->fr_addr, 1024 * 768);
 	xcfbPosCursor(fp->col * 8, fp->row * 15);
 	return (0);
 }
 
 /*ARGSUSED*/
 xcfbioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	struct proc *p;
+        dev_t dev;
+u_long cmd;
+caddr_t data;
+struct proc *p;
 {
 	register struct pmax_fb *fp = &xcfbfb;
 	int s;
 
-	switch (cmd) {
-	case QIOCGINFO:
-		return (fbmmap(fp, dev, data, p));
+	switch(cmd) {
+		case QIOCGINFO:
+			return (fbmmap(fp, dev, data, p));
 
-	case QIOCPMSTATE:
-		/*
+		case QIOCPMSTATE:
+			/*
 		 * Set mouse state.
 		 */
-		fp->fbu->scrInfo.mouse = *(pmCursor *)data;
-		xcfbPosCursor(fp->fbu->scrInfo.mouse.x, fp->fbu->scrInfo.mouse.y);
-		break;
+			fp->fbu->scrInfo.mouse = *(pmCursor *) data;
+			xcfbPosCursor(fp->fbu->scrInfo.mouse.x, fp->fbu->scrInfo.mouse.y);
+			break;
 
-	case QIOCINIT:
-		/*
+		case QIOCINIT:
+			/*
 		 * Initialize the screen.
 		 */
-		xcfbScreenInit();
-		break;
+			xcfbScreenInit();
+			break;
 
-	case QIOCKPCMD:
-	    {
-		pmKpCmd *kpCmdPtr;
-		unsigned char *cp;
+		case QIOCKPCMD: {
+			pmKpCmd *kpCmdPtr;
+			unsigned char *cp;
 
-		kpCmdPtr = (pmKpCmd *)data;
-		if (kpCmdPtr->nbytes == 0)
-			kpCmdPtr->cmd |= 0x80;
-		if (!fp->GraphicsOpen)
-			kpCmdPtr->cmd |= 1;
-		(*fp->KBDPutc)(fp->kbddev, (int)kpCmdPtr->cmd);
-		cp = &kpCmdPtr->par[0];
-		for (; kpCmdPtr->nbytes > 0; cp++, kpCmdPtr->nbytes--) {
-			if (kpCmdPtr->nbytes == 1)
-				*cp |= 0x80;
-			(*fp->KBDPutc)(fp->kbddev, (int)*cp);
+			kpCmdPtr = (pmKpCmd *) data;
+			if(kpCmdPtr->nbytes == 0)
+				kpCmdPtr->cmd |= 0x80;
+			if(!fp->GraphicsOpen)
+				kpCmdPtr->cmd |= 1;
+			(*fp->KBDPutc)(fp->kbddev, (int) kpCmdPtr->cmd);
+			cp = &kpCmdPtr->par[0];
+			for(; kpCmdPtr->nbytes > 0; cp++, kpCmdPtr->nbytes--) {
+				if(kpCmdPtr->nbytes == 1)
+					*cp |= 0x80;
+				(*fp->KBDPutc)(fp->kbddev, (int) *cp);
+			}
+			break;
 		}
-		break;
-	    }
 
-	case QIOCADDR:
-		*(PM_Info **)data = &fp->fbu->scrInfo;
-		break;
+		case QIOCADDR:
+			*(PM_Info **) data = &fp->fbu->scrInfo;
+			break;
 
-	case QIOWCURSOR:
-		xcfbLoadCursor((unsigned short *)data);
-		break;
+		case QIOWCURSOR:
+			xcfbLoadCursor((unsigned short *) data);
+			break;
 
-	case QIOWCURSORCOLOR:
-		xcfbCursorColor((unsigned int *)data);
-		break;
+		case QIOWCURSORCOLOR:
+			xcfbCursorColor((unsigned int *) data);
+			break;
 
-	case QIOSETCMAP:
-		xcfbLoadColorMap((ColorMap *)data);
-		break;
+		case QIOSETCMAP:
+			xcfbLoadColorMap((ColorMap *) data);
+			break;
 
-	case QIOKERNLOOP:
-		s = spltty();
-		dtopDivertXInput = xcfbKbdEvent;
-		dtopMouseEvent = xcfbMouseEvent;
-		dtopMouseButtons = xcfbMouseButtons;
-		splx(s);
-		break;
+		case QIOKERNLOOP:
+			s                = spltty();
+			dtopDivertXInput = xcfbKbdEvent;
+			dtopMouseEvent   = xcfbMouseEvent;
+			dtopMouseButtons = xcfbMouseButtons;
+			splx(s);
+			break;
 
-	case QIOKERNUNLOOP:
-		s = spltty();
-		dtopDivertXInput = (void (*)())0;
-		dtopMouseEvent = (void (*)())0;
-		dtopMouseButtons = (void (*)())0;
-		splx(s);
-		break;
+		case QIOKERNUNLOOP:
+			s                = spltty();
+			dtopDivertXInput = (void (*)()) 0;
+			dtopMouseEvent   = (void (*)()) 0;
+			dtopMouseButtons = (void (*)()) 0;
+			splx(s);
+			break;
 
-	case QIOVIDEOON:
-		xcfbRestoreCursorColor();
-		ims332_video_on();
-		break;
+		case QIOVIDEOON:
+			xcfbRestoreCursorColor();
+			ims332_video_on();
+			break;
 
-	case QIOVIDEOOFF:
-		ims332_video_off();
-		break;
+		case QIOVIDEOOFF:
+			ims332_video_off();
+			break;
 
-	default:
-		printf("xcfb0: Unknown ioctl command %x\n", cmd);
-		return (EINVAL);
+		default:
+			printf("xcfb0: Unknown ioctl command %x\n", cmd);
+			return (EINVAL);
 	}
 	return (0);
 }
@@ -319,102 +320,99 @@ xcfbioctl(dev, cmd, data, flag, p)
  */
 /*ARGSUSED*/
 xcfbmap(dev, off, prot)
-	dev_t dev;
+        dev_t dev;
 {
 	int len;
 
-	len = pmax_round_page(((vm_offset_t)&xcfbu & PGOFSET) + sizeof(xcfbu));
-	if (off < len)
+	len = pmax_round_page(((vm_offset_t) &xcfbu & PGOFSET) + sizeof(xcfbu));
+	if(off < len)
 		return pmax_btop(MACH_CACHED_TO_PHYS(&xcfbu) + off);
 	off -= len;
-	if (off >= xcfbfb.fr_size)
+	if(off >= xcfbfb.fr_size)
 		return (-1);
 	return pmax_btop(MACH_UNCACHED_TO_PHYS(xcfbfb.fr_addr) + off);
 }
 
 xcfbselect(dev, flag, p)
-	dev_t dev;
-	int flag;
-	struct proc *p;
+        dev_t dev;
+int flag;
+struct proc *p;
 {
 	struct pmax_fb *fp = &xcfbfb;
 
-	switch (flag) {
-	case FREAD:
-		if (fp->fbu->scrInfo.qe.eHead != fp->fbu->scrInfo.qe.eTail)
-			return (1);
-		selrecord(p, &fp->selp);
-		break;
+	switch(flag) {
+		case FREAD:
+			if(fp->fbu->scrInfo.qe.eHead != fp->fbu->scrInfo.qe.eTail)
+				return (1);
+			selrecord(p, &fp->selp);
+			break;
 	}
 
 	return (0);
 }
 
-static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
+static u_char cursor_RGB[6]; /* cursor color 2 & 3 */
 
 /*
  *	Routines for the Inmos IMS-G332 Colour video controller
  * 	Author: Alessandro Forin, Carnegie Mellon University
  */
 static u_int
-ims332_read_register(regno)
-{
-	register u_char *regs = (u_char *)IMS332_ADDRESS;
+ims332_read_register(regno) {
+	register u_char *regs = (u_char *) IMS332_ADDRESS;
 	unsigned char *rptr;
 	register u_int val, v1;
 
 	/* spec sez: */
 	rptr = regs + 0x80000 + (regno << 4);
-	val = *((volatile u_short *) rptr );
-	v1  = *((volatile u_short *) regs );
+	val  = *((volatile u_short *) rptr);
+	v1   = *((volatile u_short *) regs);
 
 	return (val & 0xffff) | ((v1 & 0xff00) << 8);
 }
 
 static void
-ims332_write_register(regno, val)
-	register unsigned int val;
+        ims332_write_register(regno, val) register unsigned int val;
 {
-	register u_char *regs = (u_char *)IMS332_ADDRESS;
+	register u_char *regs = (u_char *) IMS332_ADDRESS;
 	u_char *wptr;
 
 	/* spec sez: */
-	wptr = regs + 0xa0000 + (regno << 4);
-	*((volatile u_int *)(regs)) = (val >> 8) & 0xff00;
-	*((volatile u_short *)(wptr)) = val;
+	wptr                           = regs + 0xa0000 + (regno << 4);
+	*((volatile u_int *) (regs))   = (val >> 8) & 0xff00;
+	*((volatile u_short *) (wptr)) = val;
 }
 
-#define	assert_ims332_reset_bit(r)	*r &= ~0x40
-#define	deassert_ims332_reset_bit(r)	*r |=  0x40
+#define assert_ims332_reset_bit(r) *r &= ~0x40
+#define deassert_ims332_reset_bit(r) *r |= 0x40
 
 /*
  * Color map
  */
 static void
-xcfbLoadColorMap(ptr)
-	ColorMap *ptr;
+        xcfbLoadColorMap(ptr)
+                ColorMap *ptr;
 {
 	register int i;
 
-	if (ptr->index > 256)
+	if(ptr->index > 256)
 		return;
 	ims332_load_colormap_entry(ptr->index, ptr);
 }
 
 static void
-ims332_load_colormap_entry(entry, map)
-	ColorMap *map;
+        ims332_load_colormap_entry(entry, map)
+                ColorMap *map;
 {
 	/* ?? stop VTG */
 	ims332_write_register(IMS332_REG_LUT_BASE + (entry & 0xff),
-			      (map->Entry.blue << 16) |
-			      (map->Entry.green << 8) |
-			      (map->Entry.red));
+	                      (map->Entry.blue << 16) |
+	                              (map->Entry.green << 8) |
+	                              (map->Entry.red));
 }
 
 static void
-xcfbInitColorMap()
-{
+xcfbInitColorMap() {
 	register int i;
 	ColorMap m;
 
@@ -422,11 +420,11 @@ xcfbInitColorMap()
 	ims332_load_colormap_entry(0, &m);
 
 	m.Entry.red = m.Entry.green = m.Entry.blue = 0xff;
-	for (i = 1; i < 256; i++)
+	for(i = 1; i < 256; i++)
 		ims332_load_colormap_entry(i, &m);
 
-	for (i = 0; i < 3; i++) {
-		cursor_RGB[i] = 0x00;
+	for(i = 0; i < 3; i++) {
+		cursor_RGB[i]     = 0x00;
 		cursor_RGB[i + 3] = 0xff;
 	}
 	xcfbRestoreCursorColor();
@@ -441,16 +439,15 @@ xcfbInitColorMap()
  * it, sigh.
  */
 static struct {
-	u_int	save;
-	int	off;
+	u_int save;
+	int off;
 } xcfb_vstate;
 
 static void
-ims332_video_off()
-{
+ims332_video_off() {
 	register u_int csr;
 
-	if (xcfb_vstate.off)
+	if(xcfb_vstate.off)
 		return;
 
 	xcfb_vstate.save = ims332_read_register(IMS332_REG_LUT_BASE);
@@ -468,11 +465,10 @@ ims332_video_off()
 }
 
 static void
-ims332_video_on()
-{
+ims332_video_on() {
 	register u_int csr;
 
-	if (!xcfb_vstate.off)
+	if(!xcfb_vstate.off)
 		return;
 
 	ims332_write_register(IMS332_REG_LUT_BASE, xcfb_vstate.save);
@@ -491,38 +487,37 @@ ims332_video_on()
  * Cursor
  */
 void
-xcfbPosCursor(x, y)
-	register int x, y;
+        xcfbPosCursor(x, y) register int x,
+        y;
 {
 	register struct pmax_fb *fp = &xcfbfb;
 
-	if (y < fp->fbu->scrInfo.min_cur_y || y > fp->fbu->scrInfo.max_cur_y)
+	if(y < fp->fbu->scrInfo.min_cur_y || y > fp->fbu->scrInfo.max_cur_y)
 		y = fp->fbu->scrInfo.max_cur_y;
-	if (x < fp->fbu->scrInfo.min_cur_x || x > fp->fbu->scrInfo.max_cur_x)
+	if(x < fp->fbu->scrInfo.min_cur_x || x > fp->fbu->scrInfo.max_cur_x)
 		x = fp->fbu->scrInfo.max_cur_x;
-	fp->fbu->scrInfo.cursor.x = x;		/* keep track of real cursor */
-	fp->fbu->scrInfo.cursor.y = y;		/* position, indep. of mouse */
+	fp->fbu->scrInfo.cursor.x = x; /* keep track of real cursor */
+	fp->fbu->scrInfo.cursor.y = y; /* position, indep. of mouse */
 	ims332_write_register(IMS332_REG_CURSOR_LOC,
-		((x & 0xfff) << 12) | (y & 0xfff));
+	                      ((x & 0xfff) << 12) | (y & 0xfff));
 }
 
 /*
  * xcfbRestoreCursorColor
  */
 static void
-xcfbRestoreCursorColor()
-{
+xcfbRestoreCursorColor() {
 
 	/* Bg is color[0], Fg is color[1] */
 	ims332_write_register(IMS332_REG_CURSOR_LUT_0,
-			      (cursor_RGB[2] << 16) |
-			      (cursor_RGB[1] << 8) |
-			      (cursor_RGB[0]));
+	                      (cursor_RGB[2] << 16) |
+	                              (cursor_RGB[1] << 8) |
+	                              (cursor_RGB[0]));
 	ims332_write_register(IMS332_REG_CURSOR_LUT_1, 0x7f0000);
 	ims332_write_register(IMS332_REG_CURSOR_LUT_2,
-			      (cursor_RGB[5] << 16) |
-			      (cursor_RGB[4] << 8) |
-			      (cursor_RGB[3]));
+	                      (cursor_RGB[5] << 16) |
+	                              (cursor_RGB[4] << 8) |
+	                              (cursor_RGB[3]));
 }
 
 /*
@@ -541,20 +536,19 @@ xcfbRestoreCursorColor()
  * ----------------------------------------------------------------------------
  */
 static void
-xcfbCursorColor(color)
-	unsigned int color[];
+        xcfbCursorColor(color) unsigned int color[];
 {
 	register int i, j;
 
-	for (i = 0; i < 6; i++)
-		cursor_RGB[i] = (u_char)(color[i] >> 8);
+	for(i = 0; i < 6; i++)
+		cursor_RGB[i] = (u_char) (color[i] >> 8);
 
 	xcfbRestoreCursorColor();
 }
 
 static void
-xcfbLoadCursor(cursor)
-	u_short *cursor;
+        xcfbLoadCursor(cursor)
+                u_short *cursor;
 {
 	register int i, j, k, pos;
 	register u_short ap, bp, out;
@@ -566,16 +560,16 @@ xcfbLoadCursor(cursor)
 	 * is not a pmax display.
 	 */
 	pos = 0;
-	for (k = 0; k < 16; k++) {
+	for(k = 0; k < 16; k++) {
 		ap = *cursor;
 		bp = *(cursor + 16);
-		j = 0;
-		while (j < 2) {
+		j  = 0;
+		while(j < 2) {
 			out = 0;
-			for (i = 0; i < 8; i++) {
+			for(i = 0; i < 8; i++) {
 				out = ((out >> 2) & 0x3fff) |
-					((ap & 0x1) << 15) |
-					((bp & 0x1) << 14);
+				      ((ap & 0x1) << 15) |
+				      ((bp & 0x1) << 14);
 				ap >>= 1;
 				bp >>= 1;
 			}
@@ -583,14 +577,14 @@ xcfbLoadCursor(cursor)
 			pos++;
 			j++;
 		}
-		while (j < 8) {
+		while(j < 8) {
 			ims332_write_register(IMS332_REG_CURSOR_RAM + pos, 0);
 			pos++;
 			j++;
 		}
 		cursor++;
 	}
-	while (pos < 512) {
+	while(pos < 512) {
 		ims332_write_register(IMS332_REG_CURSOR_RAM + pos, 0);
 		pos++;
 	}
@@ -599,10 +593,8 @@ xcfbLoadCursor(cursor)
 /*
  * Initialization
  */
-int
-xcfbinit()
-{
-	register u_int *reset = (u_int *)IMS332_RESET_ADDRESS;
+int xcfbinit() {
+	register u_int *reset       = (u_int *) IMS332_RESET_ADDRESS;
 	register struct pmax_fb *fp = &xcfbfb;
 
 	fp->isMono = 0;
@@ -613,24 +605,24 @@ xcfbinit()
 	 * to blow away the data cache whenever it updates the screen, so..
 	 */
 	fp->fr_addr = (char *)
-		MACH_PHYS_TO_UNCACHED(XINE_PHYS_CFB_START + VRAM_OFFSET);
+	        MACH_PHYS_TO_UNCACHED(XINE_PHYS_CFB_START + VRAM_OFFSET);
 	fp->fr_size = 0x100000;
 	/*
 	 * Must be in Uncached space since the fbuaccess structure is
 	 * mapped into the user's address space uncached.
 	 */
 	fp->fbu = (struct fbuaccess *)
-		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&xcfbu));
+	        MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&xcfbu));
 	fp->posCursor = xcfbPosCursor;
-	fp->KBDPutc = dtopKBDPutc;
-	fp->kbddev = makedev(DTOPDEV, DTOPKBD_PORT);
+	fp->KBDPutc   = dtopKBDPutc;
+	fp->kbddev    = makedev(DTOPDEV, DTOPKBD_PORT);
 
 	/*
 	 * Initialize the screen.
 	 */
 #ifdef notdef
 	assert_ims332_reset_bit(reset);
-	DELAY(1);	/* specs sez 50ns.. */
+	DELAY(1); /* specs sez 50ns.. */
 	deassert_ims332_reset_bit(reset);
 
 	/* CLOCKIN appears to receive a 6.25 Mhz clock --> PLL 12 for 75Mhz monitor */
@@ -638,8 +630,8 @@ xcfbinit()
 
 	/* initialize VTG */
 	ims332_write_register(IMS332_REG_CSR_A,
-				IMS332_BPP_8 | IMS332_CSR_A_DISABLE_CURSOR);
-	DELAY(50);	/* spec does not say */
+	                      IMS332_BPP_8 | IMS332_CSR_A_DISABLE_CURSOR);
+	DELAY(50); /* spec does not say */
 
 	/* datapath registers (values taken from prom's settings) */
 
@@ -664,33 +656,33 @@ xcfbinit()
 	/*
 	 * Initialize screen info.
 	 */
-	fp->fbu->scrInfo.max_row = 50;
-	fp->fbu->scrInfo.max_col = 80;
-	fp->fbu->scrInfo.max_x = 1024;
-	fp->fbu->scrInfo.max_y = 768;
-	fp->fbu->scrInfo.max_cur_x = 1008;
-	fp->fbu->scrInfo.max_cur_y = 752;
-	fp->fbu->scrInfo.version = 11;
-	fp->fbu->scrInfo.mthreshold = 4;	
-	fp->fbu->scrInfo.mscale = 2;
-	fp->fbu->scrInfo.min_cur_x = -15;
-	fp->fbu->scrInfo.min_cur_y = -15;
+	fp->fbu->scrInfo.max_row         = 50;
+	fp->fbu->scrInfo.max_col         = 80;
+	fp->fbu->scrInfo.max_x           = 1024;
+	fp->fbu->scrInfo.max_y           = 768;
+	fp->fbu->scrInfo.max_cur_x       = 1008;
+	fp->fbu->scrInfo.max_cur_y       = 752;
+	fp->fbu->scrInfo.version         = 11;
+	fp->fbu->scrInfo.mthreshold      = 4;
+	fp->fbu->scrInfo.mscale          = 2;
+	fp->fbu->scrInfo.min_cur_x       = -15;
+	fp->fbu->scrInfo.min_cur_y       = -15;
 	fp->fbu->scrInfo.qe.timestamp_ms = TO_MS(time);
-	fp->fbu->scrInfo.qe.eSize = PM_MAXEVQ;
+	fp->fbu->scrInfo.qe.eSize        = PM_MAXEVQ;
 	fp->fbu->scrInfo.qe.eHead = fp->fbu->scrInfo.qe.eTail = 0;
-	fp->fbu->scrInfo.qe.tcSize = MOTION_BUFFER_SIZE;
-	fp->fbu->scrInfo.qe.tcNext = 0;
+	fp->fbu->scrInfo.qe.tcSize                            = MOTION_BUFFER_SIZE;
+	fp->fbu->scrInfo.qe.tcNext                            = 0;
 
 	xcfbInitColorMap();
 
 	ims332_write_register(IMS332_REG_CSR_A,
-		IMS332_BPP_8 | IMS332_CSR_A_DMA_DISABLE | IMS332_CSR_A_VTG_ENABLE);
+	                      IMS332_BPP_8 | IMS332_CSR_A_DMA_DISABLE | IMS332_CSR_A_VTG_ENABLE);
 
 	xcfbScreenInit();
 	fbScroll(fp);
 
 	fp->initialized = 1;
-	if (cn_tab.cn_fb == (struct pmax_fb *)0)
+	if(cn_tab.cn_fb == (struct pmax_fb *) 0)
 		cn_tab.cn_fb = fp;
 	return (1);
 }
@@ -711,8 +703,7 @@ xcfbinit()
  * ----------------------------------------------------------------------------
  */
 static void
-xcfbScreenInit()
-{
+xcfbScreenInit() {
 	register struct pmax_fb *fp = &xcfbfb;
 
 	/*
@@ -734,22 +725,21 @@ xcfbScreenInit()
  * xcfb keyboard and mouse input. Just punt to the generic ones in fb.c
  */
 void
-xcfbKbdEvent(ch)
-	int ch;
+        xcfbKbdEvent(ch) int ch;
 {
 	fbKbdEvent(ch, &xcfbfb);
 }
 
 void
-xcfbMouseEvent(newRepPtr)
-	MouseReport *newRepPtr;
+        xcfbMouseEvent(newRepPtr)
+                MouseReport *newRepPtr;
 {
 	fbMouseEvent(newRepPtr, &xcfbfb);
 }
 
 void
-xcfbMouseButtons(newRepPtr)
-	MouseReport *newRepPtr;
+        xcfbMouseButtons(newRepPtr)
+                MouseReport *newRepPtr;
 {
 	fbMouseButtons(newRepPtr, &xcfbfb);
 }

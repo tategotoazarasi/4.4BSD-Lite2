@@ -46,15 +46,14 @@
  * exec system call
  */
 struct execve_args {
-	char	*fname;
-	char	**argp;
-	char	**envp;
+	char *fname;
+	char **argp;
+	char **envp;
 };
 /* ARGSUSED */
-execve(a1, a2, a3)
-	struct proc *a1;
-	struct execve_args *a2;
-	int *a3;
+execve(a1, a2, a3) struct proc *a1;
+struct execve_args *a2;
+int *a3;
 {
 
 	/*

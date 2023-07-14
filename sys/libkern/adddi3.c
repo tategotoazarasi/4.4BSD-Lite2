@@ -48,12 +48,12 @@ static char sccsid[] = "@(#)adddi3.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __adddi3(a, b)
-	quad_t a, b;
+quad_t a, b;
 {
 	union uu aa, bb, sum;
 
-	aa.q = a;
-	bb.q = b;
+	aa.q      = a;
+	bb.q      = b;
 	sum.ul[L] = aa.ul[L] + bb.ul[L];
 	sum.ul[H] = aa.ul[H] + bb.ul[H] + (sum.ul[L] < bb.ul[L]);
 	return (sum.q);

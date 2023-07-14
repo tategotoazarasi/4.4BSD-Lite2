@@ -40,7 +40,7 @@
 
 char *
 strcpy(s1, s2)
-	char *s1, *s2;
+char *s1, *s2;
 {
 	return (callv->strcpy(s1, s2));
 }

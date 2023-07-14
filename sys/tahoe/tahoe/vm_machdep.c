@@ -52,16 +52,15 @@
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
-setredzone(pte, vaddr)
-	register struct pte *pte;
-	caddr_t vaddr;
+setredzone(pte, vaddr) register struct pte *pte;
+caddr_t vaddr;
 {
 
-	pte += (sizeof (struct user) + NBPG - 1) / NBPG;
-	*(int *)pte &= ~PG_PROT;
-	*(int *)pte |= PG_URKR;
-	if (vaddr)
-		mtpr(TBIS, vaddr + sizeof (struct user) + NBPG - 1);
+	pte += (sizeof(struct user) + NBPG - 1) / NBPG;
+	*(int *) pte &= ~PG_PROT;
+	*(int *) pte |= PG_URKR;
+	if(vaddr)
+		mtpr(TBIS, vaddr + sizeof(struct user) + NBPG - 1);
 }
 
 /*
@@ -69,37 +68,35 @@ setredzone(pte, vaddr)
  * NB - Check data and data growth separately as they may overflow 
  * when summed together.
  */
-chksize(ts, ids, uds, ss)
-	register unsigned ts, ids, uds, ss;
+chksize(ts, ids, uds, ss) register unsigned ts, ids, uds, ss;
 {
 	extern unsigned maxtsize;
 
-	if (ctob(ts) > maxtsize ||
-	    ctob(ids) > u.u_rlimit[RLIMIT_DATA].rlim_cur ||
-	    ctob(uds) > u.u_rlimit[RLIMIT_DATA].rlim_cur ||
-	    ctob(ids + uds) > u.u_rlimit[RLIMIT_DATA].rlim_cur ||
-	    ctob(ss) > u.u_rlimit[RLIMIT_STACK].rlim_cur) {
+	if(ctob(ts) > maxtsize ||
+	   ctob(ids) > u.u_rlimit[RLIMIT_DATA].rlim_cur ||
+	   ctob(uds) > u.u_rlimit[RLIMIT_DATA].rlim_cur ||
+	   ctob(ids + uds) > u.u_rlimit[RLIMIT_DATA].rlim_cur ||
+	   ctob(ss) > u.u_rlimit[RLIMIT_STACK].rlim_cur) {
 		return (ENOMEM);
 	}
 	return (0);
 }
 
 /*ARGSUSED*/
-newptes(pte, v, size)
-	register struct pte *pte;
-	u_int v;
-	register int size;
+newptes(pte, v, size) register struct pte *pte;
+u_int v;
+register int size;
 {
 	register caddr_t a = ptob(v);
 
 #ifdef lint
 	pte = pte;
 #endif
-	if (size >= 8) {
+	if(size >= 8) {
 		mtpr(TBIA, 0);
 		return;
 	}
-	while (size > 0) {
+	while(size > 0) {
 		mtpr(TBIS, a);
 		a += NBPG;
 		size--;
@@ -112,8 +109,8 @@ newptes(pte, v, size)
  * affect virtual memory mapping of current process.
  */
 chgprot(addr, tprot)
-	caddr_t addr;
-	long tprot;
+        caddr_t addr;
+long tprot;
 {
 	unsigned v;
 	int tp;
@@ -121,29 +118,28 @@ chgprot(addr, tprot)
 	register struct cmap *c;
 
 	v = clbase(btop(addr));
-	if (!isatsv(u.u_procp, v))
+	if(!isatsv(u.u_procp, v))
 		return (EFAULT);
-	tp = vtotp(u.u_procp, v);
+	tp  = vtotp(u.u_procp, v);
 	pte = tptopte(u.u_procp, tp);
-	if (pte->pg_fod == 0 && pte->pg_pfnum) {
+	if(pte->pg_fod == 0 && pte->pg_pfnum) {
 		c = &cmap[pgtocm(pte->pg_pfnum)];
-		if (c->c_blkno)
-			munhash(c->c_vp, (daddr_t)(u_long)c->c_blkno);
+		if(c->c_blkno)
+			munhash(c->c_vp, (daddr_t) (u_long) c->c_blkno);
 	}
-	*(int *)pte &= ~PG_PROT;
-	*(int *)pte |= tprot;
+	*(int *) pte &= ~PG_PROT;
+	*(int *) pte |= tprot;
 	distcl(pte);
 	tbiscl(v);
 	return (0);
 }
 
-settprot(tprot)
-	long tprot;
+settprot(tprot) long tprot;
 {
 	register int *ptaddr, i;
 
-	ptaddr = (int *)mfpr(P0BR);
-	for (i = 0; i < u.u_tsize; i++) {
+	ptaddr = (int *) mfpr(P0BR);
+	for(i = 0; i < u.u_tsize; i++) {
 		ptaddr[i] &= ~PG_PROT;
 		ptaddr[i] |= tprot;
 	}
@@ -155,30 +151,30 @@ settprot(tprot)
  * Rest are machine-dependent
  */
 getmemc(addr)
-	caddr_t addr;
+        caddr_t addr;
 {
 	register int c;
 	struct pte savemap;
 
-	savemap = mmap[0];
-	*(int *)mmap = PG_V | PG_KR | btop(addr);
+	savemap       = mmap[0];
+	*(int *) mmap = PG_V | PG_KR | btop(addr);
 	mtpr(TBIS, vmmap);
-	uncache(&vmmap[(int)addr & PGOFSET]);
-	c = *(char *)&vmmap[(int)addr & PGOFSET];
+	uncache(&vmmap[(int) addr & PGOFSET]);
+	c       = *(char *) &vmmap[(int) addr & PGOFSET];
 	mmap[0] = savemap;
 	mtpr(TBIS, vmmap);
 	return (c & 0377);
 }
 
 putmemc(addr, val)
-	caddr_t addr;
+        caddr_t addr;
 {
 	struct pte savemap;
 
-	savemap = mmap[0];
-	*(int *)mmap = PG_V | PG_KW | btop(addr);
+	savemap       = mmap[0];
+	*(int *) mmap = PG_V | PG_KW | btop(addr);
 	mtpr(TBIS, vmmap);
-	*(char *)&vmmap[(int)addr & PGOFSET] = val;
+	*(char *) &vmmap[(int) addr & PGOFSET] = val;
 
 	mtpr(PADC, 0);
 	mtpr(PACC, 0);
@@ -193,22 +189,21 @@ putmemc(addr, val)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
-pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
+pagemove(from, to, size) register caddr_t from, to;
+int size;
 {
 	register struct pte *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if(size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	while (size > 0) {
-		*tpte++ = *fpte;
-		*(int *)fpte++ = 0;
+	while(size > 0) {
+		*tpte++         = *fpte;
+		*(int *) fpte++ = 0;
 		mtpr(TBIS, from);
 		mtpr(TBIS, to);
-		mtpr(P1DC, to);		/* purge !! */
+		mtpr(P1DC, to); /* purge !! */
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
@@ -233,23 +228,22 @@ pagemove(from, to, size)
  * which is just the reciprocal of the 1'st invariant.
  * Equivalent invariants hold for the data key arrays.
  */
-struct	keystats ckeystats = { NCKEY - 1 };
-struct	keystats dkeystats = { NDKEY - 1 };
+struct keystats ckeystats = {NCKEY - 1};
+struct keystats dkeystats = {NDKEY - 1};
 
 /* 
  * Release a code key.
  */
-ckeyrelease(key)
-	int key;
+ckeyrelease(key) int key;
 {
 	register int s;
 
 	s = spl8();
-	if (--ckey_cnt[key] < 0) {
+	if(--ckey_cnt[key] < 0) {
 		printf("ckeyrelease: key = %d\n", key);
 		ckey_cnt[key] = 0;
 	}
-	if (ckey_cnt[key] == 0)
+	if(ckey_cnt[key] == 0)
 		ckeystats.ks_dirty++;
 	splx(s);
 }
@@ -257,17 +251,16 @@ ckeyrelease(key)
 /* 
  * Release a data key.
  */
-dkeyrelease(key)
-	int key;
+dkeyrelease(key) int key;
 {
 	register int s;
 
 	s = spl8();
-	if (--dkey_cnt[key] != 0) {
+	if(--dkey_cnt[key] != 0) {
 		printf("dkeyrelease: key = %d\n", key);
 		dkey_cnt[key] = 0;
 	}
-	splx(s);	
+	splx(s);
 	dkeystats.ks_dirty++;
 }
 
@@ -275,21 +268,20 @@ dkeyrelease(key)
  * Invalidate the data cache for a process
  * by exchanging cache keys.
  */
-dkeyinval(p)
-	register struct proc *p;
+dkeyinval(p) register struct proc *p;
 {
 	int s;
 
 	dkeystats.ks_inval++;
 	s = spl8();
-	if (--dkey_cnt[p->p_dkey] != 0)
+	if(--dkey_cnt[p->p_dkey] != 0)
 		dkey_cnt[p->p_dkey] = 0;
-	if (p == u.u_procp && !noproc) {
+	if(p == u.u_procp && !noproc) {
 		p->p_dkey = getdatakey();
 		mtpr(DCK, p->p_dkey);
 	} else
 		p->p_dkey = 0;
-	splx(s);	
+	splx(s);
 }
 
 /* 
@@ -304,20 +296,19 @@ dkeyinval(p)
  * 3) Free the keys from all processes not sharing keys.
  * 4) Free the keys from all processes.
  */
-getcodekey()
-{
+getcodekey() {
 	register int i, s, freekey;
 	register struct proc *p;
-	int desparate = 0;
+	int desparate      = 0;
 	static int lastkey = MAXCKEY;
 
 	ckeystats.ks_allocs++;
-	s = spl8();
+	s       = spl8();
 	freekey = 0;
-	for (i = lastkey + 1; ; i++) {
-		if (i > MAXCKEY)
+	for(i = lastkey + 1;; i++) {
+		if(i > MAXCKEY)
 			i = 1;
-		if ((int)ckey_cache[i] == 0) {	/* free key, take it */
+		if((int) ckey_cache[i] == 0) { /* free key, take it */
 			ckey_cache[i] = 1, ckey_cnt[i] = 1;
 			splx(s);
 			ckeystats.ks_allocfree++;
@@ -325,25 +316,25 @@ getcodekey()
 			lastkey = i;
 			return (i);
 		}
-		if (ckey_cnt[i] == 0)		/* save for potential use */
+		if(ckey_cnt[i] == 0) /* save for potential use */
 			freekey = i;
-		if (i == lastkey)
+		if(i == lastkey)
 			break;
 	}
 	/*
 	 * All code keys were marked as being in cache.
 	 * If a key was in the cache, but not in use, grab it.
 	 */
-	if (freekey != 0) {
-purge:
+	if(freekey != 0) {
+	purge:
 		/*
 		 * If we've run out of free keys,
 		 * try and free up some other keys to avoid
 		 * future cache purges.
 		 */
 		ckey_cnt[freekey] = 1, ckey_cache[freekey] = 1;
-		for (i = 1; i <= MAXCKEY; i++)
-			if (ckey_cnt[i] == 0) {
+		for(i = 1; i <= MAXCKEY; i++)
+			if(ckey_cnt[i] == 0) {
 				ckey_cache[i] = 0;
 				ckeystats.ks_avail++;
 			}
@@ -360,20 +351,20 @@ purge:
 	 * release all keys.
 	 */
 steal:
-	for (p = allproc; p; p = p->p_next)
-		if (p->p_ckey != 0 && (p->p_flag & P_SYSTEM) == 0) {
+	for(p = allproc; p; p = p->p_next)
+		if(p->p_ckey != 0 && (p->p_flag & P_SYSTEM) == 0) {
 			i = p->p_ckey;
-			if (ckey_cnt[i] == 1 || desparate) {
+			if(ckey_cnt[i] == 1 || desparate) {
 				p->p_ckey = 0;
-				if (--ckey_cnt[i] == 0) {
+				if(--ckey_cnt[i] == 0) {
 					freekey = i;
-					if (p->p_textp)
+					if(p->p_textp)
 						p->p_textp->x_ckey = 0;
 				}
 			}
 		}
 
-	if (freekey) {
+	if(freekey) {
 		ckeystats.ks_taken++;
 		goto purge;
 	} else {
@@ -393,20 +384,19 @@ steal:
  * 3) If all of them are allocated, free all process' keys
  *    and let them reclaim then as they run.
  */
-getdatakey()
-{
+getdatakey() {
 	register int i, freekey;
 	register struct proc *p;
 	int s;
 	static int lastkey = MAXDKEY;
 
 	dkeystats.ks_allocs++;
-	s = spl8();
+	s       = spl8();
 	freekey = 0;
-	for (i = lastkey + 1; ; i++) {
-		if (i > MAXDKEY)
+	for(i = lastkey + 1;; i++) {
+		if(i > MAXDKEY)
 			i = 1;
-		if ((int)dkey_cache[i] == 0) {	/* free key, take it */
+		if((int) dkey_cache[i] == 0) { /* free key, take it */
 			dkey_cache[i] = 1, dkey_cnt[i] = 1;
 			splx(s);
 			dkeystats.ks_allocfree++;
@@ -414,20 +404,20 @@ getdatakey()
 			lastkey = i;
 			return (i);
 		}
-		if (dkey_cnt[i] == 0)
+		if(dkey_cnt[i] == 0)
 			freekey = i;
-		if (i == lastkey)
+		if(i == lastkey)
 			break;
 	}
 purge:
-	if (freekey) {
+	if(freekey) {
 		/*
 		 * Try and free up some more keys to avoid
 		 * future allocations causing a cache purge.
 		 */
 		dkey_cnt[freekey] = 1, dkey_cache[freekey] = 1;
-		for (i = 1; i <= MAXDKEY; i++)
-			if (dkey_cnt[i] == 0) {
+		for(i = 1; i <= MAXDKEY; i++)
+			if(dkey_cnt[i] == 0) {
 				dkey_cache[i] = 0;
 				dkeystats.ks_avail++;
 			}
@@ -443,26 +433,25 @@ purge:
 	 * May as well take them all, so we get them
 	 * from all of the idle procs.
 	 */
-	for (p = allproc; p; p = p->p_next)
-		if (p->p_dkey != 0 && (p->p_flag & P_SYSTEM) == 0) {
-			freekey = p->p_dkey;
+	for(p = allproc; p; p = p->p_next)
+		if(p->p_dkey != 0 && (p->p_flag & P_SYSTEM) == 0) {
+			freekey           = p->p_dkey;
 			dkey_cnt[freekey] = 0;
-			p->p_dkey = 0;
+			p->p_dkey         = 0;
 		}
 	dkeystats.ks_taken++;
 	goto purge;
 }
 
 /*VARGARGS1*/
-vtoph(p, v)
-	register struct proc *p;
-	unsigned v;
+vtoph(p, v) register struct proc *p;
+unsigned v;
 {
 	register struct pte *pte;
 	register unsigned pg;
 
 	pg = btop(v);
-	if (pg >= BTOPKERNBASE)
+	if(pg >= BTOPKERNBASE)
 		pte = &Sysmap[pg - BTOPKERNBASE];
 	else
 		pte = vtopte(p, pg);

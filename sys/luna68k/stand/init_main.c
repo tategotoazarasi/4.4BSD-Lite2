@@ -49,46 +49,45 @@ extern int dipsw1, dipsw2;
 
 extern char default_file[];
 
-#define	VERS_LOCAL	"Phase-31"
+#define VERS_LOCAL "Phase-31"
 
 extern int howto;
 extern int devtype;
-       int nplane;
+int nplane;
 
 /* KIFF */
 
-struct KernInter  KIFF;
+struct KernInter KIFF;
 struct KernInter *kiff = &KIFF;
 
 /* for command parser */
 
 #define BUFFSIZE 100
-#define MAXARGS  30
+#define MAXARGS 30
 
 char buffer[BUFFSIZE];
 
-int   argc;
+int argc;
 char *argv[MAXARGS];
 
-char  prompt[16];
+char prompt[16];
 
-main()
-{
+main() {
 	int i, status;
 	int *p;
 
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	cpuspeed = MHZ_25;				/* for DELAY() macro */
+	cpuspeed = MHZ_25; /* for DELAY() macro */
 
-	nplane   = get_plane_numbers();
+	nplane = get_plane_numbers();
 
 	cninit();
 
 	printf("\n\nStinger ver 0.0 [%s]\n\n", VERS_LOCAL);
 
-	kiff->maxaddr = (caddr_t) (ROM_memsize -1);
+	kiff->maxaddr = (caddr_t) (ROM_memsize - 1);
 	kiff->dipsw   = ~((dipsw2 << 8) | dipsw1) & 0xFFFF;
 	kiff->plane   = nplane;
 
@@ -99,9 +98,9 @@ main()
 	printf("\n");
 
 	bcopy(VERS_LOCAL, prompt, sizeof(VERS_LOCAL));
-	prompt[sizeof(VERS_LOCAL) - 1]	= '>';
-	prompt[sizeof(VERS_LOCAL)]	= ' ';
-	prompt[sizeof(VERS_LOCAL) + 1]	= 0;
+	prompt[sizeof(VERS_LOCAL) - 1] = '>';
+	prompt[sizeof(VERS_LOCAL)]     = ' ';
+	prompt[sizeof(VERS_LOCAL) + 1] = 0;
 
 	/*
 	 * IO configuration
@@ -113,11 +112,11 @@ main()
 
 	howto = reorder_dipsw(dipsw2);
 
-	if ((howto & 0xFE) == 0) {
+	if((howto & 0xFE) == 0) {
 		printf("auto-boot %s\n", default_file);
-		
+
 		i = open(default_file, 0);
-		if (i >= 0) {
+		if(i >= 0) {
 			bootunix(howto, devtype, i);
 			close(i);
 		}
@@ -129,11 +128,11 @@ main()
 
 	do {
 		bzero(buffer, BUFFSIZE);
-		if (getline(prompt, buffer) > 0) {
-			argc = getargs(buffer, argv, sizeof(argv)/sizeof(char *));
+		if(getline(prompt, buffer) > 0) {
+			argc = getargs(buffer, argv, sizeof(argv) / sizeof(char *));
 
 			status = parse(argc, argv);
-			if (status == ST_NOTFOUND)
+			if(status == ST_NOTFOUND)
 				printf("Command \"%s\" is not found !!\n", argv[0]);
 		}
 	} while(status != ST_EXIT);
@@ -141,35 +140,32 @@ main()
 	exit();
 }
 
-int
-get_plane_numbers()
-{
+int get_plane_numbers() {
 	register int r = ROM_plane;
 	register int n = 0;
 
-	for (; r ; r >>= 1)
-		if (r & 0x1)
+	for(; r; r >>= 1)
+		if(r & 0x1)
 			n++;
 
-	return(n);
+	return (n);
 }
 
-int
-reorder_dipsw(dipsw)
-	int dipsw;
+int reorder_dipsw(dipsw)
+int dipsw;
 {
 	int i, sw = 0;
 
-	for (i = 0; i < 8; i++) {
-		if ((dipsw & 0x01) == 0)
+	for(i = 0; i < 8; i++) {
+		if((dipsw & 0x01) == 0)
 			sw += 1;
 
-		if (i == 7)
+		if(i == 7)
 			break;
 
 		sw <<= 1;
 		dipsw >>= 1;
 	}
 
-	return(sw);
+	return (sw);
 }

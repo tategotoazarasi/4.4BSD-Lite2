@@ -33,7 +33,7 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
+        "@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
@@ -58,13 +58,12 @@ static char sccsid[] = "@(#)genassym.c	7.8 (Berkeley) 9/23/93";
 
 #include "../vba/vbaparam.h"
 
-main()
-{
-	register struct user *u = (struct user *)0;
-	register struct proc *p = (struct proc *)0;
-	register struct vmmeter *vm = (struct vmmeter *)0;
-	register struct pcb *pcb = (struct pcb *)0;
-	register struct scb *scb = (struct scb *)0;
+main() {
+	register struct user *u     = (struct user *) 0;
+	register struct proc *p     = (struct proc *) 0;
+	register struct vmmeter *vm = (struct vmmeter *) 0;
+	register struct pcb *pcb    = (struct pcb *) 0;
+	register struct scb *scb    = (struct scb *) 0;
 
 	printf("#ifdef LOCORE\n");
 	printf("#define\tU_PROCP %d\n", &u->u_procp);
@@ -101,7 +100,7 @@ main()
 	printf("#define\tSYSPTSIZE %d\n", SYSPTSIZE);
 	printf("#define\tUSRPTSIZE %d\n", USRPTSIZE);
 	printf("#define\tVBIOSIZE %d\n", VBIOSIZE);
-	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
+	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof(struct msgbuf)));
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tNKMEMCLUSTERS %d\n", NKMEMCLUSTERS);
 #ifdef SYSVSHM
@@ -142,7 +141,7 @@ main()
 	printf("#define\tPCB_SIGC %d\n", pcb->pcb_sigc);
 	printf("#define\tSCB_DOADUMP %d\n", &scb->scb_doadump);
 	printf("#define\tSCB_BUSERR %d\n", &scb->scb_buserr);
-#define	SCB_DEVBASE	(((int)((struct scb *)0)->scb_devint)/sizeof (int))
+#define SCB_DEVBASE (((int) ((struct scb *) 0)->scb_devint) / sizeof(int))
 	printf("#define\tSCB_DEVBASE %d\n", SCB_DEVBASE);
 	printf("#endif\n");
 	exit(0);

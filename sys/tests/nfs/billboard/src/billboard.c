@@ -66,7 +66,7 @@
  * Manifest Constants
  ******************************************************************************
  */
-#define	_CONTROL_STR_SIZE	5	/* sscanf control string size */
+#define _CONTROL_STR_SIZE 5 /* sscanf control string size */
 
 /*
  ******************************************************************************
@@ -74,9 +74,11 @@
  ******************************************************************************
  */
 /* print error messages */
-#define	PRINT_ERROR()		{ 	fprintf(stderr, _Usage, argv[0]);\
-					return(1);			\
-				}
+#define PRINT_ERROR()                     \
+	{                                     \
+		fprintf(stderr, _Usage, argv[0]); \
+		return (1);                       \
+	}
 
 
 /*
@@ -85,25 +87,25 @@
  ******************************************************************************
  */
 /* usage message */
-char	*_Usage=
-"Usage: %s	[-s|-u client_idenitfier server_identifier]\n\
+char *_Usage =
+        "Usage: %s	[-s|-u client_idenitfier server_identifier]\n\
            	[-a|-b client_idenitfier]\n\
            	[-c|-d server_identifier]\n\
 		[-p identifier]\n";
-			
+
 /* 
  *randomly picked salt key for password encryption 	
  * This may be modified if other algorithm is preferred 
  */
-char	*_bb_salt= "kR";
+char *_bb_salt = "kR";
 
 /*
  ******************************************************************************
  * External Declarations
  ******************************************************************************
  */
-extern char	*optarg;
-extern int	optind;
+extern char *optarg;
+extern int optind;
 
 
 /*
@@ -111,10 +113,10 @@ extern int	optind;
  * Function Declarations
  ******************************************************************************
  */
-int		main();
-static int 	_cmd_line_option();
-static void 	_interactive_option();
-static int 	_bb_get_passwd();
+int main();
+static int _cmd_line_option();
+static void _interactive_option();
+static int _bb_get_passwd();
 
 
 /*
@@ -143,13 +145,12 @@ static int 	_bb_get_passwd();
  *
  ******************************************************************************
  */
-int
-main(argc, argv)
-int	argc;
-char	*argv[];
+int main(argc, argv)
+int argc;
+char *argv[];
 {
-	if (argc > 1)
-		return(_cmd_line_option(argc, argv));
+	if(argc > 1)
+		return (_cmd_line_option(argc, argv));
 	else
 		_interactive_option();
 
@@ -182,83 +183,88 @@ char	*argv[];
  */
 static int
 _cmd_line_option(argc, argv)
-int	argc;
-char	*argv[];
+int argc;
+char *argv[];
 {
-int		option;
-BB_set_in	bb_set_in;
-BB_list_in	bb_list_in;
-BB_passwd_in	bb_passwd_in;
+	int option;
+	BB_set_in bb_set_in;
+	BB_list_in bb_list_in;
+	BB_passwd_in bb_passwd_in;
 
- 	/* initialise termination of string buffers */
-	bb_set_in.client[BB_ID_NAME_LEN-1]= bb_set_in.server[BB_ID_NAME_LEN-1]
-						= '\0';
-	bb_list_in.id[BB_ID_NAME_LEN-1]= '\0';
+	/* initialise termination of string buffers */
+	bb_set_in.client[BB_ID_NAME_LEN - 1] = bb_set_in.server[BB_ID_NAME_LEN - 1] = '\0';
+	bb_list_in.id[BB_ID_NAME_LEN - 1]                                           = '\0';
 
 	/*
 	 * parses the command line input, and make the remote procedure call
 	 */
-	if ((option= getopt(argc, argv, "s:u:a:b:c:d:p:")) != -1) {
-		switch (option) {
-		/* 
+	if((option = getopt(argc, argv, "s:u:a:b:c:d:p:")) != -1) {
+		switch(option) {
+			/*
 		 * gets client and server identifier and
 		 * calls bb_call_set_unset to handle the
 		 * remote procedure call
 		 */
-		case	's':	strncpy(bb_set_in.client, optarg, 
-					BB_ID_NAME_LEN-1);
-				strncpy(bb_set_in.server, argv[optind], 
-					BB_ID_NAME_LEN-1);	
+			case 's':
+				strncpy(bb_set_in.client, optarg,
+				        BB_ID_NAME_LEN - 1);
+				strncpy(bb_set_in.server, argv[optind],
+				        BB_ID_NAME_LEN - 1);
 				bb_call_set_unset(BB_SET, &bb_set_in);
 				break;
 
-		case	'u':	strncpy(bb_set_in.client, optarg,
-					BB_ID_NAME_LEN-1);
+			case 'u':
+				strncpy(bb_set_in.client, optarg,
+				        BB_ID_NAME_LEN - 1);
 				strncpy(bb_set_in.server, argv[optind],
-					BB_ID_NAME_LEN-1);	
+				        BB_ID_NAME_LEN - 1);
 				bb_call_set_unset(BB_UNSET, &bb_set_in);
 				break;
 
-		/* 
+			/*
 		 * gets client or server identifier and
 		 * calls bb_list to handle the remote procedure
 		 * call
 		 */
-		case	'a':	strncpy(bb_list_in.id, optarg,
-					BB_ID_NAME_LEN-1);
+			case 'a':
+				strncpy(bb_list_in.id, optarg,
+				        BB_ID_NAME_LEN - 1);
 				bb_list(BB_ALIST, &bb_list_in);
 				break;
 
-		case	'b':	strncpy(bb_list_in.id, optarg,
-					BB_ID_NAME_LEN-1);
+			case 'b':
+				strncpy(bb_list_in.id, optarg,
+				        BB_ID_NAME_LEN - 1);
 				bb_list(BB_BLIST, &bb_list_in);
 				break;
 
-		case	'c':	strncpy(bb_list_in.id, optarg,
-					BB_ID_NAME_LEN-1);
+			case 'c':
+				strncpy(bb_list_in.id, optarg,
+				        BB_ID_NAME_LEN - 1);
 				bb_list(BB_CLIST, &bb_list_in);
 				break;
 
-		case	'd':	strncpy(bb_list_in.id, optarg,
-					BB_ID_NAME_LEN-1);
+			case 'd':
+				strncpy(bb_list_in.id, optarg,
+				        BB_ID_NAME_LEN - 1);
 				bb_list(BB_DLIST, &bb_list_in);
 				break;
 
-		/* to change password */
-		case	'p':
+			/* to change password */
+			case 'p':
 				strncpy(bb_passwd_in.client, optarg,
-					BB_ID_NAME_LEN-1);
-				if (_bb_get_passwd(&bb_passwd_in) == TRUE)
+				        BB_ID_NAME_LEN - 1);
+				if(_bb_get_passwd(&bb_passwd_in) == TRUE)
 					bb_change_passwd(&bb_passwd_in);
 				break;
 
-		case	'?': 	PRINT_ERROR();
+			case '?': PRINT_ERROR();
 		}
 
 	} else
 		PRINT_ERROR();
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -283,31 +289,29 @@ BB_passwd_in	bb_passwd_in;
  *
  ******************************************************************************
  */
-static void 	
-_interactive_option()
-{
-int	option= 0;
-BB_id	client_id;
-BB_id	server_id;
-char	buffer[BB_MAX_LINE_LEN];
-char	control_str[_CONTROL_STR_SIZE];
+static void
+_interactive_option() {
+	int option = 0;
+	BB_id client_id;
+	BB_id server_id;
+	char buffer[BB_MAX_LINE_LEN];
+	char control_str[_CONTROL_STR_SIZE];
 
-BB_set_in	bb_set_in;
-BB_list_in	bb_list_in;
-BB_passwd_in	bb_passwd_in;
+	BB_set_in bb_set_in;
+	BB_list_in bb_list_in;
+	BB_passwd_in bb_passwd_in;
 
 	/* terminate the string buffers */
-	bb_set_in.client[BB_ID_NAME_LEN-1]= bb_set_in.server[BB_ID_NAME_LEN-1]
-						= '\0';
-	bb_list_in.id[BB_ID_NAME_LEN-1]= '\0';
+	bb_set_in.client[BB_ID_NAME_LEN - 1] = bb_set_in.server[BB_ID_NAME_LEN - 1] = '\0';
+	bb_list_in.id[BB_ID_NAME_LEN - 1]                                           = '\0';
 
-	sprintf(control_str, "%%%ds", BB_ID_NAME_LEN-1);
+	sprintf(control_str, "%%%ds", BB_ID_NAME_LEN - 1);
 
 	/*
 	 * requests for user input, and call the remote procedure to
 	 * handle the operation
 	 */
-	for (;;) {
+	for(;;) {
 		/* print user interface options */
 		printf("\n\
 Options:\n\
@@ -324,13 +328,13 @@ Options:\n\
 		printf("Enter option: ");
 		gets(buffer);
 		sscanf(buffer, "%d", &option);
-		switch (option) {
-		/* 
+		switch(option) {
+			/*
 		 * gets client and server identifier and
 		 * calls bb_call_set_unset to handle the
 		 * remote procedure call
 		 */
-		case	1:
+			case 1:
 				printf("Client Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_set_in.client);
@@ -340,7 +344,7 @@ Options:\n\
 				bb_call_set_unset(BB_SET, &bb_set_in);
 				break;
 
-		case	2:
+			case 2:
 				printf("Client Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_set_in.client);
@@ -350,51 +354,51 @@ Options:\n\
 				bb_call_set_unset(BB_UNSET, &bb_set_in);
 				break;
 
-		/* 
+			/*
 		 * gets client or server identifier and
 		 * calls bb_list to handle the remote procedure
 		 * call
 		 */
-		case	3:
+			case 3:
 				printf("Client Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_list_in.id);
 				bb_list(BB_ALIST, &bb_list_in);
 				break;
 
-		case	4:
+			case 4:
 				printf("Client Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_list_in.id);
 				bb_list(BB_BLIST, &bb_list_in);
 				break;
 
-		case	5:
+			case 5:
 				printf("Server Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_list_in.id);
 				bb_list(BB_CLIST, &bb_list_in);
 				break;
 
-		case	6:
+			case 6:
 				printf("Server Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_list_in.id);
 				bb_list(BB_DLIST, &bb_list_in);
 				break;
 
-		/* to change password */
-		case	7: 	
+			/* to change password */
+			case 7:
 				printf("Identifier: ");
 				gets(buffer);
 				sscanf(buffer, control_str, bb_passwd_in.client);
-				if (_bb_get_passwd(&bb_passwd_in) == TRUE)
+				if(_bb_get_passwd(&bb_passwd_in) == TRUE)
 					bb_change_passwd(&bb_passwd_in);
 				break;
 
-		case	8: 	return;
+			case 8: return;
 
-		default: 	
+			default:
 				printf("invalid option\n\n");
 				break;
 		}
@@ -428,9 +432,9 @@ Options:\n\
  */
 static bool_t
 _bb_get_passwd(bb_passwd_in_p)
-BB_passwd_in	*bb_passwd_in_p;
+BB_passwd_in *bb_passwd_in_p;
 {
-char	buffer[BB_MAX_LINE_LEN];
+	char buffer[BB_MAX_LINE_LEN];
 
 	/* initialised password buffers */
 	memset(bb_passwd_in_p->old, NUL, BB_PASSWD_LEN);
@@ -441,14 +445,13 @@ char	buffer[BB_MAX_LINE_LEN];
 	 * get old and new password, and verify the new password
 	 */
 	strncpy(bb_passwd_in_p->old, crypt(getpass("Old password:"), _bb_salt),
-		BB_PASSWD_LEN-1);
+	        BB_PASSWD_LEN - 1);
 	strcpy(buffer, getpass("New password:"));
-	if (strcmp(buffer, getpass("Retype new password: ")) != 0) {
+	if(strcmp(buffer, getpass("Retype new password: ")) != 0) {
 		printf("Mismatch - password unchanged.\n");
-		return(FALSE);
-	} else 
-		strncpy(bb_passwd_in_p->new, crypt(buffer, _bb_salt), 
-			BB_PASSWD_LEN-1);
-	return(TRUE);
+		return (FALSE);
+	} else
+		strncpy(bb_passwd_in_p->new, crypt(buffer, _bb_salt),
+		        BB_PASSWD_LEN - 1);
+	return (TRUE);
 }
-

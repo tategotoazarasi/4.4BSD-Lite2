@@ -36,15 +36,15 @@
  *	@(#)Aclr.c	7.1 (Berkeley) 12/6/90
  */
 
-#include "align.h" 
-clr(infop)	process_info *infop;
+#include "align.h"
+clr(infop) process_info *infop;
 /*
 /*	Clear operand
 /*
 /*************************************/
 {
 
-	write_back(infop, 0, operand(infop,0));
+	write_back(infop, 0, operand(infop, 0));
 	negative_0;
 	zero_1;
 	overflow_0;

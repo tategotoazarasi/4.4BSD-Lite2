@@ -35,19 +35,18 @@
 
 int eval;
 
-main(argc, argv)
-	int argc;
-	char **argv;
+main(argc, argv) int argc;
+char **argv;
 {
-	if (*++argv && **argv == '-') {
+	if(*++argv && **argv == '-') {
 		err("no options available", 0);
 		_exit(1);
 	}
-	for (eval = 0; *argv; ++argv)
-		if (mkdir(*argv, 0777) < 0)
+	for(eval = 0; *argv; ++argv)
+		if(mkdir(*argv, 0777) < 0)
 			err(*argv, 1);
 	_exit(eval);
 }
 
-#define	PROGNAME	"mkdir: "
+#define PROGNAME "mkdir: "
 #include "errfunction"

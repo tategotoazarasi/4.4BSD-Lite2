@@ -76,13 +76,12 @@ int unimpresponse = 0;
 #endif
 
 /* YP domainname */
-char	domainname[MAXHOSTNAMELEN] = "unknown";
-int	domainnamelen = 7;
+char domainname[MAXHOSTNAMELEN] = "unknown";
+int domainnamelen               = 7;
 
-notimp(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
+notimp(p, uap, retval) struct proc *p;
+void *uap;
+int *retval;
 {
 	int error = 0;
 #ifdef notdef
@@ -90,19 +89,19 @@ notimp(p, uap, retval)
 	extern char *ultrixsyscallnames[];
 
 	printf("ULTRIX %s(", ultrixsyscallnames[code]);
-	if (nargs)
-		while (nargs--)
-			printf("%x%c", *argp++, nargs? ',' : ')');
+	if(nargs)
+		while(nargs--)
+			printf("%x%c", *argp++, nargs ? ',' : ')');
 	else
 		printf(")");
 	printf("\n");
-	switch (unimpresponse) {
-	case 0:
-		error = nosys(p, uap, retval);
-		break;
-	case 1:
-		error = EINVAL;
-		break;
+	switch(unimpresponse) {
+		case 0:
+			error = nosys(p, uap, retval);
+			break;
+		case 1:
+			error = EINVAL;
+			break;
 	}
 #else
 	uprintf("ULTRIX system call %d not implemented\n", p->p_md.md_regs[V0]);
@@ -112,63 +111,60 @@ notimp(p, uap, retval)
 }
 
 struct wait3_args {
-	int	*status;
-	int	options;
-	int	rusage;
+	int *status;
+	int options;
+	int rusage;
 };
 
-ultrixwait3(p, uap, retval)
-	struct proc *p;
-	struct wait3_args *uap;
-	int *retval;
+ultrixwait3(p, uap, retval) struct proc *p;
+struct wait3_args *uap;
+int *retval;
 {
 	struct {
-		int	pid;
-		int	*status;
-		int	options;
-		struct	rusage *rusage;
-		int	compat;
+		int pid;
+		int *status;
+		int options;
+		struct rusage *rusage;
+		int compat;
 	} bsd_uap;
 
 	/* rusage pointer must be zero */
-	if (uap->rusage)
+	if(uap->rusage)
 		return (EINVAL);
-	bsd_uap.pid = WAIT_ANY;
-	bsd_uap.status = uap->status;
+	bsd_uap.pid     = WAIT_ANY;
+	bsd_uap.status  = uap->status;
 	bsd_uap.options = 0;
-	bsd_uap.rusage = 0;
-	bsd_uap.compat = 0;
+	bsd_uap.rusage  = 0;
+	bsd_uap.compat  = 0;
 	return (wait1(p, &bsd_uap, retval));
 }
 
 struct domainname_args {
-	char	*domainname;
-	u_int	len;
+	char *domainname;
+	u_int len;
 };
 
-ultrixgetdomainname(p, uap, retval)
-	struct proc *p;
-	register struct domainname_args *uap;
-	int *retval;
+ultrixgetdomainname(p, uap, retval) struct proc *p;
+register struct domainname_args *uap;
+int *retval;
 {
-	if (uap->len > domainnamelen + 1)
+	if(uap->len > domainnamelen + 1)
 		uap->len = domainnamelen + 1;
 	return (copyout(domainname, uap->domainname, uap->len));
 }
 
-ultrixsetdomainname(p, uap, retval)
-	struct proc *p;
-	register struct domainname_args *uap;
-	int *retval;
+ultrixsetdomainname(p, uap, retval) struct proc *p;
+register struct domainname_args *uap;
+int *retval;
 {
 	int error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if(error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-	if (uap->len > sizeof (domainname) - 1)
+	if(uap->len > sizeof(domainname) - 1)
 		return (EINVAL);
-	domainnamelen = uap->len;
-	error = copyin(uap->domainname, domainname, uap->len);
+	domainnamelen             = uap->len;
+	error                     = copyin(uap->domainname, domainname, uap->len);
 	domainname[domainnamelen] = 0;
 	return (error);
 }
@@ -181,72 +177,67 @@ struct getpgrp_args {
  * This is the equivalent of BSD getpgrp but with more restrictions.
  * Note we do not check the real uid or "saved" uid.
  */
-ultrixgetpgrp(cp, uap, retval)
-	struct proc *cp;
-	register struct getpgrp_args *uap;
-	int *retval;
+ultrixgetpgrp(cp, uap, retval) struct proc *cp;
+register struct getpgrp_args *uap;
+int *retval;
 {
 	register struct proc *p;
 
-	if (uap->pid == 0)
+	if(uap->pid == 0)
 		uap->pid = cp->p_pid;
 	p = pfind(uap->pid);
-	if (p == 0)
+	if(p == 0)
 		return (ESRCH);
-	if (cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
-	    !inferior(p))
+	if(cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
+	   !inferior(p))
 		return (EPERM);
 	*retval = p->p_pgid;
 	return (0);
 }
 
 struct setpgrp_args {
-	int	pid;
-	int	pgrp;
+	int pid;
+	int pgrp;
 } *uap;
 /*
  * This is the equivalent of BSD setpgrp but with more restrictions.
  * Note we do not check the real uid or "saved" uid or pgrp.
  */
-ultrixsetpgrp(p, uap, retval)
-	struct proc *p;
-	struct setpgrp_args *uap;
-	int *retval;
+ultrixsetpgrp(p, uap, retval) struct proc *p;
+struct setpgrp_args *uap;
+int *retval;
 {
 	/* empirically determined */
-	if (uap->pgrp < 0 || uap->pgrp >= 30000)
+	if(uap->pgrp < 0 || uap->pgrp >= 30000)
 		return (EINVAL);
 	return (setpgid(p, uap, retval));
 }
 
 struct sigvec_args {
-	int	signo;
-	struct	sigvec *nsv;
-	struct	sigvec *osv;
-	caddr_t	sigcode;	/* handler return address */
+	int signo;
+	struct sigvec *nsv;
+	struct sigvec *osv;
+	caddr_t sigcode; /* handler return address */
 };
 
-ultrixsigvec(p, uap, retval)
-	struct proc *p;
-	register struct sigvec_args *uap;
-	int *retval;
+ultrixsigvec(p, uap, retval) struct proc *p;
+register struct sigvec_args *uap;
+int *retval;
 {
 	return (osigvec(p, uap, retval));
 }
 
-ultrixsigcleanup(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
+ultrixsigcleanup(p, uap, retval) struct proc *p;
+void *uap;
+int *retval;
 {
 	printf("ultrixsigcleanup %s %d\n", p->p_comm, p->p_pid); /* XXX */
 	return (ENOSYS);
 }
 
-ultrixsigreturn(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
+ultrixsigreturn(p, uap, retval) struct proc *p;
+void *uap;
+int *retval;
 {
 	printf("ultrixsigreturn %s %d\n", p->p_comm, p->p_pid); /* XXX */
 	return (ENOSYS);
@@ -255,20 +246,18 @@ ultrixsigreturn(p, uap, retval)
 /*
  * Switch process from ULTRIX emulation to BSD.
  */
-ultrixtobsd(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
+ultrixtobsd(p, uap, retval) struct proc *p;
+void *uap;
+int *retval;
 {
 
 	p->p_md.md_flags &= ~MDP_ULTRIX;
 	return (0);
 }
 
-ultrixgetsysinfo(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
+ultrixgetsysinfo(p, uap, retval) struct proc *p;
+void *uap;
+int *retval;
 {
 
 	/*

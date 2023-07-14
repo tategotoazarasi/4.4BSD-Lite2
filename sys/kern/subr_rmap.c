@@ -43,11 +43,10 @@
 #include <sys/proc.h>
 
 void
-rminit(a1, a2, a3, a4, a5)
-	struct map *a1;
-	long a2, a3;
-	char *a4;
-	int a5;
+        rminit(a1, a2, a3, a4, a5) struct map *a1;
+long a2, a3;
+char *a4;
+int a5;
 {
 
 	/*
@@ -56,10 +55,9 @@ rminit(a1, a2, a3, a4, a5)
 	return;
 }
 
-long
-rmalloc(a1, a2)
-	struct map *a1;
-	long a2;
+long rmalloc(a1, a2)
+struct map *a1;
+long a2;
 {
 
 	/*
@@ -69,9 +67,8 @@ rmalloc(a1, a2)
 }
 
 void
-rmfree(a1, a2, a3)
-	struct map *a1;
-	long a2, a3;
+        rmfree(a1, a2, a3) struct map *a1;
+long a2, a3;
 {
 
 	/*

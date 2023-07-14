@@ -44,14 +44,13 @@
 #include <sys/param.h>
 #include <sys/clist.h>
 
-hilq_to_b(a1, a2, a3)
-	register struct clist *a1;
-	register char *a2;
-	int a3;
+hilq_to_b(a1, a2, a3) register struct clist *a1;
+register char *a2;
+int a3;
 {
 
 	/*
-	 * Body deleted.
-	 */
+     * Body deleted.
+     */
 	return (0);
 }

@@ -94,15 +94,15 @@ extern struct clnp_fragl *clnp_frags;
  */
 struct clnp_fragl *
 clnp_freefrags(cfh)
-register struct clnp_fragl	*cfh;	/* fragment header to delete */
+register struct clnp_fragl *cfh; /* fragment header to delete */
 {
-	struct clnp_fragl	*next = cfh->cfl_next;
-	struct clnp_frag	*cf;
+	struct clnp_fragl *next = cfh->cfl_next;
+	struct clnp_frag *cf;
 
 	/* free any frags hanging around */
 	cf = cfh->cfl_frags;
-	while (cf != NULL) {
-		struct clnp_frag	*cf_next = cf->cfr_next;
+	while(cf != NULL) {
+		struct clnp_frag *cf_next = cf->cfr_next;
 		INCSTAT(cns_fragdropped);
 		m_freem(cf->cfr_data);
 		cf = cf_next;
@@ -112,13 +112,13 @@ register struct clnp_fragl	*cfh;	/* fragment header to delete */
 	INCSTAT(cns_fragdropped);
 	m_freem(cfh->cfl_orighdr);
 
-	if (clnp_frags == cfh) {
+	if(clnp_frags == cfh) {
 		clnp_frags = cfh->cfl_next;
 	} else {
-		struct clnp_fragl	*scan;
+		struct clnp_fragl *scan;
 
-		for (scan = clnp_frags; scan != NULL; scan = scan->cfl_next) {
-			if (scan->cfl_next == cfh) {
+		for(scan = clnp_frags; scan != NULL; scan = scan->cfl_next) {
+			if(scan->cfl_next == cfh) {
 				scan->cfl_next = cfh->cfl_next;
 				break;
 			}
@@ -128,7 +128,7 @@ register struct clnp_fragl	*cfh;	/* fragment header to delete */
 	/* free the fragment header */
 	m_freem(dtom(cfh));
 
-	return(next);
+	return (next);
 }
 
 /*
@@ -143,13 +143,12 @@ register struct clnp_fragl	*cfh;	/* fragment header to delete */
  *
  * NOTES:			
  */
-clnp_slowtimo()
-{
-	register struct clnp_fragl	*cfh = clnp_frags;
-	int s = splnet();
+clnp_slowtimo() {
+	register struct clnp_fragl *cfh = clnp_frags;
+	int s                           = splnet();
 
-	while (cfh != NULL) {
-		if (--cfh->cfl_ttl == 0) {
+	while(cfh != NULL) {
+		if(--cfh->cfl_ttl == 0) {
 			cfh = clnp_freefrags(cfh);
 			INCSTAT(cns_fragtimeout);
 		} else {
@@ -171,10 +170,9 @@ clnp_slowtimo()
  * NOTES:			
  *	TODO: should send back ER
  */
-clnp_drain()
-{
-	register struct clnp_fragl	*cfh = clnp_frags;
+clnp_drain() {
+	register struct clnp_fragl *cfh = clnp_frags;
 
-	while (cfh != NULL)
+	while(cfh != NULL)
 		cfh = clnp_freefrags(cfh);
 }

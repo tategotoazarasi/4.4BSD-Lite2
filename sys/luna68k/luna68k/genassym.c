@@ -67,34 +67,30 @@
 extern int errno;
 
 void
-def(what, val)
-	char *what;
-	int val;
+        def(what, val) char *what;
+int val;
 {
 
-	if (printf("#define\t%s\t%d\n", what, val) < 0) {
-		(void)fprintf(stderr, "genassym: printf: %s\n",
-		    strerror(errno));
+	if(printf("#define\t%s\t%d\n", what, val) < 0) {
+		(void) fprintf(stderr, "genassym: printf: %s\n",
+		               strerror(errno));
 		exit(1);
 	}
 }
 
-void
-flush()
-{
+void flush() {
 
-	if (fflush(stdout) || fsync(fileno(stdout)) < 0) {
-		(void)fprintf(stderr, "genassym: flush stdout: %s\n",
-		    strerror(errno));
+	if(fflush(stdout) || fsync(fileno(stdout)) < 0) {
+		(void) fprintf(stderr, "genassym: flush stdout: %s\n",
+		               strerror(errno));
 		exit(1);
 	}
 }
 
-#define	off(what, s, m)	def(what, (int)offsetof(s, m))
+#define off(what, s, m) def(what, (int) offsetof(s, m))
 
-main()
-{
-	struct pio *pio = (struct pio *)PIO0_ADDR;
+main() {
+	struct pio *pio = (struct pio *) PIO0_ADDR;
 	register unsigned i;
 
 	def("UPAGES", UPAGES);
@@ -102,7 +98,7 @@ main()
 	def("PGSHIFT", PGSHIFT);
 	def("USRSTACK", USRSTACK);
 	def("KERNELSTACK", KERNELSTACK);
-	
+
 	def("KIFF_SIZE", sizeof(struct KernInter));
 	off("KI_MAXADDR", struct KernInter, maxaddr);
 
@@ -205,7 +201,7 @@ main()
 	def("PIO0_CTL", &pio->control_port);
 	def("PIO_MODED", PIO_MODED);
 
-#ifdef	OLD_LUNA
+#ifdef OLD_LUNA
 	def("FLINE_VEC", 44); /* F-Line excep vector offset */
 	def("COPRO_VEC", 52); /* Coprocessor prot. offset */
 #endif

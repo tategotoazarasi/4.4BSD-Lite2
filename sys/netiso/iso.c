@@ -91,10 +91,10 @@ SOFTWARE.
 
 #ifdef ISO
 
-int	iso_interfaces = 0;		/* number of external interfaces */
-extern	struct ifnet loif;	/* loopback interface */
-int	ether_output();
-void	llc_rtrequest();
+int iso_interfaces = 0;   /* number of external interfaces */
+extern struct ifnet loif; /* loopback interface */
+int ether_output();
+void llc_rtrequest();
 
 /*
  * FUNCTION:		iso_addrmatch1
@@ -107,54 +107,53 @@ void	llc_rtrequest();
  *
  * NOTES:			
  */
-iso_addrmatch1(isoaa, isoab)
-register struct iso_addr *isoaa, *isoab;		/* addresses to check */
+iso_addrmatch1(isoaa, isoab) register struct iso_addr *isoaa, *isoab; /* addresses to check */
 {
-	u_int	compare_len;
+	u_int compare_len;
 
 	IFDEBUG(D_ROUTE)
-		printf("iso_addrmatch1: comparing lengths: %d to %d\n", isoaa->isoa_len,
-			isoab->isoa_len);
-		printf("a:\n");
-		dump_buf(isoaa->isoa_genaddr, isoaa->isoa_len);
-		printf("b:\n");
-		dump_buf(isoab->isoa_genaddr, isoab->isoa_len);
+	printf("iso_addrmatch1: comparing lengths: %d to %d\n", isoaa->isoa_len,
+	       isoab->isoa_len);
+	printf("a:\n");
+	dump_buf(isoaa->isoa_genaddr, isoaa->isoa_len);
+	printf("b:\n");
+	dump_buf(isoab->isoa_genaddr, isoab->isoa_len);
 	ENDDEBUG
 
-	if ((compare_len = isoaa->isoa_len) != isoab->isoa_len) {
+	if((compare_len = isoaa->isoa_len) != isoab->isoa_len) {
 		IFDEBUG(D_ROUTE)
-			printf("iso_addrmatch1: returning false because of lengths\n");
+		printf("iso_addrmatch1: returning false because of lengths\n");
 		ENDDEBUG
 		return 0;
 	}
-	
+
 #ifdef notdef
 	/* TODO : generalize this to all afis with masks */
-	if(	isoaa->isoa_afi == AFI_37 ) {
+	if(isoaa->isoa_afi == AFI_37) {
 		/* must not compare 2 least significant digits, or for
 		 * that matter, the DSP
 		 */
-		compare_len = ADDR37_IDI_LEN - 1; 
+		compare_len = ADDR37_IDI_LEN - 1;
 	}
 #endif
 
 	IFDEBUG(D_ROUTE)
-		int i;
-		char *a, *b;
+	int i;
+	char *a, *b;
 
-		a = isoaa->isoa_genaddr;
-		b = isoab->isoa_genaddr;
+	a = isoaa->isoa_genaddr;
+	b = isoab->isoa_genaddr;
 
-		for (i=0; i<compare_len; i++) {
-			printf("<%x=%x>", a[i]&0xff, b[i]&0xff);
-			if (a[i] != b[i]) {
-				printf("\naddrs are not equal at byte %d\n", i);
-				return(0);
-			}
+	for(i = 0; i < compare_len; i++) {
+		printf("<%x=%x>", a[i] & 0xff, b[i] & 0xff);
+		if(a[i] != b[i]) {
+			printf("\naddrs are not equal at byte %d\n", i);
+			return (0);
 		}
-		printf("\n");
-		printf("addrs are equal\n");
-		return (1);
+	}
+	printf("\n");
+	printf("addrs are equal\n");
+	return (1);
 	ENDDEBUG
 	return (!bcmp(isoaa->isoa_genaddr, isoab->isoa_genaddr, compare_len));
 }
@@ -170,10 +169,9 @@ register struct iso_addr *isoaa, *isoab;		/* addresses to check */
  *
  * NOTES:			
  */
-iso_addrmatch(sisoa, sisob)
-struct sockaddr_iso	*sisoa, *sisob;		/* addresses to check */
+iso_addrmatch(sisoa, sisob) struct sockaddr_iso *sisoa, *sisob; /* addresses to check */
 {
-	return(iso_addrmatch1(&sisoa->siso_addr, &sisob->siso_addr));
+	return (iso_addrmatch1(&sisoa->siso_addr, &sisob->siso_addr));
 }
 #ifdef notdef
 /*
@@ -188,22 +186,21 @@ struct sockaddr_iso	*sisoa, *sisob;		/* addresses to check */
  *
  * NOTES:			
  */
-iso_netmatch(sisoa, sisob)
-struct sockaddr_iso *sisoa, *sisob;
+iso_netmatch(sisoa, sisob) struct sockaddr_iso *sisoa, *sisob;
 {
-	u_char			bufa[sizeof(struct sockaddr_iso)];
-	u_char			bufb[sizeof(struct sockaddr_iso)];
-	register int	lena, lenb;
+	u_char bufa[sizeof(struct sockaddr_iso)];
+	u_char bufb[sizeof(struct sockaddr_iso)];
+	register int lena, lenb;
 
 	lena = iso_netof(&sisoa->siso_addr, bufa);
 	lenb = iso_netof(&sisob->siso_addr, bufb);
 
 	IFDEBUG(D_ROUTE)
-		printf("iso_netmatch: comparing lengths: %d to %d\n", lena, lenb);
-		printf("a:\n");
-		dump_buf(bufa, lena);
-		printf("b:\n");
-		dump_buf(bufb, lenb);
+	printf("iso_netmatch: comparing lengths: %d to %d\n", lena, lenb);
+	printf("a:\n");
+	dump_buf(bufa, lena);
+	printf("b:\n");
+	dump_buf(bufb, lenb);
 	ENDDEBUG
 
 	return ((lena == lenb) && (!bcmp(bufa, bufb, lena)));
@@ -225,22 +222,22 @@ struct sockaddr_iso *sisoa, *sisob;
  */
 u_long
 iso_hashchar(buf, len)
-register caddr_t	buf;		/* buffer to pack from */
-register int		len;		/* length of buffer */
+register caddr_t buf; /* buffer to pack from */
+register int len;     /* length of buffer */
 {
-	register u_long	h = 0;
-	register int	i;
+	register u_long h = 0;
+	register int i;
 
-	for (i=0; i<len; i+=4) {
-		register u_long	l = 0;
+	for(i = 0; i < len; i += 4) {
+		register u_long l = 0;
 
-		if ((len - i) < 4) {
+		if((len - i) < 4) {
 			/* buffer not multiple of 4 */
-			switch (len - i) {
+			switch(len - i) {
 				case 3:
-					l |= buf[i+2] << 8;
+					l |= buf[i + 2] << 8;
 				case 2:
-					l |= buf[i+1] << 16;
+					l |= buf[i + 1] << 16;
 				case 1:
 					l |= buf[i] << 24;
 					break;
@@ -250,17 +247,17 @@ register int		len;		/* length of buffer */
 			}
 		} else {
 			l |= buf[i] << 24;
-			l |= buf[i+1] << 16;
-			l |= buf[i+2] << 8;
-			l |= buf[i+3];
+			l |= buf[i + 1] << 16;
+			l |= buf[i + 2] << 8;
+			l |= buf[i + 3];
 		}
 
 		h ^= l;
 	}
-	
+
 	h ^= (u_long) (len % 4);
 
-	return(h);
+	return (h);
 }
 #ifdef notdef
 /*
@@ -274,30 +271,29 @@ register int		len;		/* length of buffer */
  *
  * NOTES:			
  */
-iso_hash(siso, hp)
-struct sockaddr_iso	*siso;		/* address to perform hash on */
-struct afhash		*hp;		/* RETURN: hash info here */
+iso_hash(siso, hp) struct sockaddr_iso *siso; /* address to perform hash on */
+struct afhash *hp;                            /* RETURN: hash info here */
 {
-	u_long			buf[sizeof(struct sockaddr_iso)+1/4];
-	register int	bufsize;
+	u_long buf[sizeof(struct sockaddr_iso) + 1 / 4];
+	register int bufsize;
 
 
 	bzero(buf, sizeof(buf));
 
-	bufsize = iso_netof(&siso->siso_addr, buf);
-	hp->afh_nethash = iso_hashchar((caddr_t)buf, bufsize);
+	bufsize         = iso_netof(&siso->siso_addr, buf);
+	hp->afh_nethash = iso_hashchar((caddr_t) buf, bufsize);
 
 	IFDEBUG(D_ROUTE)
-		printf("iso_hash: iso_netof: bufsize = %d\n", bufsize);
+	printf("iso_hash: iso_netof: bufsize = %d\n", bufsize);
 	ENDDEBUG
 
-	hp->afh_hosthash = iso_hashchar((caddr_t)&siso->siso_addr, 
-		siso->siso_addr.isoa_len);
+	hp->afh_hosthash = iso_hashchar((caddr_t) &siso->siso_addr,
+	                                siso->siso_addr.isoa_len);
 
 	IFDEBUG(D_ROUTE)
-		printf("iso_hash: %s: nethash = x%x, hosthash = x%x\n",
-			clnp_iso_addrp(&siso->siso_addr), hp->afh_nethash, 
-			hp->afh_hosthash);
+	printf("iso_hash: %s: nethash = x%x, hosthash = x%x\n",
+	       clnp_iso_addrp(&siso->siso_addr), hp->afh_nethash,
+	       hp->afh_hosthash);
 	ENDDEBUG
 }
 /*
@@ -320,13 +316,12 @@ struct afhash		*hp;		/* RETURN: hash info here */
  *
  * NOTES:			Buf is assumed to be big enough
  */
-iso_netof(isoa, buf)
-struct iso_addr	*isoa;		/* address */
-caddr_t			buf;		/* RESULT: network portion of address here */
+iso_netof(isoa, buf) struct iso_addr *isoa; /* address */
+caddr_t buf;                                /* RESULT: network portion of address here */
 {
-	u_int		len = 1;	/* length of afi */
+	u_int len = 1; /* length of afi */
 
-	switch (isoa->isoa_afi) {
+	switch(isoa->isoa_afi) {
 		case AFI_37:
 			/*
 			 * Due to classic x.25 tunnel vision, there is no
@@ -338,15 +333,15 @@ caddr_t			buf;		/* RESULT: network portion of address here */
 
 			break;
 
-/* 		case AFI_OSINET:*/
+			/* 		case AFI_OSINET:*/
 		case AFI_RFC986: {
-			u_short	idi;	/* value of idi */
+			u_short idi; /* value of idi */
 
 			/* osinet and rfc986 have idi in the same place */
 			CTOH(isoa->rfc986_idi[0], isoa->rfc986_idi[1], idi);
 
-			if (idi == IDI_OSINET)
-/*
+			if(idi == IDI_OSINET)
+				/*
  *	Network portion of OSINET address can only be the IDI. Clearly,
  *	with one x25 interface, one could get to several orgids, and
  *	several snetids.
@@ -354,38 +349,38 @@ caddr_t			buf;		/* RESULT: network portion of address here */
 						OVLOSINET_SNETID_LEN);
  */
 				len += ADDROSINET_IDI_LEN;
-			else if (idi == IDI_RFC986) {
-				u_long				inetaddr;
-				struct ovl_rfc986	*o986 = (struct ovl_rfc986 *)isoa;
+			else if(idi == IDI_RFC986) {
+				u_long inetaddr;
+				struct ovl_rfc986 *o986 = (struct ovl_rfc986 *) isoa;
 
 				/* bump len to include idi and version (1 byte) */
 				len += ADDRRFC986_IDI_LEN + 1;
 
 				/* get inet addr long aligned */
 				bcopy(o986->o986_inetaddr, &inetaddr, sizeof(inetaddr));
-				inetaddr = ntohl(inetaddr);	/* convert to host byte order */
+				inetaddr = ntohl(inetaddr); /* convert to host byte order */
 
 				IFDEBUG(D_ROUTE)
-					printf("iso_netof: isoa ");
-					dump_buf(isoa, sizeof(*isoa));
-					printf("iso_netof: inetaddr 0x%x ", inetaddr);
+				printf("iso_netof: isoa ");
+				dump_buf(isoa, sizeof(*isoa));
+				printf("iso_netof: inetaddr 0x%x ", inetaddr);
 				ENDDEBUG
 
 				/* bump len by size of network portion of inet address */
-				if (IN_CLASSA(inetaddr)) {
-					len += 4-IN_CLASSA_NSHIFT/8;
+				if(IN_CLASSA(inetaddr)) {
+					len += 4 - IN_CLASSA_NSHIFT / 8;
 					IFDEBUG(D_ROUTE)
-						printf("iso_netof: class A net len is now %d\n", len);
+					printf("iso_netof: class A net len is now %d\n", len);
 					ENDDEBUG
-				} else if (IN_CLASSB(inetaddr)) {
-					len += 4-IN_CLASSB_NSHIFT/8;
+				} else if(IN_CLASSB(inetaddr)) {
+					len += 4 - IN_CLASSB_NSHIFT / 8;
 					IFDEBUG(D_ROUTE)
-						printf("iso_netof: class B net len is now %d\n", len);
+					printf("iso_netof: class B net len is now %d\n", len);
 					ENDDEBUG
 				} else {
-					len += 4-IN_CLASSC_NSHIFT/8;
+					len += 4 - IN_CLASSC_NSHIFT / 8;
 					IFDEBUG(D_ROUTE)
-						printf("iso_netof: class C net len is now %d\n", len);
+					printf("iso_netof: class C net len is now %d\n", len);
 					ENDDEBUG
 				}
 			} else
@@ -396,12 +391,12 @@ caddr_t			buf;		/* RESULT: network portion of address here */
 			len = 0;
 	}
 
-	bcopy((caddr_t)isoa, buf, len);
+	bcopy((caddr_t) isoa, buf, len);
 	IFDEBUG(D_ROUTE)
-		printf("iso_netof: isoa ");
-		dump_buf(isoa, len);
-		printf("iso_netof: net ");
-		dump_buf(buf, len);
+	printf("iso_netof: isoa ");
+	dump_buf(isoa, len);
+	printf("iso_netof: net ");
+	dump_buf(buf, len);
 	ENDDEBUG
 	return len;
 }
@@ -411,163 +406,162 @@ caddr_t			buf;		/* RESULT: network portion of address here */
  * Ifp is 0 if not an interface-specific ioctl.
  */
 /* ARGSUSED */
-iso_control(so, cmd, data, ifp)
-	struct socket *so;
-	u_long cmd;
-	caddr_t data;
-	register struct ifnet *ifp;
+iso_control(so, cmd, data, ifp) struct socket *so;
+u_long cmd;
+caddr_t data;
+register struct ifnet *ifp;
 {
-	register struct iso_ifreq *ifr = (struct iso_ifreq *)data;
+	register struct iso_ifreq *ifr = (struct iso_ifreq *) data;
 	register struct iso_ifaddr *ia = 0;
 	register struct ifaddr *ifa;
 	struct iso_ifaddr *oia;
-	struct iso_aliasreq *ifra = (struct iso_aliasreq *)data;
+	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int error, hostIsNew, maskIsNew;
 
 	/*
 	 * Find address for this interface, if it exists.
 	 */
-	if (ifp)
-		for (ia = iso_ifaddr; ia; ia = ia->ia_next)
-			if (ia->ia_ifp == ifp)
+	if(ifp)
+		for(ia = iso_ifaddr; ia; ia = ia->ia_next)
+			if(ia->ia_ifp == ifp)
 				break;
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case SIOCAIFADDR_ISO:
-	case SIOCDIFADDR_ISO:
-		if (ifra->ifra_addr.siso_family == AF_ISO)
-		    for (oia = ia; ia; ia = ia->ia_next) {
-			if (ia->ia_ifp == ifp  &&
-			    SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
-				break;
-		}
-		if ((so->so_state & SS_PRIV) == 0)
-			return (EPERM);
-		if (ifp == 0)
-			panic("iso_control");
-		if (ia == (struct iso_ifaddr *)0) {
-			struct iso_ifaddr *nia;
-			if (cmd == SIOCDIFADDR_ISO)
-				return (EADDRNOTAVAIL);
+		case SIOCAIFADDR_ISO:
+		case SIOCDIFADDR_ISO:
+			if(ifra->ifra_addr.siso_family == AF_ISO)
+				for(oia = ia; ia; ia = ia->ia_next) {
+					if(ia->ia_ifp == ifp &&
+					   SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
+						break;
+				}
+			if((so->so_state & SS_PRIV) == 0)
+				return (EPERM);
+			if(ifp == 0)
+				panic("iso_control");
+			if(ia == (struct iso_ifaddr *) 0) {
+				struct iso_ifaddr *nia;
+				if(cmd == SIOCDIFADDR_ISO)
+					return (EADDRNOTAVAIL);
 #ifdef TUBA
-			/* XXXXXX can't be done in the proto init routines */
-			if (tuba_tree == 0)
-				tuba_table_init();
+				/* XXXXXX can't be done in the proto init routines */
+				if(tuba_tree == 0)
+					tuba_table_init();
 #endif
-			MALLOC(nia, struct iso_ifaddr *, sizeof(*nia),
+				MALLOC(nia, struct iso_ifaddr *, sizeof(*nia),
 				       M_IFADDR, M_WAITOK);
-			if (nia == (struct iso_ifaddr *)0)
-				return (ENOBUFS);
-			bzero((caddr_t)nia, sizeof(*nia));
-			if (ia = iso_ifaddr) {
-				for ( ; ia->ia_next; ia = ia->ia_next)
-					;
-				ia->ia_next = nia;
-			} else
-				iso_ifaddr = nia;
-			ia = nia;
-			if (ifa = ifp->if_addrlist) {
-				for ( ; ifa->ifa_next; ifa = ifa->ifa_next)
-					;
-				ifa->ifa_next = (struct ifaddr *) ia;
-			} else
-				ifp->if_addrlist = (struct ifaddr *) ia;
-			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
-			ia->ia_ifa.ifa_dstaddr
-					= (struct sockaddr *)&ia->ia_dstaddr;
-			ia->ia_ifa.ifa_netmask
-					= (struct sockaddr *)&ia->ia_sockmask;
-			ia->ia_ifp = ifp;
-			if (ifp != &loif)
-				iso_interfaces++;
-		}
-		break;
-
-#define cmdbyte(x)	(((x) >> 8) & 0xff)
-	default:
-		if (cmdbyte(cmd) == 'a')
-			return (snpac_ioctl(so, cmd, data));
-		if (ia == (struct iso_ifaddr *)0)
-			return (EADDRNOTAVAIL);
-		break;
-	}
-	switch (cmd) {
-
-	case SIOCGIFADDR_ISO:
-		ifr->ifr_Addr = ia->ia_addr;
-		break;
-
-	case SIOCGIFDSTADDR_ISO:
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-			return (EINVAL);
-		ifr->ifr_Addr = ia->ia_dstaddr;
-		break;
-
-	case SIOCGIFNETMASK_ISO:
-		ifr->ifr_Addr = ia->ia_sockmask;
-		break;
-
-	case SIOCAIFADDR_ISO:
-		maskIsNew = 0; hostIsNew = 1; error = 0;
-		if (ia->ia_addr.siso_family == AF_ISO) {
-			if (ifra->ifra_addr.siso_len == 0) {
-				ifra->ifra_addr = ia->ia_addr;
-				hostIsNew = 0;
-			} else if (SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
-				hostIsNew = 0;
-		}
-		if (ifra->ifra_mask.siso_len) {
-			iso_ifscrub(ifp, ia);
-			ia->ia_sockmask = ifra->ifra_mask;
-			maskIsNew = 1;
-		}
-		if ((ifp->if_flags & IFF_POINTOPOINT) &&
-		    (ifra->ifra_dstaddr.siso_family == AF_ISO)) {
-			iso_ifscrub(ifp, ia);
-			ia->ia_dstaddr = ifra->ifra_dstaddr;
-			maskIsNew  = 1; /* We lie; but the effect's the same */
-		}
-		if (ifra->ifra_addr.siso_family == AF_ISO &&
-					    (hostIsNew || maskIsNew)) {
-			error = iso_ifinit(ifp, ia, &ifra->ifra_addr, 0);
-		}
-		if (ifra->ifra_snpaoffset)
-			ia->ia_snpaoffset = ifra->ifra_snpaoffset;
-		return (error);
-
-	case SIOCDIFADDR_ISO:
-		iso_ifscrub(ifp, ia);
-		if ((ifa = ifp->if_addrlist) == (struct ifaddr *)ia)
-			ifp->if_addrlist = ifa->ifa_next;
-		else {
-			while (ifa->ifa_next &&
-			       (ifa->ifa_next != (struct ifaddr *)ia))
-				    ifa = ifa->ifa_next;
-			if (ifa->ifa_next)
-			    ifa->ifa_next = ((struct ifaddr *)ia)->ifa_next;
-			else
-				printf("Couldn't unlink isoifaddr from ifp\n");
-		}
-		oia = ia;
-		if (oia == (ia = iso_ifaddr)) {
-			iso_ifaddr = ia->ia_next;
-		} else {
-			while (ia->ia_next && (ia->ia_next != oia)) {
-				ia = ia->ia_next;
+				if(nia == (struct iso_ifaddr *) 0)
+					return (ENOBUFS);
+				bzero((caddr_t) nia, sizeof(*nia));
+				if(ia = iso_ifaddr) {
+					for(; ia->ia_next; ia = ia->ia_next)
+						;
+					ia->ia_next = nia;
+				} else
+					iso_ifaddr = nia;
+				ia = nia;
+				if(ifa = ifp->if_addrlist) {
+					for(; ifa->ifa_next; ifa = ifa->ifa_next)
+						;
+					ifa->ifa_next = (struct ifaddr *) ia;
+				} else
+					ifp->if_addrlist = (struct ifaddr *) ia;
+				ia->ia_ifa.ifa_addr    = (struct sockaddr *) &ia->ia_addr;
+				ia->ia_ifa.ifa_dstaddr = (struct sockaddr *) &ia->ia_dstaddr;
+				ia->ia_ifa.ifa_netmask = (struct sockaddr *) &ia->ia_sockmask;
+				ia->ia_ifp             = ifp;
+				if(ifp != &loif)
+					iso_interfaces++;
 			}
-			if (ia->ia_next)
-			    ia->ia_next = oia->ia_next;
-			else
-				printf("Didn't unlink isoifadr from list\n");
-		}
-		IFAFREE((&oia->ia_ifa));
-		break;
+			break;
 
-	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+#define cmdbyte(x) (((x) >> 8) & 0xff)
+		default:
+			if(cmdbyte(cmd) == 'a')
+				return (snpac_ioctl(so, cmd, data));
+			if(ia == (struct iso_ifaddr *) 0)
+				return (EADDRNOTAVAIL);
+			break;
+	}
+	switch(cmd) {
+
+		case SIOCGIFADDR_ISO:
+			ifr->ifr_Addr = ia->ia_addr;
+			break;
+
+		case SIOCGIFDSTADDR_ISO:
+			if((ifp->if_flags & IFF_POINTOPOINT) == 0)
+				return (EINVAL);
+			ifr->ifr_Addr = ia->ia_dstaddr;
+			break;
+
+		case SIOCGIFNETMASK_ISO:
+			ifr->ifr_Addr = ia->ia_sockmask;
+			break;
+
+		case SIOCAIFADDR_ISO:
+			maskIsNew = 0;
+			hostIsNew = 1;
+			error     = 0;
+			if(ia->ia_addr.siso_family == AF_ISO) {
+				if(ifra->ifra_addr.siso_len == 0) {
+					ifra->ifra_addr = ia->ia_addr;
+					hostIsNew       = 0;
+				} else if(SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
+					hostIsNew = 0;
+			}
+			if(ifra->ifra_mask.siso_len) {
+				iso_ifscrub(ifp, ia);
+				ia->ia_sockmask = ifra->ifra_mask;
+				maskIsNew       = 1;
+			}
+			if((ifp->if_flags & IFF_POINTOPOINT) &&
+			   (ifra->ifra_dstaddr.siso_family == AF_ISO)) {
+				iso_ifscrub(ifp, ia);
+				ia->ia_dstaddr = ifra->ifra_dstaddr;
+				maskIsNew      = 1; /* We lie; but the effect's the same */
+			}
+			if(ifra->ifra_addr.siso_family == AF_ISO &&
+			   (hostIsNew || maskIsNew)) {
+				error = iso_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+			}
+			if(ifra->ifra_snpaoffset)
+				ia->ia_snpaoffset = ifra->ifra_snpaoffset;
+			return (error);
+
+		case SIOCDIFADDR_ISO:
+			iso_ifscrub(ifp, ia);
+			if((ifa = ifp->if_addrlist) == (struct ifaddr *) ia)
+				ifp->if_addrlist = ifa->ifa_next;
+			else {
+				while(ifa->ifa_next &&
+				      (ifa->ifa_next != (struct ifaddr *) ia))
+					ifa = ifa->ifa_next;
+				if(ifa->ifa_next)
+					ifa->ifa_next = ((struct ifaddr *) ia)->ifa_next;
+				else
+					printf("Couldn't unlink isoifaddr from ifp\n");
+			}
+			oia = ia;
+			if(oia == (ia = iso_ifaddr)) {
+				iso_ifaddr = ia->ia_next;
+			} else {
+				while(ia->ia_next && (ia->ia_next != oia)) {
+					ia = ia->ia_next;
+				}
+				if(ia->ia_next)
+					ia->ia_next = oia->ia_next;
+				else
+					printf("Didn't unlink isoifadr from list\n");
+			}
+			IFAFREE((&oia->ia_ifa));
+			break;
+
+		default:
+			if(ifp == 0 || ifp->if_ioctl == 0)
+				return (EOPNOTSUPP);
+			return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 	return (0);
 }
@@ -575,20 +569,19 @@ iso_control(so, cmd, data, ifp)
 /*
  * Delete any existing route for an interface.
  */
-iso_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct iso_ifaddr *ia;
+iso_ifscrub(ifp, ia) register struct ifnet *ifp;
+register struct iso_ifaddr *ia;
 {
 	int nsellength = ia->ia_addr.siso_tlen;
-	if ((ia->ia_flags & IFA_ROUTE) == 0)
+	if((ia->ia_flags & IFA_ROUTE) == 0)
 		return;
 	ia->ia_addr.siso_tlen = 0;
-	if (ifp->if_flags & IFF_LOOPBACK)
-		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
-	else if (ifp->if_flags & IFF_POINTOPOINT)
-		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
+	if(ifp->if_flags & IFF_LOOPBACK)
+		rtinit(&(ia->ia_ifa), (int) RTM_DELETE, RTF_HOST);
+	else if(ifp->if_flags & IFF_POINTOPOINT)
+		rtinit(&(ia->ia_ifa), (int) RTM_DELETE, RTF_HOST);
 	else {
-		rtinit(&(ia->ia_ifa), (int)RTM_DELETE, 0);
+		rtinit(&(ia->ia_ifa), (int) RTM_DELETE, 0);
 	}
 	ia->ia_addr.siso_tlen = nsellength;
 	ia->ia_flags &= ~IFA_ROUTE;
@@ -598,55 +591,54 @@ iso_ifscrub(ifp, ia)
  * Initialize an interface's internet address
  * and routing table entry.
  */
-iso_ifinit(ifp, ia, siso, scrub)
-	register struct ifnet *ifp;
-	register struct iso_ifaddr *ia;
-	struct sockaddr_iso *siso;
+iso_ifinit(ifp, ia, siso, scrub) register struct ifnet *ifp;
+register struct iso_ifaddr *ia;
+struct sockaddr_iso *siso;
 {
 	struct sockaddr_iso oldaddr;
 	int s = splimp(), error, nsellength;
 
-	oldaddr = ia->ia_addr;
+	oldaddr     = ia->ia_addr;
 	ia->ia_addr = *siso;
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl &&
-				(error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
+	if(ifp->if_ioctl &&
+	   (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t) ia))) {
 		splx(s);
 		ia->ia_addr = oldaddr;
 		return (error);
 	}
-	if (scrub) {
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&oldaddr;
+	if(scrub) {
+		ia->ia_ifa.ifa_addr = (struct sockaddr *) &oldaddr;
 		iso_ifscrub(ifp, ia);
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
+		ia->ia_ifa.ifa_addr = (struct sockaddr *) &ia->ia_addr;
 	}
 	/* XXX -- The following is here temporarily out of laziness
 	   in not changing every ethernet driver's if_ioctl routine */
-	if (ifp->if_output == ether_output) {
+	if(ifp->if_output == ether_output) {
 		ia->ia_ifa.ifa_rtrequest = llc_rtrequest;
 		ia->ia_ifa.ifa_flags |= RTF_CLONING;
 	}
 	/*
 	 * Add route for the network.
 	 */
-	nsellength = ia->ia_addr.siso_tlen;
+	nsellength            = ia->ia_addr.siso_tlen;
 	ia->ia_addr.siso_tlen = 0;
-	if (ifp->if_flags & IFF_LOOPBACK) {
+	if(ifp->if_flags & IFF_LOOPBACK) {
 		ia->ia_ifa.ifa_dstaddr = ia->ia_ifa.ifa_addr;
-		error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
-	} else if (ifp->if_flags & IFF_POINTOPOINT &&
-		 ia->ia_dstaddr.siso_family == AF_ISO)
-		error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
+		error                  = rtinit(&(ia->ia_ifa), (int) RTM_ADD, RTF_HOST | RTF_UP);
+	} else if(ifp->if_flags & IFF_POINTOPOINT &&
+	          ia->ia_dstaddr.siso_family == AF_ISO)
+		error = rtinit(&(ia->ia_ifa), (int) RTM_ADD, RTF_HOST | RTF_UP);
 	else {
 		rt_maskedcopy(ia->ia_ifa.ifa_addr, ia->ia_ifa.ifa_dstaddr,
-			ia->ia_ifa.ifa_netmask);
+		              ia->ia_ifa.ifa_netmask);
 		ia->ia_dstaddr.siso_nlen =
-			min(ia->ia_addr.siso_nlen, (ia->ia_sockmask.siso_len - 6));
-		error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_UP);
+		        min(ia->ia_addr.siso_nlen, (ia->ia_sockmask.siso_len - 6));
+		error = rtinit(&(ia->ia_ifa), (int) RTM_ADD, RTF_UP);
 	}
 	ia->ia_addr.siso_tlen = nsellength;
 	ia->ia_flags |= IFA_ROUTE;
@@ -657,54 +649,54 @@ iso_ifinit(ifp, ia, siso, scrub)
 
 struct ifaddr *
 iso_ifwithidi(addr)
-	register struct sockaddr *addr;
+register struct sockaddr *addr;
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 	register u_int af = addr->sa_family;
 
-	if (af != AF_ISO)
+	if(af != AF_ISO)
 		return (0);
 	IFDEBUG(D_ROUTE)
-		printf(">>> iso_ifwithidi addr\n");
-		dump_isoaddr( (struct sockaddr_iso *)(addr));
-		printf("\n");
+	printf(">>> iso_ifwithidi addr\n");
+	dump_isoaddr((struct sockaddr_iso *) (addr));
+	printf("\n");
 	ENDDEBUG
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) {
+	for(ifp = ifnet; ifp; ifp = ifp->if_next) {
 		IFDEBUG(D_ROUTE)
-			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
+		printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		ENDDEBUG
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+		for(ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
 			IFDEBUG(D_ROUTE)
-				printf("iso_ifwithidi address ");
-				dump_isoaddr( (struct sockaddr_iso *)(ifa->ifa_addr));
+			printf("iso_ifwithidi address ");
+			dump_isoaddr((struct sockaddr_iso *) (ifa->ifa_addr));
 			ENDDEBUG
-			if (ifa->ifa_addr->sa_family != addr->sa_family)
+			if(ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 
-#define	IFA_SIS(ifa)\
-	((struct sockaddr_iso *)((ifa)->ifa_addr))
+#define IFA_SIS(ifa) \
+	((struct sockaddr_iso *) ((ifa)->ifa_addr))
 
 			IFDEBUG(D_ROUTE)
-				printf(" af same, args to iso_eqtype:\n");
-				printf("0x%x ", IFA_SIS(ifa)->siso_addr);
-				printf(" 0x%x\n",
-				&(((struct sockaddr_iso *)addr)->siso_addr));
+			printf(" af same, args to iso_eqtype:\n");
+			printf("0x%x ", IFA_SIS(ifa)->siso_addr);
+			printf(" 0x%x\n",
+			       &(((struct sockaddr_iso *) addr)->siso_addr));
 			ENDDEBUG
 
-			if (iso_eqtype(&(IFA_SIS(ifa)->siso_addr), 
-				&(((struct sockaddr_iso *)addr)->siso_addr))) {
+			if(iso_eqtype(&(IFA_SIS(ifa)->siso_addr),
+			              &(((struct sockaddr_iso *) addr)->siso_addr))) {
 				IFDEBUG(D_ROUTE)
-					printf("ifa_ifwithidi: ifa found\n");
+				printf("ifa_ifwithidi: ifa found\n");
 				ENDDEBUG
 				return (ifa);
 			}
 			IFDEBUG(D_ROUTE)
-				printf(" iso_eqtype failed\n");
+			printf(" iso_eqtype failed\n");
 			ENDDEBUG
 		}
 	}
-	return ((struct ifaddr *)0);
+	return ((struct ifaddr *) 0);
 }
 
 #endif /* notdef */
@@ -719,11 +711,9 @@ iso_ifwithidi(addr)
  * SIDE EFFECTS:	
  *
  */
-iso_ck_addr(isoa)
-struct iso_addr	*isoa;	/* address to check */
+iso_ck_addr(isoa) struct iso_addr *isoa; /* address to check */
 {
 	return (isoa->isoa_len <= 20);
-
 }
 
 #ifdef notdef
@@ -744,17 +734,16 @@ struct iso_addr	*isoa;	/* address to check */
  *					This will first compare afis. If they match, then
  *					if the addr is not t37, the idis must be compared.
  */
-iso_eqtype(isoaa, isoab)
-struct iso_addr	*isoaa;		/* first addr to check */
-struct iso_addr	*isoab;		/* other addr to check */
+iso_eqtype(isoaa, isoab) struct iso_addr *isoaa; /* first addr to check */
+struct iso_addr *isoab;                          /* other addr to check */
 {
-	if (isoaa->isoa_afi == isoab->isoa_afi) {
-		if (isoaa->isoa_afi == AFI_37)
-			return(1);
-		else 
+	if(isoaa->isoa_afi == isoab->isoa_afi) {
+		if(isoaa->isoa_afi == AFI_37)
+			return (1);
+		else
 			return (!bcmp(&isoaa->isoa_u, &isoab->isoa_u, 2));
 	}
-	return(0);
+	return (0);
 }
 #endif /* notdef */
 /*
@@ -771,7 +760,7 @@ struct iso_addr	*isoab;		/* other addr to check */
  */
 struct iso_ifaddr *
 iso_localifa(siso)
-	register struct sockaddr_iso *siso;
+register struct sockaddr_iso *siso;
 {
 	register struct iso_ifaddr *ia;
 	register char *cp1, *cp2, *cp3;
@@ -781,38 +770,37 @@ iso_localifa(siso)
 	 * We make one pass looking for both net matches and an exact
 	 * dst addr.
 	 */
-	for (ia = iso_ifaddr; ia; ia = ia->ia_next) {
-		if ((ifp = ia->ia_ifp) == 0 || ((ifp->if_flags & IFF_UP) == 0))
+	for(ia = iso_ifaddr; ia; ia = ia->ia_next) {
+		if((ifp = ia->ia_ifp) == 0 || ((ifp->if_flags & IFF_UP) == 0))
 			continue;
-		if (ifp->if_flags & IFF_POINTOPOINT) {
-			if ((ia->ia_dstaddr.siso_family == AF_ISO) &&
-				SAME_ISOADDR(&ia->ia_dstaddr, siso))
+		if(ifp->if_flags & IFF_POINTOPOINT) {
+			if((ia->ia_dstaddr.siso_family == AF_ISO) &&
+			   SAME_ISOADDR(&ia->ia_dstaddr, siso))
 				return (ia);
-			else
-				if (SAME_ISOADDR(&ia->ia_addr, siso))
-					ia_maybe = ia;
+			else if(SAME_ISOADDR(&ia->ia_addr, siso))
+				ia_maybe = ia;
 			continue;
 		}
-		if (ia->ia_sockmask.siso_len) {
-			char *cplim = ia->ia_sockmask.siso_len + (char *)&ia->ia_sockmask;
-			cp1 = ia->ia_sockmask.siso_data;
-			cp2 = siso->siso_data;
-			cp3 = ia->ia_addr.siso_data;
-			while (cp1 < cplim)
-				if (*cp1++ & (*cp2++ ^ *cp3++))
+		if(ia->ia_sockmask.siso_len) {
+			char *cplim = ia->ia_sockmask.siso_len + (char *) &ia->ia_sockmask;
+			cp1         = ia->ia_sockmask.siso_data;
+			cp2         = siso->siso_data;
+			cp3         = ia->ia_addr.siso_data;
+			while(cp1 < cplim)
+				if(*cp1++ & (*cp2++ ^ *cp3++))
 					goto next;
 			ia_maybe = ia;
 		}
-		if (SAME_ISOADDR(&ia->ia_addr, siso))
+		if(SAME_ISOADDR(&ia->ia_addr, siso))
 			return ia;
 	next:;
 	}
 	return ia_maybe;
 }
 
-#ifdef	TPCONS
+#ifdef TPCONS
 #include <netiso/cons.h>
-#endif	/* TPCONS */
+#endif /* TPCONS */
 /*
  * FUNCTION:		iso_nlctloutput
  *
@@ -825,60 +813,59 @@ iso_localifa(siso)
  * NOTES:			This could embody some of the functions of
  *					rclnp_ctloutput and cons_ctloutput.
  */
-iso_nlctloutput(cmd, optname, pcb, m)
-int			cmd;		/* command:set or get */
-int			optname;	/* option of interest */
-caddr_t		pcb;		/* nl pcb */
-struct mbuf	*m;			/* data for set, buffer for get */
+iso_nlctloutput(cmd, optname, pcb, m) int cmd; /* command:set or get */
+int optname;                                   /* option of interest */
+caddr_t pcb;                                   /* nl pcb */
+struct mbuf *m;                                /* data for set, buffer for get */
 {
-	struct isopcb	*isop = (struct isopcb *)pcb;
-	int				error = 0;	/* return value */
-	caddr_t			data;		/* data for option */
-	int				data_len;	/* data's length */
+	struct isopcb *isop = (struct isopcb *) pcb;
+	int error           = 0; /* return value */
+	caddr_t data;            /* data for option */
+	int data_len;            /* data's length */
 
 	IFDEBUG(D_ISO)
-		printf("iso_nlctloutput: cmd %x, opt %x, pcb %x, m %x\n",
-			cmd, optname, pcb, m);
+	printf("iso_nlctloutput: cmd %x, opt %x, pcb %x, m %x\n",
+	       cmd, optname, pcb, m);
 	ENDDEBUG
 
-	if ((cmd != PRCO_GETOPT) && (cmd != PRCO_SETOPT))
-		return(EOPNOTSUPP);
+	if((cmd != PRCO_GETOPT) && (cmd != PRCO_SETOPT))
+		return (EOPNOTSUPP);
 
-	data = mtod(m, caddr_t);
+	data     = mtod(m, caddr_t);
 	data_len = (m)->m_len;
 
 	IFDEBUG(D_ISO)
-		printf("iso_nlctloutput: data is:\n");
-		dump_buf(data, data_len);
+	printf("iso_nlctloutput: data is:\n");
+	dump_buf(data, data_len);
 	ENDDEBUG
 
-	switch (optname) {
+	switch(optname) {
 
-#ifdef	TPCONS
+#ifdef TPCONS
 		case CONSOPT_X25CRUD:
-			if (cmd == PRCO_GETOPT) {
+			if(cmd == PRCO_GETOPT) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			if (data_len > MAXX25CRUDLEN) {
+			if(data_len > MAXX25CRUDLEN) {
 				error = EINVAL;
 				break;
 			}
 
 			IFDEBUG(D_ISO)
-				printf("iso_nlctloutput: setting x25 crud\n");
+			printf("iso_nlctloutput: setting x25 crud\n");
 			ENDDEBUG
 
-			bcopy(data, (caddr_t)isop->isop_x25crud, (unsigned)data_len);
+			bcopy(data, (caddr_t) isop->isop_x25crud, (unsigned) data_len);
 			isop->isop_x25crud_len = data_len;
 			break;
-#endif	/* TPCONS */
+#endif /* TPCONS */
 
 		default:
 			error = EOPNOTSUPP;
 	}
-	if (cmd == PRCO_SETOPT)
+	if(cmd == PRCO_SETOPT)
 		m_freem(m);
 	return error;
 }
@@ -894,25 +881,24 @@ struct mbuf	*m;			/* data for set, buffer for get */
  * RETURNS:			nada 
  *
  */
-dump_isoaddr(s)
-	struct sockaddr_iso *s;
+dump_isoaddr(s) struct sockaddr_iso *s;
 {
 	char *clnp_saddr_isop();
 	register int i;
 
-	if( s->siso_family == AF_ISO) {
+	if(s->siso_family == AF_ISO) {
 		printf("ISO address: suffixlen %d, %s\n",
-			s->siso_tlen, clnp_saddr_isop(s));
-	} else if( s->siso_family == AF_INET) {
+		       s->siso_tlen, clnp_saddr_isop(s));
+	} else if(s->siso_family == AF_INET) {
 		/* hack */
-		struct sockaddr_in *sin = (struct sockaddr_in *)s;
+		struct sockaddr_in *sin = (struct sockaddr_in *) s;
 
-		printf("%d.%d.%d.%d: %d", 
-			(sin->sin_addr.s_addr>>24)&0xff,
-			(sin->sin_addr.s_addr>>16)&0xff,
-			(sin->sin_addr.s_addr>>8)&0xff,
-			(sin->sin_addr.s_addr)&0xff,
-			sin->sin_port);
+		printf("%d.%d.%d.%d: %d",
+		       (sin->sin_addr.s_addr >> 24) & 0xff,
+		       (sin->sin_addr.s_addr >> 16) & 0xff,
+		       (sin->sin_addr.s_addr >> 8) & 0xff,
+		       (sin->sin_addr.s_addr) & 0xff,
+		       sin->sin_port);
 	}
 }
 

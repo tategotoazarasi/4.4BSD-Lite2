@@ -51,13 +51,12 @@
 extern int clock_on;
 
 static int month_days[12] = {
-    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
+        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 struct bbc_tm *gmt_to_bbc();
 
-volatile struct bbc *bbc = (struct bbc *)BBC_ADDR;
+volatile struct bbc *bbc = (struct bbc *) BBC_ADDR;
 #ifdef LUNA2
-volatile struct bbc2 *bbc2 = (struct bbc2 *)BBC_ADDR;
+volatile struct bbc2 *bbc2 = (struct bbc2 *) BBC_ADDR;
 #endif
 
 int battery_clock;
@@ -81,15 +80,14 @@ int battery_chkfg;
 /*
  * Start the real-time clock.
  */
-cpu_initclocks()
-{
-	static char *rtcstrings = "RTC";     /* For compat */
+cpu_initclocks() {
+	static char *rtcstrings = "RTC"; /* For compat */
 
 	/* set flag for clockintr. */
 	clock_on = 1;
 
 #ifdef LUNA2
-	if (machineid == LUNA_II) {
+	if(machineid == LUNA_II) {
 		/* not yet */
 		battery_chkfg = 1;
 		battery_clock = 1;
@@ -98,12 +96,12 @@ cpu_initclocks()
 #endif
 
 	batterychk();
-	if (!battery_clock)
-	  return;
+	if(!battery_clock)
+		return;
 
-	if (!strncmp(bbc->nvram.nv_calclock, rtcstrings, sizeof(rtcstrings))) /* Okey */
-	  return;
-	
+	if(!strncmp(bbc->nvram.nv_calclock, rtcstrings, sizeof(rtcstrings))) /* Okey */
+		return;
+
 	printf("Initialize Battery Backup Clock.\n");
 	bbc->cal_ctl |= BBC_WRT;
 	bbc->cal_sec &= ~BBC_STOP;
@@ -118,23 +116,21 @@ cpu_initclocks()
 }
 
 void
-setstatclockrate(newhz)
-        int newhz;
+        setstatclockrate(newhz) int newhz;
 {
 }
 
-microtime(tvp)
-        register struct timeval *tvp;
+microtime(tvp) register struct timeval *tvp;
 {
-        int s = splhigh();
+	int s = splhigh();
 
-        *tvp = time;
-        tvp->tv_usec += tick;
-        while (tvp->tv_usec > 1000000) {
-                tvp->tv_sec++;
-                tvp->tv_usec -= 1000000;
-        }
-        splx(s);
+	*tvp = time;
+	tvp->tv_usec += tick;
+	while(tvp->tv_usec > 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	splx(s);
 }
 
 /*
@@ -142,9 +138,9 @@ microtime(tvp)
  * from a filesystem.
  */
 inittodr(base)
-	time_t base;
+        time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
+	u_long timbuf = base; /* assume no battery clock exists */
 
 	/*
 	 * bbc_to_gmt converts and stores the gmt in timbuf.
@@ -152,23 +148,22 @@ inittodr(base)
 	 * time is more recent than the gmt time in the clock,
 	 * then use the filesystem time and warn the user.
  	 */
-	if (!bbc_to_gmt(&timbuf) || timbuf < base) {
+	if(!bbc_to_gmt(&timbuf) || timbuf < base) {
 		printf("WARNING: bad date in battery clock\n");
 		timbuf = base;
 	}
-	if (base < 5*SECYR) {
+	if(base < 5 * SECYR) {
 		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
+		timbuf = 6 * SECYR + 186 * SECDAY + SECDAY / 2;
 		printf(" -- CHECK AND RESET THE DATE!\n");
 	}
-	
+
 	/* Battery clock does not store usec's, so forget about it. */
 	time.tv_sec = timbuf;
 }
 
-resettodr()
-{
-	register int i,s;
+resettodr() {
+	register int i, s;
 	register struct bbc_tm *tmptr;
 
 	tmptr = gmt_to_bbc(time.tv_sec);
@@ -177,24 +172,24 @@ resettodr()
 
 	/* set bb-clock */
 #ifdef LUNA2
-	if (machineid == LUNA_II) {
+	if(machineid == LUNA_II) {
 		bbc2->cal_ctl_b |= BBC2_B_SET;
-		bbc2->cal_sec = tmptr->tm_sec;
-		bbc2->cal_min = tmptr->tm_min;
-		bbc2->cal_hour =tmptr->tm_hour;
-		bbc2->cal_day = tmptr->tm_mday;
-		bbc2->cal_mon = tmptr->tm_mon;
+		bbc2->cal_sec  = tmptr->tm_sec;
+		bbc2->cal_min  = tmptr->tm_min;
+		bbc2->cal_hour = tmptr->tm_hour;
+		bbc2->cal_day  = tmptr->tm_mday;
+		bbc2->cal_mon  = tmptr->tm_mon;
 		bbc2->cal_year = tmptr->tm_year;
 		bbc2->cal_ctl_b &= ~BBC2_B_SET;
-	} else 
+	} else
 #endif
 	{
 		bbc->cal_ctl |= BBC_WRT;
-		bbc->cal_sec = binary_to_bcd(tmptr->tm_sec);
-		bbc->cal_min = binary_to_bcd(tmptr->tm_min);
+		bbc->cal_sec  = binary_to_bcd(tmptr->tm_sec);
+		bbc->cal_min  = binary_to_bcd(tmptr->tm_min);
 		bbc->cal_hour = binary_to_bcd(tmptr->tm_hour);
-		bbc->cal_day = binary_to_bcd(tmptr->tm_mday);
-		bbc->cal_mon = binary_to_bcd(tmptr->tm_mon);
+		bbc->cal_day  = binary_to_bcd(tmptr->tm_mday);
+		bbc->cal_mon  = binary_to_bcd(tmptr->tm_mon);
 		bbc->cal_year = binary_to_bcd(tmptr->tm_year);
 		bbc->cal_ctl &= ~BBC_WRT;
 	}
@@ -204,7 +199,7 @@ resettodr()
 
 struct bbc_tm *
 gmt_to_bbc(tim)
-	long tim;
+long tim;
 {
 	register int i;
 	register long hms, day;
@@ -219,58 +214,58 @@ gmt_to_bbc(tim)
 	rt.tm_sec  = (hms % 3600) % 60;
 
 	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-	  	day -= days_in_year(i);
+	for(i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
+		day -= days_in_year(i);
 	rt.tm_year = i;
-	
+
 	/* Number of months in days left */
-	if (leapyear(rt.tm_year))
+	if(leapyear(rt.tm_year))
 		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
+	for(i = 1; day >= days_in_month(i); i++)
 		day -= days_in_month(i);
 	days_in_month(FEBRUARY) = 28;
-	rt.tm_mon = i;
+	rt.tm_mon               = i;
 
 	/* Days are what is left over (+1) from all that. */
-	rt.tm_mday = day + 1;  
-	
-	return(&rt);
+	rt.tm_mday = day + 1;
+
+	return (&rt);
 }
 
 bbc_to_gmt(timbuf)
-	u_long *timbuf;
+        u_long *timbuf;
 {
-	register int i,s;
+	register int i, s;
 	register u_long tmp;
 	int year, month, day, hour, min, sec;
 
-        if (!battery_clock)
-	   return(0);
+	if(!battery_clock)
+		return (0);
 
 	s = splimp();
 
 	/* read bb-clock */
 #ifdef LUNA2
-	if (machineid == LUNA_II) {
-		while (bbc2->cal_ctl_a & BBC2_A_UIP) {} /* wait (max 224 us) */
+	if(machineid == LUNA_II) {
+		while(bbc2->cal_ctl_a & BBC2_A_UIP) {} /* wait (max 224 us) */
 		bbc2->cal_ctl_b |= BBC2_B_SET;
-		sec = bbc2->cal_sec;
-		min = bbc2->cal_min;
-		hour = bbc2->cal_hour;
-		day = bbc2->cal_day;
+		sec   = bbc2->cal_sec;
+		min   = bbc2->cal_min;
+		hour  = bbc2->cal_hour;
+		day   = bbc2->cal_day;
 		month = bbc2->cal_mon;
-		year = bbc2->cal_year + 1900;
+		year  = bbc2->cal_year + 1900;
 		bbc2->cal_ctl_b &= ~BBC2_B_SET;
 	} else
 #endif
 	{
 		bbc->cal_ctl |= BBC_RD;
-		sec = bcd_to_binary(bbc->cal_sec);
-		min = bcd_to_binary(bbc->cal_min);
-		hour = bcd_to_binary(bbc->cal_hour);
-		day = bcd_to_binary(bbc->cal_day);
+		sec   = bcd_to_binary(bbc->cal_sec);
+		min   = bcd_to_binary(bbc->cal_min);
+		hour  = bcd_to_binary(bbc->cal_hour);
+		day   = bcd_to_binary(bbc->cal_day);
 		month = bcd_to_binary(bbc->cal_mon);
-		year = bcd_to_binary(bbc->cal_year) + 1900;
+		year  = bcd_to_binary(bbc->cal_year) + 1900;
 		bbc->cal_ctl &= ~BBC_RD;
 	}
 
@@ -280,33 +275,32 @@ bbc_to_gmt(timbuf)
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
 
-	if (year < 1970) {
+	if(year < 1970) {
 		year += 100;
 	}
-	
-	tmp = 0;
-	
-	for (i = STARTOFTIME; i < year; i++)
-	    tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-	    tmp++;
 
-	for (i = 1; i < month; i++)
-	    tmp += days_in_month(i);
-	
+	tmp = 0;
+
+	for(i = STARTOFTIME; i < year; i++)
+		tmp += days_in_year(i);
+	if(leapyear(year) && month > FEBRUARY)
+		tmp++;
+
+	for(i = 1; i < month; i++)
+		tmp += days_in_month(i);
+
 	tmp += (day - 1);
 	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
 
 	*timbuf = tmp;
-	return(1);
+	return (1);
 }
 
-batterychk()
-{
+batterychk() {
 	static char btchkdata[] = "chk";
 
 #ifdef LUNA2
-	if (machineid == LUNA_II) {
+	if(machineid == LUNA_II) {
 		/* not yet */
 		battery_chkfg = 1;
 		battery_clock = 1;
@@ -314,15 +308,15 @@ batterychk()
 	}
 #endif
 	/* if already checked, return */
-	if (battery_chkfg)
+	if(battery_chkfg)
 		return;
 
 	battery_chkfg = 1;
-	if (badaddr((caddr_t)bbc, 2))
+	if(badaddr((caddr_t) bbc, 2))
 		return;
 
 	strcpy(bbc->nvram.nv_testwrite, btchkdata);
-	if (strncmp(bbc->nvram.nv_testwrite, btchkdata, sizeof(btchkdata))) {
+	if(strncmp(bbc->nvram.nv_testwrite, btchkdata, sizeof(btchkdata))) {
 		printf("WARNING: calendar clock battery down\n");
 		return;
 	}
@@ -330,15 +324,14 @@ batterychk()
 	return;
 }
 
-#define	LUNA1_HZ	60
+#define LUNA1_HZ 60
 
-modify_clock_param()
-{
-	extern int	hz, tick, tickadj;
+modify_clock_param() {
+	extern int hz, tick, tickadj;
 
-	if (machineid == LUNA_I) {
-		hz = LUNA1_HZ;
-		tick = 1000000 / hz;
-		tickadj = 30000 / (60 * hz);	/* can adjust 30ms in 60s */
+	if(machineid == LUNA_I) {
+		hz      = LUNA1_HZ;
+		tick    = 1000000 / hz;
+		tickadj = 30000 / (60 * hz); /* can adjust 30ms in 60s */
 	}
 }

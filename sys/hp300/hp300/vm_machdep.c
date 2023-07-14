@@ -63,16 +63,15 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2) register struct proc *p1, *p2;
 {
 	register struct user *up = p2->p_addr;
 	int offset;
 	extern caddr_t getsp();
 	extern char kstack[];
 
-	p2->p_md.md_regs = p1->p_md.md_regs;
-	p2->p_md.md_flags = (p1->p_md.md_flags & ~(MDP_AST|MDP_HPUXTRACE));
+	p2->p_md.md_regs  = p1->p_md.md_regs;
+	p2->p_md.md_flags = (p1->p_md.md_flags & ~(MDP_AST | MDP_HPUXTRACE));
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
@@ -86,9 +85,9 @@ cpu_fork(p1, p2)
 	 * replacing the bcopy and savectx.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = getsp() - kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
+	offset            = getsp() - kstack;
+	bcopy((caddr_t) kstack + offset, (caddr_t) p2->p_addr + offset,
+	      (unsigned) ctob(UPAGES) - offset);
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
 
@@ -96,7 +95,7 @@ cpu_fork(p1, p2)
 	 * Arrange for a non-local goto when the new process
 	 * is started, to resume here, returning nonzero from setjmp.
 	 */
-	if (savectx(up, 1)) {
+	if(savectx(up, 1)) {
 		/*
 		 * Return 1 in child.
 		 */
@@ -113,14 +112,13 @@ cpu_fork(p1, p2)
  * pcb and stack and never returns.  We block memory allocation
  * until switch_exit has made things safe again.
  */
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(p) struct proc *p;
 {
 
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	kmem_free(kernel_map, (vm_offset_t) p->p_addr, ctob(UPAGES));
 	switch_exit();
 	/* NOTREACHED */
 }
@@ -128,10 +126,9 @@ cpu_exit(p)
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
-cpu_coredump(p, vp, cred)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
+cpu_coredump(p, vp, cred) struct proc *p;
+struct vnode *vp;
+struct ucred *cred;
 {
 #ifdef HPUXCOMPAT
 	/*
@@ -139,12 +136,12 @@ cpu_coredump(p, vp, cred)
 	 * of an HP-UX style user struct so that the HP-UX debuggers can
 	 * grok it.
 	 */
-	if (p->p_md.md_flags & MDP_HPUX)
+	if(p->p_md.md_flags & MDP_HPUX)
 		return (hpuxdumpu(vp, cred));
 #endif
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
-	    p));
+	                (off_t) 0, UIO_SYSSPACE, IO_NODELOCKED | IO_UNIT, cred, (int *) NULL,
+	                p));
 }
 
 /*
@@ -152,28 +149,27 @@ cpu_coredump(p, vp, cred)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
-pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
+pagemove(from, to, size) register caddr_t from, to;
+int size;
 {
 	register vm_offset_t pa;
 
 #ifdef DEBUG
-	if (size & CLOFSET)
+	if(size & CLOFSET)
 		panic("pagemove");
 #endif
-	while (size > 0) {
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+	while(size > 0) {
+		pa = pmap_extract(kernel_pmap, (vm_offset_t) from);
 #ifdef DEBUG
-		if (pa == 0)
+		if(pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
+		if(pmap_extract(kernel_pmap, (vm_offset_t) to) != 0)
 			panic("pagemove 3");
 #endif
 		pmap_remove(kernel_pmap,
-			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+		            (vm_offset_t) from, (vm_offset_t) from + PAGE_SIZE);
 		pmap_enter(kernel_pmap,
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		           (vm_offset_t) to, pa, VM_PROT_READ | VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -184,32 +180,33 @@ pagemove(from, to, size)
  * Map `size' bytes of physical memory starting at `paddr' into
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
- */ 
+ */
 physaccess(vaddr, paddr, size, prot)
-	caddr_t vaddr, paddr;
-	register int size, prot;
+        caddr_t vaddr,
+        paddr;
+register int size, prot;
 {
 	register struct pte *pte;
 	register u_int page;
 
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*(int *)pte++ = PG_V | prot | page;
+	pte  = kvtopte(vaddr);
+	page = (u_int) paddr & PG_FRAME;
+	for(size = btoc(size); size; size--) {
+		*(int *) pte++ = PG_V | prot | page;
 		page += NBPG;
 	}
 	TBIAS();
 }
 
 physunaccess(vaddr, size)
-	caddr_t vaddr;
-	register int size;
+        caddr_t vaddr;
+register int size;
 {
 	register struct pte *pte;
 
 	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*(int *)pte++ = PG_NV;
+	for(size = btoc(size); size; size--)
+		*(int *) pte++ = PG_NV;
 	TBIAS();
 }
 
@@ -225,24 +222,22 @@ physunaccess(vaddr, size)
  * Look at _lev6intr in locore.s for more details.
  */
 /*ARGSUSED*/
-setredzone(pte, vaddr)
-	struct pte *pte;
-	caddr_t vaddr;
+setredzone(pte, vaddr) struct pte *pte;
+caddr_t vaddr;
 {
 }
 
 /*
  * Convert kernel VA to physical address
  */
-kvtop(addr)
-	register caddr_t addr;
+kvtop(addr) register caddr_t addr;
 {
 	vm_offset_t va;
 
-	va = pmap_extract(kernel_pmap, (vm_offset_t)addr);
-	if (va == 0)
+	va = pmap_extract(kernel_pmap, (vm_offset_t) addr);
+	if(va == 0)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return ((int) va);
 }
 
 extern vm_map_t phys_map;
@@ -255,8 +250,7 @@ extern vm_map_t phys_map;
  * is a total crock, the multiple mappings of these physical pages should
  * be reflected in the higher-level VM structures to avoid problems.
  */
-vmapbuf(bp)
-	register struct buf *bp;
+vmapbuf(bp) register struct buf *bp;
 {
 	register int npf;
 	register caddr_t addr;
@@ -266,21 +260,21 @@ vmapbuf(bp)
 	vm_offset_t kva;
 	register vm_offset_t pa;
 
-	if ((flags & B_PHYS) == 0)
+	if((flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	addr = bp->b_saveaddr = bp->b_data;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_data = (caddr_t)(kva + off);
-	while (npf--) {
+	off                   = (int) addr & PGOFSET;
+	p                     = bp->b_proc;
+	npf                   = btoc(round_page(bp->b_bcount + off));
+	kva                   = kmem_alloc_wait(phys_map, ctob(npf));
+	bp->b_data            = (caddr_t) (kva + off);
+	while(npf--) {
 		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
-		if (pa == 0)
+		                  (vm_offset_t) addr);
+		if(pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		           VM_PROT_READ | VM_PROT_WRITE, TRUE);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
@@ -289,29 +283,27 @@ vmapbuf(bp)
 /*
  * Free the io map PTEs associated with this IO operation.
  */
-vunmapbuf(bp)
-	register struct buf *bp;
+vunmapbuf(bp) register struct buf *bp;
 {
 	register caddr_t addr;
 	register int npf;
 	vm_offset_t kva;
 
-	if ((bp->b_flags & B_PHYS) == 0)
+	if((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = bp->b_data;
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+	npf  = btoc(round_page(bp->b_bcount + ((int) addr & PGOFSET)));
+	kva  = (vm_offset_t) ((int) addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
-	bp->b_data = bp->b_saveaddr;
+	bp->b_data     = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
 
 #ifdef MAPPEDCOPY
 u_int mappedcopysize = 4096;
 
-mappedcopyin(fromp, top, count)
-	register char *fromp, *top;
-	register int count;
+mappedcopyin(fromp, top, count) register char *fromp, *top;
+register int count;
 {
 	register vm_offset_t kva, upa;
 	register int off, len;
@@ -319,41 +311,40 @@ mappedcopyin(fromp, top, count)
 	pmap_t upmap;
 	extern caddr_t CADDR1;
 
-	kva = (vm_offset_t) CADDR1;
-	off = (vm_offset_t)fromp & PAGE_MASK;
-	alignable = (off == ((vm_offset_t)top & PAGE_MASK));
-	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
-	while (count > 0) {
+	kva       = (vm_offset_t) CADDR1;
+	off       = (vm_offset_t) fromp & PAGE_MASK;
+	alignable = (off == ((vm_offset_t) top & PAGE_MASK));
+	upmap     = vm_map_pmap(&curproc->p_vmspace->vm_map);
+	while(count > 0) {
 		/*
 		 * First access of a page, use fubyte to make sure
 		 * page is faulted in and read access allowed.
 		 */
-		if (fubyte(fromp) == -1)
+		if(fubyte(fromp) == -1)
 			return (EFAULT);
 		/*
 		 * Map in the page and bcopy data in from it
 		 */
 		upa = pmap_extract(upmap, trunc_page(fromp));
-		if (upa == 0)
+		if(upa == 0)
 			panic("mappedcopyin");
-		len = min(count, PAGE_SIZE-off);
+		len = min(count, PAGE_SIZE - off);
 		pmap_enter(kernel_pmap, kva, upa, VM_PROT_READ, TRUE);
-		if (len == PAGE_SIZE && alignable && off == 0)
+		if(len == PAGE_SIZE && alignable && off == 0)
 			copypage(kva, top);
 		else
-			bcopy((caddr_t)(kva+off), top, len);
+			bcopy((caddr_t) (kva + off), top, len);
 		fromp += len;
 		top += len;
 		count -= len;
 		off = 0;
 	}
-	pmap_remove(kernel_pmap, kva, kva+PAGE_SIZE);
+	pmap_remove(kernel_pmap, kva, kva + PAGE_SIZE);
 	return (0);
 }
 
-mappedcopyout(fromp, top, count)
-	register char *fromp, *top;
-	register int count;
+mappedcopyout(fromp, top, count) register char *fromp, *top;
+register int count;
 {
 	register vm_offset_t kva, upa;
 	register int off, len;
@@ -361,36 +352,36 @@ mappedcopyout(fromp, top, count)
 	pmap_t upmap;
 	extern caddr_t CADDR2;
 
-	kva = (vm_offset_t) CADDR2;
-	off = (vm_offset_t)top & PAGE_MASK;
-	alignable = (off == ((vm_offset_t)fromp & PAGE_MASK));
-	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
-	while (count > 0) {
+	kva       = (vm_offset_t) CADDR2;
+	off       = (vm_offset_t) top & PAGE_MASK;
+	alignable = (off == ((vm_offset_t) fromp & PAGE_MASK));
+	upmap     = vm_map_pmap(&curproc->p_vmspace->vm_map);
+	while(count > 0) {
 		/*
 		 * First access of a page, use subyte to make sure
 		 * page is faulted in and write access allowed.
 		 */
-		if (subyte(top, *fromp) == -1)
+		if(subyte(top, *fromp) == -1)
 			return (EFAULT);
 		/*
 		 * Map in the page and bcopy data out to it
 		 */
 		upa = pmap_extract(upmap, trunc_page(top));
-		if (upa == 0)
+		if(upa == 0)
 			panic("mappedcopyout");
-		len = min(count, PAGE_SIZE-off);
+		len = min(count, PAGE_SIZE - off);
 		pmap_enter(kernel_pmap, kva, upa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		if (len == PAGE_SIZE && alignable && off == 0)
+		           VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		if(len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, kva);
 		else
-			bcopy(fromp, (caddr_t)(kva+off), len);
+			bcopy(fromp, (caddr_t) (kva + off), len);
 		fromp += len;
 		top += len;
 		count -= len;
 		off = 0;
 	}
-	pmap_remove(kernel_pmap, kva, kva+PAGE_SIZE);
+	pmap_remove(kernel_pmap, kva, kva + PAGE_SIZE);
 	return (0);
 }
 #endif

@@ -124,22 +124,20 @@ SOFTWARE.
  *
  * NOTES:			
  */
-in_getsufx(inp, lenp, data_out, which)
-	struct inpcb *inp;
-	u_short *lenp;
-	caddr_t data_out;
-	int which;
+in_getsufx(inp, lenp, data_out, which) struct inpcb *inp;
+u_short *lenp;
+caddr_t data_out;
+int which;
 {
 	*lenp = sizeof(u_short);
-	switch (which) {
-	case TP_LOCAL:
-		*(u_short *)data_out = inp->inp_lport;
-		return;
+	switch(which) {
+		case TP_LOCAL:
+			*(u_short *) data_out = inp->inp_lport;
+			return;
 
-	case TP_FOREIGN:
-		*(u_short *)data_out = inp->inp_fport;
+		case TP_FOREIGN:
+			*(u_short *) data_out = inp->inp_fport;
 	}
-
 }
 
 /*
@@ -160,13 +158,12 @@ in_getsufx(inp, lenp, data_out, which)
  */
 /*ARGSUSED*/
 void
-in_putsufx(inp, sufxloc, sufxlen, which)
-	struct inpcb *inp;
-	caddr_t sufxloc;
-	int which;
+        in_putsufx(inp, sufxloc, sufxlen, which) struct inpcb *inp;
+caddr_t sufxloc;
+int which;
 {
-	if (which == TP_FOREIGN) {
-		bcopy(sufxloc, (caddr_t)&inp->inp_fport, sizeof(inp->inp_fport));
+	if(which == TP_FOREIGN) {
+		bcopy(sufxloc, (caddr_t) &inp->inp_fport, sizeof(inp->inp_fport));
 	}
 }
 
@@ -189,8 +186,7 @@ in_putsufx(inp, sufxloc, sufxlen, which)
  * 	timer goes off.
  */
 void
-in_recycle_tsuffix(inp)
-	struct inpcb	*inp;
+        in_recycle_tsuffix(inp) struct inpcb *inp;
 {
 	inp->inp_fport = inp->inp_lport = 0;
 }
@@ -212,25 +208,24 @@ in_recycle_tsuffix(inp)
  * SIDE EFFECTS:	
  *
  * NOTES:			
- */ 
+ */
 void
-in_putnetaddr(inp, name, which)
-	register struct inpcb	*inp;
-	struct sockaddr_in	*name;
-	int which;
+        in_putnetaddr(inp, name, which) register struct inpcb *inp;
+struct sockaddr_in *name;
+int which;
 {
-	switch (which) {
-	case TP_LOCAL:
-		bcopy((caddr_t)&name->sin_addr, 
-			(caddr_t)&inp->inp_laddr, sizeof(struct in_addr));
+	switch(which) {
+		case TP_LOCAL:
+			bcopy((caddr_t) &name->sin_addr,
+			      (caddr_t) &inp->inp_laddr, sizeof(struct in_addr));
 			/* won't work if the dst address (name) is INADDR_ANY */
 
-		break;
-	case TP_FOREIGN:
-		if( name != (struct sockaddr_in *)0 ) {
-			bcopy((caddr_t)&name->sin_addr, 
-				(caddr_t)&inp->inp_faddr, sizeof(struct in_addr));
-		}
+			break;
+		case TP_FOREIGN:
+			if(name != (struct sockaddr_in *) 0) {
+				bcopy((caddr_t) &name->sin_addr,
+				      (caddr_t) &inp->inp_faddr, sizeof(struct in_addr));
+			}
 	}
 }
 
@@ -251,18 +246,17 @@ in_putnetaddr(inp, name, which)
  * SIDE EFFECTS:	
  *
  * NOTES:			
- */ 
-in_cmpnetaddr(inp, name, which)
-	register struct inpcb	*inp;
-	register struct sockaddr_in	*name;
-	int which;
+ */
+in_cmpnetaddr(inp, name, which) register struct inpcb *inp;
+register struct sockaddr_in *name;
+int which;
 {
-	if (which == TP_LOCAL) {
-		if (name->sin_port && name->sin_port != inp->inp_lport)
+	if(which == TP_LOCAL) {
+		if(name->sin_port && name->sin_port != inp->inp_lport)
 			return 0;
 		return (name->sin_addr.s_addr == inp->inp_laddr.s_addr);
 	}
-	if (name->sin_port && name->sin_port != inp->inp_fport)
+	if(name->sin_port && name->sin_port != inp->inp_fport)
 		return 0;
 	return (name->sin_addr.s_addr == inp->inp_faddr.s_addr);
 }
@@ -282,30 +276,29 @@ in_cmpnetaddr(inp, name, which)
  * SIDE EFFECTS:	
  *
  * NOTES:			
- */ 
+ */
 
 void
-in_getnetaddr( inp, name, which)
-	register struct mbuf *name;
-	struct inpcb *inp;
-	int which;
+        in_getnetaddr(inp, name, which) register struct mbuf *name;
+struct inpcb *inp;
+int which;
 {
 	register struct sockaddr_in *sin = mtod(name, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof(*sin));
-	switch (which) {
-	case TP_LOCAL:
-		sin->sin_addr = inp->inp_laddr;
-		sin->sin_port = inp->inp_lport;
-		break;
-	case TP_FOREIGN:
-		sin->sin_addr = inp->inp_faddr;
-		sin->sin_port = inp->inp_fport;
-		break;
-	default:
-		return;
+	bzero((caddr_t) sin, sizeof(*sin));
+	switch(which) {
+		case TP_LOCAL:
+			sin->sin_addr = inp->inp_laddr;
+			sin->sin_port = inp->inp_lport;
+			break;
+		case TP_FOREIGN:
+			sin->sin_addr = inp->inp_faddr;
+			sin->sin_port = inp->inp_fport;
+			break;
+		default:
+			return;
 	}
-	name->m_len = sin->sin_len = sizeof (*sin);
-	sin->sin_family = AF_INET;
+	name->m_len = sin->sin_len = sizeof(*sin);
+	sin->sin_family            = AF_INET;
 }
 
 /*
@@ -327,18 +320,16 @@ in_getnetaddr( inp, name, which)
  * NOTES:
  */
 
-tpip_mtu(tpcb)
-register struct tp_pcb *tpcb;
+tpip_mtu(tpcb) register struct tp_pcb *tpcb;
 {
-	struct inpcb			*inp = (struct inpcb *)tpcb->tp_npcb;
+	struct inpcb *inp = (struct inpcb *) tpcb->tp_npcb;
 
 	IFDEBUG(D_CONN)
-		printf("tpip_mtu(tpcb)\n", tpcb);
-		printf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
+	printf("tpip_mtu(tpcb)\n", tpcb);
+	printf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
 	ENDDEBUG
 	tpcb->tp_routep = &(inp->inp_route.ro_rt);
-	return (sizeof (struct ip));
-
+	return (sizeof(struct ip));
 }
 
 /*
@@ -360,15 +351,14 @@ register struct tp_pcb *tpcb;
  * NOTES:			
  */
 
-int
-tpip_output(inp, m0, datalen, nochksum)
-	struct inpcb		*inp;
-	struct mbuf 		*m0;
-	int 				datalen;
-	int					nochksum;
+int tpip_output(inp, m0, datalen, nochksum)
+struct inpcb *inp;
+struct mbuf *m0;
+int datalen;
+int nochksum;
 {
-	return tpip_output_dg( &inp->inp_laddr, &inp->inp_faddr, m0, datalen,
-		&inp->inp_route, nochksum);
+	return tpip_output_dg(&inp->inp_laddr, &inp->inp_faddr, m0, datalen,
+	                      &inp->inp_route, nochksum);
 }
 
 /*
@@ -390,25 +380,24 @@ tpip_output(inp, m0, datalen, nochksum)
  */
 
 /*ARGSUSED*/
-int
-tpip_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
-	struct in_addr		*laddr, *faddr;
-	struct mbuf 		*m0;
-	int 				datalen;
-	struct route 		*ro;
-	int					nochksum;
+int tpip_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
+struct in_addr *laddr, *faddr;
+struct mbuf *m0;
+int datalen;
+struct route *ro;
+int nochksum;
 {
-	register struct mbuf 	*m;
+	register struct mbuf *m;
 	register struct ip *ip;
-	int 					error;
+	int error;
 
 	IFDEBUG(D_EMIT)
-		printf("tpip_output_dg  datalen 0x%x m0 0x%x\n", datalen, m0);
+	printf("tpip_output_dg  datalen 0x%x m0 0x%x\n", datalen, m0);
 	ENDDEBUG
 
 
 	MGETHDR(m, M_DONTWAIT, TPMT_IPHDR);
-	if (m == 0) {
+	if(m == 0) {
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -417,12 +406,12 @@ tpip_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
 	m->m_len = sizeof(struct ip);
 
 	ip = mtod(m, struct ip *);
-	bzero((caddr_t)ip, sizeof *ip);
+	bzero((caddr_t) ip, sizeof *ip);
 
-	ip->ip_p = IPPROTO_TP;
+	ip->ip_p        = IPPROTO_TP;
 	m->m_pkthdr.len = ip->ip_len = sizeof(struct ip) + datalen;
-	ip->ip_ttl = MAXTTL;	
-		/* don't know why you need to set ttl;
+	ip->ip_ttl                   = MAXTTL;
+	/* don't know why you need to set ttl;
 		 * overlay doesn't even make this available
 		 */
 
@@ -431,13 +420,13 @@ tpip_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
 
 	IncStat(ts_tpdu_sent);
 	IFDEBUG(D_EMIT)
-		dump_mbuf(m, "tpip_output_dg before ip_output\n");
+	dump_mbuf(m, "tpip_output_dg before ip_output\n");
 	ENDDEBUG
 
-	error = ip_output(m, (struct mbuf *)0, ro, IP_ALLOWBROADCAST, NULL);
+	error = ip_output(m, (struct mbuf *) 0, ro, IP_ALLOWBROADCAST, NULL);
 
 	IFDEBUG(D_EMIT)
-		printf("tpip_output_dg after ip_output\n");
+	printf("tpip_output_dg after ip_output\n");
 	ENDDEBUG
 
 	return error;
@@ -465,12 +454,12 @@ bad:
  */
 ProtoHook
 tpip_input(m, iplen)
-	struct mbuf *m;
-	int iplen;
+struct mbuf *m;
+int iplen;
 {
-	struct sockaddr_in 	src, dst;
-	register struct ip 		*ip;
-	int						s = splnet(), hdrlen;
+	struct sockaddr_in src, dst;
+	register struct ip *ip;
+	int s = splnet(), hdrlen;
 
 	IncStat(ts_pkt_rcvd);
 
@@ -487,7 +476,7 @@ tpip_input(m, iplen)
 	if((m = m_pullup(m, iplen + 1)) == MNULL)
 		goto discard;
 	CHANGE_MTYPE(m, TPMT_DATA);
-	
+
 	/*
 	 * Now pull up the whole tp header:
 	 * Unfortunately, there may be IP options to skip past so we
@@ -495,10 +484,10 @@ tpip_input(m, iplen)
 	 */
 	hdrlen = iplen + 1 + mtod(m, u_char *)[iplen];
 
-	if( m->m_len < hdrlen ) {
-		if((m = m_pullup(m, hdrlen)) == MNULL){
+	if(m->m_len < hdrlen) {
+		if((m = m_pullup(m, hdrlen)) == MNULL) {
 			IFDEBUG(D_TPINPUT)
-				printf("tp_input, pullup 2!\n");
+			printf("tp_input, pullup 2!\n");
 			ENDDEBUG
 			goto discard;
 		}
@@ -509,7 +498,7 @@ tpip_input(m, iplen)
 	 */
 
 	IFDEBUG(D_TPINPUT)
-		dump_mbuf(m, "after tpip_input both pullups");
+	dump_mbuf(m, "after tpip_input both pullups");
 	ENDDEBUG
 	/* 
 	 * m_pullup may have returned a different mbuf
@@ -523,23 +512,23 @@ tpip_input(m, iplen)
 	m->m_len -= iplen;
 	m->m_data += iplen;
 
-	src.sin_addr = *(struct in_addr *)&(ip->ip_src);
-	src.sin_family  = AF_INET;
-	src.sin_len  = sizeof(src);
-	dst.sin_addr = *(struct in_addr *)&(ip->ip_dst);
-	dst.sin_family  = AF_INET; 
-	dst.sin_len  = sizeof(dst);
+	src.sin_addr   = *(struct in_addr *) &(ip->ip_src);
+	src.sin_family = AF_INET;
+	src.sin_len    = sizeof(src);
+	dst.sin_addr   = *(struct in_addr *) &(ip->ip_dst);
+	dst.sin_family = AF_INET;
+	dst.sin_len    = sizeof(dst);
 
-	(void) tp_input(m, (struct sockaddr *)&src, (struct sockaddr *)&dst,
-				0, tpip_output_dg, 0);
+	(void) tp_input(m, (struct sockaddr *) &src, (struct sockaddr *) &dst,
+	                0, tpip_output_dg, 0);
 	return 0;
 
 discard:
 	IFDEBUG(D_TPINPUT)
-		printf("tpip_input DISCARD\n");
+	printf("tpip_input DISCARD\n");
 	ENDDEBUG
 	IFTRACE(D_TPINPUT)
-		tptrace(TPPTmisc, "tpip_input DISCARD m",  m,0,0,0);
+	tptrace(TPPTmisc, "tpip_input DISCARD m", m, 0, 0, 0);
 	ENDTRACE
 	m_freem(m);
 	IncStat(ts_recv_drop);
@@ -567,10 +556,9 @@ extern void tp_quench();
  */
 
 void
-tpin_quench(inp)
-	struct inpcb *inp;
+        tpin_quench(inp) struct inpcb *inp;
 {
-	tp_quench((struct tp_pcb *)inp->inp_socket->so_pcb, PRC_QUENCH);
+	tp_quench((struct tp_pcb *) inp->inp_socket->so_pcb, PRC_QUENCH);
 }
 
 /*
@@ -595,38 +583,38 @@ tpin_quench(inp)
  */
 ProtoHook
 tpip_ctlinput(cmd, sin)
-	int cmd;
-	struct sockaddr_in *sin;
+int cmd;
+struct sockaddr_in *sin;
 {
 	extern u_char inetctlerrmap[];
 	extern struct in_addr zeroin_addr;
-	void tp_quench __P((struct inpcb *,int));
-	void tpin_abort __P((struct inpcb *,int));
+	void tp_quench __P((struct inpcb *, int) );
+	void tpin_abort __P((struct inpcb *, int) );
 
-	if (sin->sin_family != AF_INET && sin->sin_family != AF_IMPLINK)
+	if(sin->sin_family != AF_INET && sin->sin_family != AF_IMPLINK)
 		return 0;
-	if (sin->sin_addr.s_addr == INADDR_ANY)
+	if(sin->sin_addr.s_addr == INADDR_ANY)
 		return 0;
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if(cmd < 0 || cmd > PRC_NCMDS)
 		return 0;
-	switch (cmd) {
+	switch(cmd) {
 
-		case	PRC_QUENCH:
-			in_pcbnotify(&tp_inpcb, (struct sockaddr *)sin, 0,
-				zeroin_addr, 0, cmd, tp_quench);
+		case PRC_QUENCH:
+			in_pcbnotify(&tp_inpcb, (struct sockaddr *) sin, 0,
+			             zeroin_addr, 0, cmd, tp_quench);
 			break;
 
-		case	PRC_ROUTEDEAD:
-		case	PRC_HOSTUNREACH:
-		case	PRC_UNREACH_NET:
-		case	PRC_IFDOWN:
-		case	PRC_HOSTDEAD:
-			in_pcbnotify(&tp_inpcb, (struct sockaddr *)sin, 0,
-				zeroin_addr, 0, cmd, in_rtchange);
+		case PRC_ROUTEDEAD:
+		case PRC_HOSTUNREACH:
+		case PRC_UNREACH_NET:
+		case PRC_IFDOWN:
+		case PRC_HOSTDEAD:
+			in_pcbnotify(&tp_inpcb, (struct sockaddr *) sin, 0,
+			             zeroin_addr, 0, cmd, in_rtchange);
 			break;
 
 		default:
-		/*
+			/*
 		case	PRC_MSGSIZE:
 		case	PRC_UNREACH_HOST:
 		case	PRC_UNREACH_PROTOCOL:
@@ -641,8 +629,8 @@ tpip_ctlinput(cmd, sin)
 		case	PRC_TIMXCEED_REASS:
 		case	PRC_PARAMPROB:
 		*/
-		in_pcbnotify(&tp_inpcb, (struct sockaddr *)sin, 0,
-			zeroin_addr, 0, cmd, tpin_abort);
+			in_pcbnotify(&tp_inpcb, (struct sockaddr *) sin, 0,
+			             zeroin_addr, 0, cmd, tpin_abort);
 	}
 	return 0;
 }
@@ -668,19 +656,18 @@ tpip_ctlinput(cmd, sin)
 
 ProtoHook
 tpin_abort(inp)
-	struct inpcb *inp;
+struct inpcb *inp;
 {
 	struct tp_event e;
 
-	e.ev_number = ER_TPDU;
+	e.ev_number              = ER_TPDU;
 	e.ATTR(ER_TPDU).e_reason = ENETRESET;
-	(void) tp_driver((struct tp_pcb *)inp->inp_ppcb, &e);
+	(void) tp_driver((struct tp_pcb *) inp->inp_ppcb, &e);
 	return 0;
 }
 
 #ifdef ARGO_DEBUG
-dump_inaddr(addr)
-	register struct sockaddr_in *addr;
+dump_inaddr(addr) register struct sockaddr_in *addr;
 {
 	printf("INET: port 0x%x; addr 0x%x\n", addr->sin_port, addr->sin_addr);
 }

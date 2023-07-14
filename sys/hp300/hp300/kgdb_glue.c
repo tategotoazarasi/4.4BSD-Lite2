@@ -55,7 +55,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Header: /usr/src/sys/hp300/hp300/RCS/kgdb_glue.c,v 1.5 92/12/20 15:48:57 mike Exp $ (LBL)";
+        "@(#) $Header: /usr/src/sys/hp300/hp300/RCS/kgdb_glue.c,v 1.5 92/12/20 15:48:57 mike Exp $ (LBL)";
 #endif
 
 #define KGDB_STACKSIZE 0x800
@@ -63,26 +63,26 @@ static char rcsid[] =
 
 u_long kgdb_stack[KGDB_STACKWORDS];
 
-#define getsp(v) asm("movl sp, %0" : "=r" (v))
-#define setsp(v) asm("movl %0, sp" :: "r" (v))
+#define getsp(v) asm("movl sp, %0" \
+	                 : "=r"(v))
+#define setsp(v) asm("movl %0, sp" ::"r"(v))
 
 static inline void
-copywords(src, dst, nbytes)
-	register u_long *src, *dst;
-	register u_int nbytes;
+        copywords(src, dst, nbytes) register u_long *src,
+        *dst;
+register u_int nbytes;
 {
 	u_long *limit = src + (nbytes / sizeof(u_long));
 
 	do {
 		*dst++ = *src++;
-	} while (src < limit);
-	if (nbytes & 2)
-		*(u_short *)dst = *(u_short *)src;
+	} while(src < limit);
+	if(nbytes & 2)
+		*(u_short *) dst = *(u_short *) src;
 }
 
-kgdb_trap_glue(type, frame)
-	int type;
-	struct frame frame;
+kgdb_trap_glue(type, frame) int type;
+struct frame frame;
 {
 	u_long osp, nsp;
 	u_int fsize, s;
@@ -95,25 +95,25 @@ kgdb_trap_glue(type, frame)
 	 *
 	 * XXX this may have to change if we implement an interrupt stack.
 	 */
-	fsize = sizeof(frame) - sizeof(frame.F_u) + exframesize[frame.f_format];
-	frame.f_regs[SP] = (u_long)&frame + fsize;
+	fsize            = sizeof(frame) - sizeof(frame.F_u) + exframesize[frame.f_format];
+	frame.f_regs[SP] = (u_long) &frame + fsize;
 
 	/*
 	 * Copy the interrupt context and frame to the new stack.
 	 * We're throwing away trap()'s frame since we're going to do
 	 * our own rte.
 	 */
-	nsp = (u_long)&kgdb_stack[KGDB_STACKWORDS] -
+	nsp = (u_long) &kgdb_stack[KGDB_STACKWORDS] -
 	      roundup(fsize, sizeof(u_long));
 
-	copywords((u_long *)&frame, (u_long *)nsp, fsize);
+	copywords((u_long *) &frame, (u_long *) nsp, fsize);
 
 	s = splhigh();
 
 	getsp(osp);
 	setsp(nsp);
 
-	if (kgdb_trap(type, (struct frame *)nsp) == 0) {
+	if(kgdb_trap(type, (struct frame *) nsp) == 0) {
 		/*
 		 * Get back on kernel stack.  This thread of control
 		 * will return back up through trap().  If kgdb_trap()
@@ -129,8 +129,8 @@ kgdb_trap_glue(type, frame)
 	 * Copy back context, which has possibly changed.  Even the
 	 * sp might have changed.
 	 */
-	osp = ((struct frame *)nsp)->f_regs[SP] - fsize;
-	copywords((u_long *)nsp, (u_long *)osp, fsize);
+	osp = ((struct frame *) nsp)->f_regs[SP] - fsize;
+	copywords((u_long *) nsp, (u_long *) osp, fsize);
 	setsp(osp);
 
 	/*
@@ -143,10 +143,9 @@ kgdb_trap_glue(type, frame)
 
 int kgdb_testval;
 
-kgdb_test(i)
-	int i;
+kgdb_test(i) int i;
 {
-        ++kgdb_testval;
-        return (i + 1);
+	++kgdb_testval;
+	return (i + 1);
 }
 #endif /* KGDB */

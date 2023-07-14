@@ -45,17 +45,17 @@
 
 #include <stand/saio.h>
 
-extern int	nullsys(), nodev(), noioctl();
+extern int nullsys(), nodev(), noioctl();
 
-int	wdstrategy(), wdopen();
-#define	wdioctl	noioctl
+int wdstrategy(), wdopen();
+#define wdioctl noioctl
 
-int	fdstrategy(), fdopen();
-#define	fdioctl noioctl
+int fdstrategy(), fdopen();
+#define fdioctl noioctl
 
 struct devsw devsw[] = {
-	{ "wd",	wdstrategy,	wdopen,	nullsys, wdioctl },	/* 0 = wd */
-	{ NULL },				/* swapdev place holder */
-	{ "fd",	fdstrategy,	fdopen,	nullsys, fdioctl },	/* 2 = fd */
+        {"wd", wdstrategy, wdopen, nullsys, wdioctl}, /* 0 = wd */
+        {NULL},                                       /* swapdev place holder */
+        {"fd", fdstrategy, fdopen, nullsys, fdioctl}, /* 2 = fd */
 };
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int ndevs = (sizeof(devsw) / sizeof(devsw[0]));

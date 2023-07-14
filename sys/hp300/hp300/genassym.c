@@ -65,33 +65,29 @@
 extern int errno;
 
 void
-def(what, val)
-	char *what;
-	int val;
+        def(what, val) char *what;
+int val;
 {
 
-	if (printf("#define\t%s\t%d\n", what, val) < 0) {
-		(void)fprintf(stderr, "genassym: printf: %s\n",
-		    strerror(errno));
+	if(printf("#define\t%s\t%d\n", what, val) < 0) {
+		(void) fprintf(stderr, "genassym: printf: %s\n",
+		               strerror(errno));
 		exit(1);
 	}
 }
 
-void
-flush()
-{
+void flush() {
 
-	if (fflush(stdout) || fsync(fileno(stdout)) < 0) {
-		(void)fprintf(stderr, "genassym: flush stdout: %s\n",
-		    strerror(errno));
+	if(fflush(stdout) || fsync(fileno(stdout)) < 0) {
+		(void) fprintf(stderr, "genassym: flush stdout: %s\n",
+		               strerror(errno));
 		exit(1);
 	}
 }
 
-#define	off(what, s, m)	def(what, (int)offsetof(s, m))
+#define off(what, s, m) def(what, (int) offsetof(s, m))
 
-main()
-{
+main() {
 	/* general constants */
 	def("UPAGES", UPAGES);
 	def("NBPG", NBPG);

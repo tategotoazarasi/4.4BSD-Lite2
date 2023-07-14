@@ -43,35 +43,34 @@
  * code and should be modified for each CPU to be as fast as possible.
  */
 
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(m, len) register struct mbuf *m;
+register int len;
 {
-	register u_short *w;		/* on vax, known to be r9 */
-	register int sum = 0;		/* on vax, known to be r8 */
+	register u_short *w;   /* on vax, known to be r9 */
+	register int sum  = 0; /* on vax, known to be r8 */
 	register int mlen = 0;
 
-	for (;;) {
+	for(;;) {
 		/*
 		 * Each trip around loop adds in
 		 * word from one mbuf segment.
 		 */
 		w = mtod(m, u_short *);
-		if (mlen == -1) {
+		if(mlen == -1) {
 			/*
 			 * There is a byte left from the last segment;
 			 * add it into the checksum.  Don't have to worry
 			 * about a carry-out here because we make sure
 			 * that high part of (32 bit) sum is small below.
 			 */
-			sum += *(u_char *)w << 8;
-			w = (u_short *)((char *)w + 1);
+			sum += *(u_char *) w << 8;
+			w    = (u_short *) ((char *) w + 1);
 			mlen = m->m_len - 1;
 			len--;
 		} else
 			mlen = m->m_len;
 		m = m->m_next;
-		if (len < mlen)
+		if(len < mlen)
 			mlen = len;
 		len -= mlen;
 		/*
@@ -79,7 +78,7 @@ in_cksum(m, len)
 		 * memory operations.  It is too hard to do byte
 		 * adjustment, do only word adjustment.
 		 */
-		if (((int)w&0x2) && mlen >= 2) {
+		if(((int) w & 0x2) && mlen >= 2) {
 			sum += *w++;
 			mlen -= 2;
 		}
@@ -99,21 +98,29 @@ in_cksum(m, len)
 		 * Here there is the danger of high order carry out, and
 		 * we carefully use adwc.
 		 */
-		while ((mlen -= 32) >= 0) {
+		while((mlen -= 32) >= 0) {
 #undef ADD
-#ifdef unneeded		 /* The loop construct clears carry for us... */
-			asm("bicpsr $1");		/* clears carry */
+#ifdef unneeded               /* The loop construct clears carry for us... */
+			asm("bicpsr $1"); /* clears carry */
 #endif
-#define ADD		asm("adwc (r9)+,r8;");
-			ADD; ADD; ADD; ADD; ADD; ADD; ADD; ADD;
+#define ADD asm("adwc (r9)+,r8;");
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
 			asm("adwc $0,r8");
 		}
 		mlen += 32;
-		while ((mlen -= 8) >= 0) {
-#ifdef unneeded		 /* The loop construct clears carry for us... */
-			asm("bicpsr $1");		/* clears carry */
+		while((mlen -= 8) >= 0) {
+#ifdef unneeded               /* The loop construct clears carry for us... */
+			asm("bicpsr $1"); /* clears carry */
 #endif
-			ADD; ADD;
+			ADD;
+			ADD;
 			asm("adwc $0,r8");
 		}
 		mlen += 8;
@@ -123,15 +130,17 @@ in_cksum(m, len)
 		 * low parts together.)  Then mop up trailing words
 		 * and maybe an odd byte.
 		 */
-		{ asm("ashl $-16,r8,r0; addw2 r0,r8");
-		  asm("adwc $0,r8; movzwl r8,r8"); }
-		while ((mlen -= 2) >= 0) {
+		{
+			asm("ashl $-16,r8,r0; addw2 r0,r8");
+			asm("adwc $0,r8; movzwl r8,r8");
+		}
+		while((mlen -= 2) >= 0) {
 			asm("movzwl (r9)+,r0; addl2 r0,r8");
 		}
-		if (mlen == -1) {
-			sum += *(u_char *)w;
+		if(mlen == -1) {
+			sum += *(u_char *) w;
 		}
-		if (len == 0)
+		if(len == 0)
 			break;
 		/*
 		 * Locate the next block with some data.
@@ -139,12 +148,12 @@ in_cksum(m, len)
 		 * will wrap to the top with mlen == -1 and
 		 * then add it in shifted appropriately.
 		 */
-		for (;;) {
-			if (m == 0) {
+		for(;;) {
+			if(m == 0) {
 				printf("cksum: out of data\n");
 				goto done;
 			}
-			if (m->m_len)
+			if(m->m_len)
 				break;
 			m = m->m_next;
 		}
@@ -156,7 +165,9 @@ done:
 	 * Have to be careful to not drop the last
 	 * carry here.
 	 */
-	{ asm("ashl $-16,r8,r0; addw2 r0,r8; adwc $0,r8");
-	  asm("mcoml r8,r8; movzwl r8,r8"); }
+	{
+		asm("ashl $-16,r8,r0; addw2 r0,r8; adwc $0,r8");
+		asm("mcoml r8,r8; movzwl r8,r8");
+	}
 	return (sum);
 }

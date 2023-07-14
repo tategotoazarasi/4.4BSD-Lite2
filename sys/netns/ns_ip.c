@@ -72,42 +72,42 @@ struct ifnet_en {
 	struct ifnet_en *ifen_next;
 };
 
-int	nsipoutput(), nsipioctl(), nsipstart();
-#define LOMTU	(1024+512);
+int nsipoutput(), nsipioctl(), nsipstart();
+#define LOMTU (1024 + 512);
 
 struct ifnet nsipif;
-struct ifnet_en *nsip_list;		/* list of all hosts and gateways or
+struct ifnet_en *nsip_list; /* list of all hosts and gateways or
 					broadcast addrs */
 
 struct ifnet_en *
-nsipattach()
-{
+nsipattach() {
 	register struct ifnet_en *m;
 	register struct ifnet *ifp;
 
-	if (nsipif.if_mtu == 0) {
-		ifp = &nsipif;
-		ifp->if_name = "nsip";
-		ifp->if_mtu = LOMTU;
-		ifp->if_ioctl = nsipioctl;
+	if(nsipif.if_mtu == 0) {
+		ifp            = &nsipif;
+		ifp->if_name   = "nsip";
+		ifp->if_mtu    = LOMTU;
+		ifp->if_ioctl  = nsipioctl;
 		ifp->if_output = nsipoutput;
-		ifp->if_start = nsipstart;
-		ifp->if_flags = IFF_POINTOPOINT;
+		ifp->if_start  = nsipstart;
+		ifp->if_flags  = IFF_POINTOPOINT;
 	}
 
 	MALLOC((m), struct ifnet_en *, sizeof(*m), M_PCB, M_NOWAIT);
-	if (m == NULL) return (NULL);
+	if(m == NULL)
+		return (NULL);
 	m->ifen_next = nsip_list;
-	nsip_list = m;
-	ifp = &m->ifen_ifnet;
+	nsip_list    = m;
+	ifp          = &m->ifen_ifnet;
 
-	ifp->if_name = "nsip";
-	ifp->if_mtu = LOMTU;
-	ifp->if_ioctl = nsipioctl;
+	ifp->if_name   = "nsip";
+	ifp->if_mtu    = LOMTU;
+	ifp->if_ioctl  = nsipioctl;
 	ifp->if_output = nsipoutput;
-	ifp->if_start = nsipstart;
-	ifp->if_flags = IFF_POINTOPOINT;
-	ifp->if_unit = nsipif.if_unit++;
+	ifp->if_start  = nsipstart;
+	ifp->if_flags  = IFF_POINTOPOINT;
+	ifp->if_unit   = nsipif.if_unit++;
 	if_attach(ifp);
 
 	return (m);
@@ -118,34 +118,33 @@ nsipattach()
  * Process an ioctl request.
  */
 /* ARGSUSED */
-nsipioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	int cmd;
-	caddr_t data;
+nsipioctl(ifp, cmd, data) register struct ifnet *ifp;
+int cmd;
+caddr_t data;
 {
 	int error = 0;
 	struct ifreq *ifr;
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		/* fall into: */
+		case SIOCSIFADDR:
+			ifp->if_flags |= IFF_UP;
+			/* fall into: */
 
-	case SIOCSIFDSTADDR:
-		/*
+		case SIOCSIFDSTADDR:
+			/*
 		 * Everything else is done at a higher level.
 		 */
-		break;
+			break;
 
-	case SIOCSIFFLAGS:
-		ifr = (struct ifreq *)data;
-		if ((ifr->ifr_flags & IFF_UP) == 0)
-			error = nsip_free(ifp);
+		case SIOCSIFFLAGS:
+			ifr = (struct ifreq *) data;
+			if((ifr->ifr_flags & IFF_UP) == 0)
+				error = nsip_free(ifp);
 
 
-	default:
-		error = EINVAL;
+		default:
+			error = EINVAL;
 	}
 	return (error);
 }
@@ -154,36 +153,35 @@ struct mbuf *nsip_badlen;
 struct mbuf *nsip_lastin;
 int nsip_hold_input;
 
-idpip_input(m, ifp)
-	register struct mbuf *m;
-	struct ifnet *ifp;
+idpip_input(m, ifp) register struct mbuf *m;
+struct ifnet *ifp;
 {
 	register struct ip *ip;
 	register struct idp *idp;
 	register struct ifqueue *ifq = &nsintrq;
 	int len, s;
 
-	if (nsip_hold_input) {
-		if (nsip_lastin) {
+	if(nsip_hold_input) {
+		if(nsip_lastin) {
 			m_freem(nsip_lastin);
 		}
-		nsip_lastin = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT);
+		nsip_lastin = m_copym(m, 0, (int) M_COPYALL, M_DONTWAIT);
 	}
 	/*
 	 * Get IP and IDP header together in first mbuf.
 	 */
 	nsipif.if_ipackets++;
-	s = sizeof (struct ip) + sizeof (struct idp);
-	if (((m->m_flags & M_EXT) || m->m_len < s) &&
-	    (m = m_pullup(m, s)) == 0) {
+	s = sizeof(struct ip) + sizeof(struct idp);
+	if(((m->m_flags & M_EXT) || m->m_len < s) &&
+	   (m = m_pullup(m, s)) == 0) {
 		nsipif.if_ierrors++;
 		return;
 	}
 	ip = mtod(m, struct ip *);
-	if (ip->ip_hl > (sizeof (struct ip) >> 2)) {
-		ip_stripoptions(m, (struct mbuf *)0);
-		if (m->m_len < s) {
-			if ((m = m_pullup(m, s)) == 0) {
+	if(ip->ip_hl > (sizeof(struct ip) >> 2)) {
+		ip_stripoptions(m, (struct mbuf *) 0);
+		if(m->m_len < s) {
+			if((m = m_pullup(m, s)) == 0) {
 				nsipif.if_ierrors++;
 				return;
 			}
@@ -195,16 +193,18 @@ idpip_input(m, ifp)
 	 * Make mbuf data length reflect IDP length.
 	 * If not enough data to reflect IDP length, drop.
 	 */
-	m->m_data += sizeof (struct ip);
-	m->m_len -= sizeof (struct ip);
-	m->m_pkthdr.len -= sizeof (struct ip);
+	m->m_data += sizeof(struct ip);
+	m->m_len -= sizeof(struct ip);
+	m->m_pkthdr.len -= sizeof(struct ip);
 	idp = mtod(m, struct idp *);
 	len = ntohs(idp->idp_len);
-	if (len & 1) len++;		/* Preserve Garbage Byte */
-	if (ip->ip_len != len) {
-		if (len > ip->ip_len) {
+	if(len & 1)
+		len++; /* Preserve Garbage Byte */
+	if(ip->ip_len != len) {
+		if(len > ip->ip_len) {
 			nsipif.if_ierrors++;
-			if (nsip_badlen) m_freem(nsip_badlen);
+			if(nsip_badlen)
+				m_freem(nsip_badlen);
 			nsip_badlen = m;
 			return;
 		}
@@ -220,9 +220,9 @@ idpip_input(m, ifp)
 	 * Deliver to NS
 	 */
 	s = splimp();
-	if (IF_QFULL(ifq)) {
+	if(IF_QFULL(ifq)) {
 		IF_DROP(ifq);
-bad:
+	bad:
 		m_freem(m);
 		splx(s);
 		return;
@@ -234,16 +234,15 @@ bad:
 }
 
 /* ARGSUSED */
-nsipoutput(ifn, m, dst)
-	struct ifnet_en *ifn;
-	register struct mbuf *m;
-	struct sockaddr *dst;
+nsipoutput(ifn, m, dst) struct ifnet_en *ifn;
+register struct mbuf *m;
+struct sockaddr *dst;
 {
 
 	register struct ip *ip;
 	register struct route *ro = &(ifn->ifen_route);
-	register int len = 0;
-	register struct idp *idp = mtod(m, struct idp *);
+	register int len          = 0;
+	register struct idp *idp  = mtod(m, struct idp *);
 	int error;
 
 	ifn->ifen_ifnet.if_opackets++;
@@ -254,43 +253,44 @@ nsipoutput(ifn, m, dst)
 	 * Calculate data length and make space
 	 * for IP header.
 	 */
-	len =  ntohs(idp->idp_len);
-	if (len & 1) len++;		/* Preserve Garbage Byte */
+	len = ntohs(idp->idp_len);
+	if(len & 1)
+		len++; /* Preserve Garbage Byte */
 	/* following clause not necessary on vax */
-	if (3 & (int)m->m_data) {
+	if(3 & (int) m->m_data) {
 		/* force longword alignment of ip hdr */
 		struct mbuf *m0 = m_gethdr(MT_HEADER, M_DONTWAIT);
-		if (m0 == 0) {
+		if(m0 == 0) {
 			m_freem(m);
 			return (ENOBUFS);
 		}
-		MH_ALIGN(m0, sizeof (struct ip));
-		m0->m_flags = m->m_flags & M_COPYFLAGS;
-		m0->m_next = m;
-		m0->m_len = sizeof (struct ip);
+		MH_ALIGN(m0, sizeof(struct ip));
+		m0->m_flags      = m->m_flags & M_COPYFLAGS;
+		m0->m_next       = m;
+		m0->m_len        = sizeof(struct ip);
 		m0->m_pkthdr.len = m0->m_len + m->m_len;
 		m->m_flags &= ~M_PKTHDR;
 	} else {
-		M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
-		if (m == 0)
+		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+		if(m == 0)
 			return (ENOBUFS);
 	}
 	/*
 	 * Fill in IP header.
 	 */
-	ip = mtod(m, struct ip *);
-	*(long *)ip = 0;
-	ip->ip_p = IPPROTO_IDP;
-	ip->ip_src = ifn->ifen_src;
-	ip->ip_dst = ifn->ifen_dst;
-	ip->ip_len = (u_short)len + sizeof (struct ip);
-	ip->ip_ttl = MAXTTL;
+	ip           = mtod(m, struct ip *);
+	*(long *) ip = 0;
+	ip->ip_p     = IPPROTO_IDP;
+	ip->ip_src   = ifn->ifen_src;
+	ip->ip_dst   = ifn->ifen_dst;
+	ip->ip_len   = (u_short) len + sizeof(struct ip);
+	ip->ip_ttl   = MAXTTL;
 
 	/*
 	 * Output final datagram.
 	 */
-	error =  (ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL));
-	if (error) {
+	error = (ip_output(m, (struct mbuf *) 0, ro, SO_BROADCAST, NULL));
+	if(error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;
 	}
@@ -300,20 +300,18 @@ bad:
 	return (ENETUNREACH);
 }
 
-nsipstart(ifp)
-struct ifnet *ifp;
+nsipstart(ifp) struct ifnet *ifp;
 {
 	panic("nsip_start called\n");
 }
 
 struct ifreq ifr = {"nsip0"};
 
-nsip_route(m)
-	register struct mbuf *m;
+nsip_route(m) register struct mbuf *m;
 {
 	register struct nsip_req *rq = mtod(m, struct nsip_req *);
-	struct sockaddr_ns *ns_dst = (struct sockaddr_ns *)&rq->rq_ns;
-	struct sockaddr_in *ip_dst = (struct sockaddr_in *)&rq->rq_ip;
+	struct sockaddr_ns *ns_dst   = (struct sockaddr_ns *) &rq->rq_ns;
+	struct sockaddr_in *ip_dst   = (struct sockaddr_in *) &rq->rq_ip;
 	struct route ro;
 	struct ifnet_en *ifn;
 	struct sockaddr_in *src;
@@ -321,15 +319,15 @@ nsip_route(m)
 	/*
 	 * First, make sure we already have an ns address:
 	 */
-	if (ns_hosteqnh(ns_thishost, ns_zerohost))
+	if(ns_hosteqnh(ns_thishost, ns_zerohost))
 		return (EADDRNOTAVAIL);
 	/*
 	 * Now, determine if we can get to the destination
 	 */
-	bzero((caddr_t)&ro, sizeof (ro));
-	ro.ro_dst = *(struct sockaddr *)ip_dst;
+	bzero((caddr_t) &ro, sizeof(ro));
+	ro.ro_dst = *(struct sockaddr *) ip_dst;
 	rtalloc(&ro);
-	if (ro.ro_rt == 0 || ro.ro_rt->rt_ifp == 0) {
+	if(ro.ro_rt == 0 || ro.ro_rt->rt_ifp == 0) {
 		return (ENETUNREACH);
 	}
 
@@ -341,54 +339,53 @@ nsip_route(m)
 		register struct in_ifaddr *ia;
 		struct ifnet *ifp = ro.ro_rt->rt_ifp;
 
-		for (ia = in_ifaddr; ia; ia = ia->ia_next)
-			if (ia->ia_ifp == ifp)
+		for(ia = in_ifaddr; ia; ia = ia->ia_next)
+			if(ia->ia_ifp == ifp)
 				break;
-		if (ia == 0)
+		if(ia == 0)
 			ia = in_ifaddr;
-		if (ia == 0) {
+		if(ia == 0) {
 			RTFREE(ro.ro_rt);
 			return (EADDRNOTAVAIL);
 		}
-		src = (struct sockaddr_in *)&ia->ia_addr;
+		src = (struct sockaddr_in *) &ia->ia_addr;
 	}
 
 	/*
 	 * Is there a free (pseudo-)interface or space?
 	 */
-	for (ifn = nsip_list; ifn; ifn = ifn->ifen_next) {
-		if ((ifn->ifen_ifnet.if_flags & IFF_UP) == 0)
+	for(ifn = nsip_list; ifn; ifn = ifn->ifen_next) {
+		if((ifn->ifen_ifnet.if_flags & IFF_UP) == 0)
 			break;
 	}
-	if (ifn == NULL)
+	if(ifn == NULL)
 		ifn = nsipattach();
-	if (ifn == NULL) {
+	if(ifn == NULL) {
 		RTFREE(ro.ro_rt);
 		return (ENOBUFS);
 	}
 	ifn->ifen_route = ro;
-	ifn->ifen_dst =  ip_dst->sin_addr;
-	ifn->ifen_src = src->sin_addr;
+	ifn->ifen_dst   = ip_dst->sin_addr;
+	ifn->ifen_src   = src->sin_addr;
 
 	/*
 	 * now configure this as a point to point link
 	 */
 	ifr.ifr_name[4] = '0' + nsipif.if_unit - 1;
-	ifr.ifr_dstaddr = * (struct sockaddr *) ns_dst;
-	(void)ns_control((struct socket *)0, SIOCSIFDSTADDR, (caddr_t)&ifr,
-			(struct ifnet *)ifn);
+	ifr.ifr_dstaddr = *(struct sockaddr *) ns_dst;
+	(void) ns_control((struct socket *) 0, SIOCSIFDSTADDR, (caddr_t) &ifr,
+	                  (struct ifnet *) ifn);
 	satons_addr(ifr.ifr_addr).x_host = ns_thishost;
-	return (ns_control((struct socket *)0, SIOCSIFADDR, (caddr_t)&ifr,
-			(struct ifnet *)ifn));
+	return (ns_control((struct socket *) 0, SIOCSIFADDR, (caddr_t) &ifr,
+	                   (struct ifnet *) ifn));
 }
 
-nsip_free(ifp)
-struct ifnet *ifp;
+nsip_free(ifp) struct ifnet *ifp;
 {
-	register struct ifnet_en *ifn = (struct ifnet_en *)ifp;
-	struct route *ro = & ifn->ifen_route;
+	register struct ifnet_en *ifn = (struct ifnet_en *) ifp;
+	struct route *ro              = &ifn->ifen_route;
 
-	if (ro->ro_rt) {
+	if(ro->ro_rt) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
@@ -396,44 +393,42 @@ struct ifnet *ifp;
 	return (0);
 }
 
-nsip_ctlinput(cmd, sa)
-	int cmd;
-	struct sockaddr *sa;
+nsip_ctlinput(cmd, sa) int cmd;
+struct sockaddr *sa;
 {
 	extern u_char inetctlerrmap[];
 	struct sockaddr_in *sin;
 	int in_rtchange();
 
-	if ((unsigned)cmd >= PRC_NCMDS)
+	if((unsigned) cmd >= PRC_NCMDS)
 		return;
-	if (sa->sa_family != AF_INET && sa->sa_family != AF_IMPLINK)
+	if(sa->sa_family != AF_INET && sa->sa_family != AF_IMPLINK)
 		return;
-	sin = (struct sockaddr_in *)sa;
-	if (sin->sin_addr.s_addr == INADDR_ANY)
+	sin = (struct sockaddr_in *) sa;
+	if(sin->sin_addr.s_addr == INADDR_ANY)
 		return;
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case PRC_ROUTEDEAD:
-	case PRC_REDIRECT_NET:
-	case PRC_REDIRECT_HOST:
-	case PRC_REDIRECT_TOSNET:
-	case PRC_REDIRECT_TOSHOST:
-		nsip_rtchange(&sin->sin_addr);
-		break;
+		case PRC_ROUTEDEAD:
+		case PRC_REDIRECT_NET:
+		case PRC_REDIRECT_HOST:
+		case PRC_REDIRECT_TOSNET:
+		case PRC_REDIRECT_TOSHOST:
+			nsip_rtchange(&sin->sin_addr);
+			break;
 	}
 }
 
-nsip_rtchange(dst)
-	register struct in_addr *dst;
+nsip_rtchange(dst) register struct in_addr *dst;
 {
 	register struct ifnet_en *ifn;
 
-	for (ifn = nsip_list; ifn; ifn = ifn->ifen_next) {
-		if (ifn->ifen_dst.s_addr == dst->s_addr &&
-			ifn->ifen_route.ro_rt) {
-				RTFREE(ifn->ifen_route.ro_rt);
-				ifn->ifen_route.ro_rt = 0;
+	for(ifn = nsip_list; ifn; ifn = ifn->ifen_next) {
+		if(ifn->ifen_dst.s_addr == dst->s_addr &&
+		   ifn->ifen_route.ro_rt) {
+			RTFREE(ifn->ifen_route.ro_rt);
+			ifn->ifen_route.ro_rt = 0;
 		}
 	}
 }

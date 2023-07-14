@@ -47,11 +47,10 @@
 
 #include <machine/reg.h>
 
-main()
-{
-	register struct proc *p = (struct proc *)0;
-	register struct user *up = (struct user *)0;
-	register struct vmmeter *vm = (struct vmmeter *)0;
+main() {
+	register struct proc *p     = (struct proc *) 0;
+	register struct user *up    = (struct user *) 0;
+	register struct vmmeter *vm = (struct vmmeter *) 0;
 	register int size, s, n;
 
 	printf("#define\tP_FORW %d\n", &p->p_forw);
@@ -72,6 +71,5 @@ main()
 	exit(0);
 }
 
-panic()
-{
+panic() {
 }

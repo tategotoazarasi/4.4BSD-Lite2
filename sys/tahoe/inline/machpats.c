@@ -42,35 +42,34 @@ static char sccsid[] = "@(#)machpats.c	1.4 (Berkeley) 5/8/91";
  */
 struct pats machine_ptab[] = {
 
-	{ 3, "_blkcpy\n",
-"	movl	(sp)+,r0\n\
+        {3, "_blkcpy\n",
+         "	movl	(sp)+,r0\n\
 	movl	(sp)+,r1\n\
 	movl	(sp)+,r2\n\
-	movblk\n" },
+	movblk\n"},
 
-	{ 3, "_bcopy\n",
-"	movl	(sp)+,r0\n\
+        {3, "_bcopy\n",
+         "	movl	(sp)+,r0\n\
 	movl	(sp)+,r1\n\
 	movl	(sp)+,r2\n\
-	movblk\n" },
+	movblk\n"},
 
-	{ 2, "_bzero\n",
-"	movl	(sp)+,r1\n\
+        {2, "_bzero\n",
+         "	movl	(sp)+,r1\n\
 	movl	(sp)+,r2\n\
 	movab	1f,r0\n\
 	movs3\n\
 	.data\n\
 1:	.byte	0\n\
-	.text\n" },
+	.text\n"},
 
-	{ 2, "_blkclr\n",
-"	movl	(sp)+,r1\n\
+        {2, "_blkclr\n",
+         "	movl	(sp)+,r1\n\
 	movl	(sp)+,r2\n\
 	movab	1f,r0\n\
 	movs3\n\
 	.data\n\
 1:	.byte	0\n\
-	.text\n" },
+	.text\n"},
 
-	{ 0, "", "" }
-};
+        {0, "", ""}};

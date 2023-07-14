@@ -60,9 +60,9 @@
 #include <sys/gmon.h>
 #endif
 
-int    clkstd[1];
+int clkstd[1];
 
-static int clkint;		/* clock interval, as loaded */
+static int clkint; /* clock interval, as loaded */
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
  * power of two.  Since this gives us an even number, not an odd number,
@@ -71,15 +71,14 @@ static int clkint;		/* clock interval, as loaded */
  * This is symmetric about the point 512, or statvar/2, and thus averages
  * to that value (assuming uniform random numbers).
  */
-static int statvar = 1024 / 4;	/* {stat,prof}clock variance */
-static int statmin;		/* statclock interval - variance/2 */
-static int profmin;		/* profclock interval - variance/2 */
-static int timer3min;		/* current, from above choices */
-static int statprev;		/* previous value in stat timer */
+static int statvar = 1024 / 4; /* {stat,prof}clock variance */
+static int statmin;            /* statclock interval - variance/2 */
+static int profmin;            /* profclock interval - variance/2 */
+static int timer3min;          /* current, from above choices */
+static int statprev;           /* previous value in stat timer */
 
 static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
+        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 struct bbc_tm *gmt_to_bbc();
 u_char bbc_registers[13];
 u_char write_bbc_reg(), read_bbc_reg();
@@ -96,22 +95,21 @@ struct hil_dev *bbcaddr = NULL;
  * The frequencies of the HP300 clocks must be a multiple of four
  * microseconds (since the clock counts in 4 us units).
  */
-#define	COUNTS_PER_SEC	(1000000 / CLK_RESOLUTION)
+#define COUNTS_PER_SEC (1000000 / CLK_RESOLUTION)
 
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
  *
  */
-cpu_initclocks()
-{
+cpu_initclocks() {
 	register volatile struct clkreg *clk;
 	register int intvl, statint, profint, minint;
 
-	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
-	clk = (volatile struct clkreg *)clkstd[0];
+	clkstd[0] = IIOV(0x5F8000); /* XXX grot */
+	clk       = (volatile struct clkreg *) clkstd[0];
 
-	if (COUNTS_PER_SEC % hz) {
+	if(COUNTS_PER_SEC % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
@@ -119,25 +117,25 @@ cpu_initclocks()
 	 * Clock has several counters, so we can always use separate
 	 * statclock.
 	 */
-	if (stathz == 0)		/* XXX should be set in param.c */
+	if(stathz == 0) /* XXX should be set in param.c */
 		stathz = hz;
-	else if (COUNTS_PER_SEC % stathz) {
+	else if(COUNTS_PER_SEC % stathz) {
 		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
-	if (profhz == 0)		/* XXX should be set in param.c */
+	if(profhz == 0) /* XXX should be set in param.c */
 		profhz = stathz * 5;
-	else if (profhz < stathz || COUNTS_PER_SEC % profhz) {
+	else if(profhz < stathz || COUNTS_PER_SEC % profhz) {
 		printf("cannot get %d Hz profclock; using %d Hz\n",
-		    profhz, stathz);
+		       profhz, stathz);
 		profhz = stathz;
 	}
 
-	intvl = COUNTS_PER_SEC / hz;
+	intvl   = COUNTS_PER_SEC / hz;
 	statint = COUNTS_PER_SEC / stathz;
 	profint = COUNTS_PER_SEC / profhz;
-	minint = statint / 2 + 100;
-	while (statvar > minint)
+	minint  = statint / 2 + 100;
+	while(statvar > minint)
 		statvar >>= 1;
 
 	tick = intvl * CLK_RESOLUTION;
@@ -148,18 +146,24 @@ cpu_initclocks()
 	profint--;
 
 	/* calculate base reload values */
-	clkint = intvl;
-	statmin = statint - (statvar >> 1);
-	profmin = profint - (statvar >> 1);
+	clkint    = intvl;
+	statmin   = statint - (statvar >> 1);
+	profmin   = profint - (statvar >> 1);
 	timer3min = statmin;
-	statprev = statint;
+	statprev  = statint;
 
 	/* finally, load hardware */
 	clk->clk_cr2 = CLK_CR1;
 	clk->clk_cr1 = CLK_RESET;
-	asm volatile(" movpw %0,%1@(5)" : : "d" (intvl), "a" (clk));
-	asm volatile(" movpw %0,%1@(9)" : : "d" (0), "a" (clk));
-	asm volatile(" movpw %0,%1@(13)" : : "d" (statint), "a" (clk));
+	asm volatile(" movpw %0,%1@(5)"
+	             :
+	             : "d"(intvl), "a"(clk));
+	asm volatile(" movpw %0,%1@(9)"
+	             :
+	             : "d"(0), "a"(clk));
+	asm volatile(" movpw %0,%1@(13)"
+	             :
+	             : "d"(statint), "a"(clk));
 	clk->clk_cr2 = CLK_CR1;
 	clk->clk_cr1 = CLK_IENAB;
 	clk->clk_cr2 = CLK_CR3;
@@ -172,11 +176,10 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+        setstatclockrate(newhz) int newhz;
 {
 
-	if (newhz == stathz)
+	if(newhz == stathz)
 		timer3min = statmin;
 	else
 		timer3min = profmin;
@@ -189,17 +192,16 @@ setstatclockrate(newhz)
  * DO THIS INLINE IN locore.s?
  */
 void
-statintr(fp)
-	struct clockframe *fp;
+        statintr(fp) struct clockframe *fp;
 {
 	register volatile struct clkreg *clk;
 	register int newint, r, var;
 
-	clk = (volatile struct clkreg *)clkstd[0];
+	clk = (volatile struct clkreg *) clkstd[0];
 	var = statvar;
 	do {
 		r = random() & (var - 1);
-	} while (r == 0);
+	} while(r == 0);
 	newint = timer3min + r;
 
 	/*
@@ -209,10 +211,14 @@ statintr(fp)
 	 * timer ticks depending on CPU type) plus one tick roundoff.
 	 * This should keep us closer to the mean.
 	 */
-	asm volatile(" clrl %0; movpw %1@(13),%0" : "=d" (r) : "a" (clk));
+	asm volatile(" clrl %0; movpw %1@(13),%0"
+	             : "=d"(r)
+	             : "a"(clk));
 	newint -= (statprev - r + 1);
 
-	asm volatile(" movpw %0,%1@(13)" : : "d" (newint), "a" (clk));
+	asm volatile(" movpw %0,%1@(13)"
+	             :
+	             : "d"(newint), "a"(clk));
 	statprev = newint;
 	statclock(fp);
 }
@@ -221,8 +227,7 @@ statintr(fp)
  * Return the best possible estimate of the current time.
  */
 void
-microtime(tvp)
-	register struct timeval *tvp;
+        microtime(tvp) register struct timeval *tvp;
 {
 	register volatile struct clkreg *clk;
 	register int s, u, t, u2, s2;
@@ -237,22 +242,23 @@ microtime(tvp)
 	 *
 	 * (Using this loop avoids the need to block interrupts.)
 	 */
-	clk = (volatile struct clkreg *)clkstd[0];
+	clk = (volatile struct clkreg *) clkstd[0];
 	do {
 		s = time.tv_sec;
 		u = time.tv_usec;
-		asm volatile (" clrl %0; movpw %1@(5),%0"
-			      : "=d" (t) : "a" (clk));
+		asm volatile(" clrl %0; movpw %1@(5),%0"
+		             : "=d"(t)
+		             : "a"(clk));
 		u2 = time.tv_usec;
 		s2 = time.tv_sec;
-	} while (u != u2 || s != s2);
+	} while(u != u2 || s != s2);
 
 	u += (clkint - t) * CLK_RESOLUTION;
-	if (u >= 1000000) {		/* normalize */
+	if(u >= 1000000) { /* normalize */
 		s++;
 		u -= 1000000;
 	}
-	tvp->tv_sec = s;
+	tvp->tv_sec  = s;
 	tvp->tv_usec = u;
 }
 
@@ -261,14 +267,14 @@ microtime(tvp)
  * from a filesystem.
  */
 inittodr(base)
-	time_t base;
+        time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
+	u_long timbuf        = base; /* assume no battery clock exists */
 	static int bbcinited = 0;
 
 	/* XXX */
-	if (!bbcinited) {
-		if (badbaddr(&BBCADDR->hil_stat))
+	if(!bbcinited) {
+		if(badbaddr(&BBCADDR->hil_stat))
 			printf("WARNING: no battery clock\n");
 		else
 			bbcaddr = BBCADDR;
@@ -281,16 +287,16 @@ inittodr(base)
 	 * time is more recent than the gmt time in the clock,
 	 * then use the filesystem time and warn the user.
  	 */
-	if (!bbc_to_gmt(&timbuf) || timbuf < base) {
+	if(!bbc_to_gmt(&timbuf) || timbuf < base) {
 		printf("WARNING: bad date in battery clock\n");
 		timbuf = base;
 	}
-	if (base < 5*SECYR) {
+	if(base < 5 * SECYR) {
 		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
+		timbuf = 6 * SECYR + 186 * SECDAY + SECDAY / 2;
 		printf(" -- CHECK AND RESET THE DATE!\n");
 	}
-	
+
 	/* Battery clock does not store usec's, so forget about it. */
 	time.tv_sec = timbuf;
 }
@@ -298,27 +304,26 @@ inittodr(base)
 /*
  * Restore the time of day hardware after a time change.
  */
-resettodr()
-{
+resettodr() {
 	register int i;
 	register struct bbc_tm *tmptr;
 
 	tmptr = gmt_to_bbc(time.tv_sec);
 
-	decimal_to_bbc(0, 1,  tmptr->tm_sec);
-	decimal_to_bbc(2, 3,  tmptr->tm_min);
-	decimal_to_bbc(4, 5,  tmptr->tm_hour);
-	decimal_to_bbc(7, 8,  tmptr->tm_mday);
+	decimal_to_bbc(0, 1, tmptr->tm_sec);
+	decimal_to_bbc(2, 3, tmptr->tm_min);
+	decimal_to_bbc(4, 5, tmptr->tm_hour);
+	decimal_to_bbc(7, 8, tmptr->tm_mday);
 	decimal_to_bbc(9, 10, tmptr->tm_mon);
 	decimal_to_bbc(11, 12, tmptr->tm_year);
 
 	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
 	bbc_registers[5] = ((tmptr->tm_hour / 10) & 0x03) + 8;
 
-	write_bbc_reg(15, 13);	/* reset prescalar */
+	write_bbc_reg(15, 13); /* reset prescalar */
 
-	for (i = 0; i <= NUM_BBC_REGS; i++)
-	  	if (bbc_registers[i] != write_bbc_reg(i, bbc_registers[i])) {
+	for(i = 0; i <= NUM_BBC_REGS; i++)
+		if(bbc_registers[i] != write_bbc_reg(i, bbc_registers[i])) {
 			printf("Cannot set battery backed clock\n");
 			break;
 		}
@@ -326,7 +331,7 @@ resettodr()
 
 struct bbc_tm *
 gmt_to_bbc(tim)
-	long tim;
+long tim;
 {
 	register int i;
 	register long hms, day;
@@ -341,26 +346,26 @@ gmt_to_bbc(tim)
 	rt.tm_sec  = (hms % 3600) % 60;
 
 	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-	  	day -= days_in_year(i);
+	for(i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
+		day -= days_in_year(i);
 	rt.tm_year = i;
-	
+
 	/* Number of months in days left */
-	if (leapyear(rt.tm_year))
+	if(leapyear(rt.tm_year))
 		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
+	for(i = 1; day >= days_in_month(i); i++)
 		day -= days_in_month(i);
 	days_in_month(FEBRUARY) = 28;
-	rt.tm_mon = i;
+	rt.tm_mon               = i;
 
 	/* Days are what is left over (+1) from all that. */
-	rt.tm_mday = day + 1;  
-	
-	return(&rt);
+	rt.tm_mday = day + 1;
+
+	return (&rt);
 }
 
 bbc_to_gmt(timbuf)
-	u_long *timbuf;
+        u_long *timbuf;
 {
 	register int i;
 	register u_long tmp;
@@ -386,62 +391,61 @@ bbc_to_gmt(timbuf)
 
 	tmp = 0;
 
-	for (i = STARTOFTIME; i < year; i++)
+	for(i = STARTOFTIME; i < year; i++)
 		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
+	if(leapyear(year) && month > FEBRUARY)
 		tmp++;
 
-	for (i = 1; i < month; i++)
-	  	tmp += days_in_month(i);
-	
+	for(i = 1; i < month; i++)
+		tmp += days_in_month(i);
+
 	tmp += (day - 1);
 	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
 
 	*timbuf = tmp;
-	return(1);
+	return (1);
 }
 
-read_bbc()
-{
-  	register int i, read_okay;
+read_bbc() {
+	register int i, read_okay;
 
 	read_okay = 0;
-	while (!read_okay) {
+	while(!read_okay) {
 		read_okay = 1;
-		for (i = 0; i <= NUM_BBC_REGS; i++)
+		for(i = 0; i <= NUM_BBC_REGS; i++)
 			bbc_registers[i] = read_bbc_reg(i);
-		for (i = 0; i <= NUM_BBC_REGS; i++)
-			if (bbc_registers[i] != read_bbc_reg(i))
+		for(i = 0; i <= NUM_BBC_REGS; i++)
+			if(bbc_registers[i] != read_bbc_reg(i))
 				read_okay = 0;
 	}
 }
 
 u_char
 read_bbc_reg(reg)
-	int reg;
+int reg;
 {
 	u_char data = reg;
 
-	if (bbcaddr) {
+	if(bbcaddr) {
 		send_hil_cmd(bbcaddr, BBC_SET_REG, &data, 1, NULL);
 		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &data);
 	}
-	return(data);
+	return (data);
 }
 
 u_char
 write_bbc_reg(reg, data)
-	int reg;
-	u_int data;
+int reg;
+u_int data;
 {
 	u_char tmp;
 
 	tmp = (u_char) ((data << HIL_SSHIFT) | reg);
 
-	if (bbcaddr) {
+	if(bbcaddr) {
 		send_hil_cmd(bbcaddr, BBC_SET_REG, &tmp, 1, NULL);
 		send_hil_cmd(bbcaddr, BBC_WRITE_REG, NULL, 0, NULL);
 		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &tmp);
 	}
-	return(tmp);
-}	
+	return (tmp);
+}

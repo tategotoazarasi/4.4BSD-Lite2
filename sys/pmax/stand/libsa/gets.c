@@ -40,7 +40,7 @@
 
 char *
 gets(s)
-	char *s;
+char *s;
 {
 	return (callv->gets(s));
 }

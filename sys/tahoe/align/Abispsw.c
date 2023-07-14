@@ -36,8 +36,8 @@
  *	@(#)Abispsw.c	7.1 (Berkeley) 12/6/90
  */
 
-#include "align.h" 
-bispsw(infop)	process_info *infop;
+#include "align.h"
+bispsw(infop) process_info *infop;
 /*
 /*	Bits set in PSW.
 /*
@@ -45,6 +45,6 @@ bispsw(infop)	process_info *infop;
 {
 	register int mask;
 
-	mask = operand(infop,0)->data;
+	mask = operand(infop, 0)->data;
 	psl |= mask & 0x7f;
 }

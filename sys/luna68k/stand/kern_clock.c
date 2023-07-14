@@ -47,7 +47,7 @@
  */
 /*ARGSUSED*/
 hardclock(pc, ps)
-	caddr_t pc;
-	int ps;
+        caddr_t pc;
+int ps;
 {
 }

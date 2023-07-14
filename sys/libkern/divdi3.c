@@ -47,19 +47,19 @@ static char sccsid[] = "@(#)divdi3.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __divdi3(a, b)
-	quad_t a, b;
+quad_t a, b;
 {
 	u_quad_t ua, ub, uq;
 	int neg;
 
-	if (a < 0)
-		ua = -(u_quad_t)a, neg = 1;
+	if(a < 0)
+		ua = -(u_quad_t) a, neg = 1;
 	else
 		ua = a, neg = 0;
-	if (b < 0)
-		ub = -(u_quad_t)b, neg ^= 1;
+	if(b < 0)
+		ub = -(u_quad_t) b, neg ^= 1;
 	else
 		ub = b;
-	uq = __qdivrem(ua, ub, (u_quad_t *)0);
+	uq = __qdivrem(ua, ub, (u_quad_t *) 0);
 	return (neg ? -uq : uq);
 }

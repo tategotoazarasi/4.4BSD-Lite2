@@ -76,9 +76,8 @@
  * communicate message type, message subtype, etc.
  * We don't really check the header supplied by the user.
  */
-rhy_output(m, so)
-	register struct mbuf *m;
-	struct socket *so;
+rhy_output(m, so) register struct mbuf *m;
+struct socket *so;
 {
 	int error = 0;
 	register struct sockaddr_in *sin;
@@ -89,17 +88,17 @@ rhy_output(m, so)
 	 * Verify user has supplied necessary space
 	 * for the header.
 	 */
-	if ((m->m_off > MMAXOFF || m->m_len < sizeof(struct hym_hdr)) &&
-	    (m = m_pullup(m, sizeof(struct hym_hdr))) == 0) {
-		error = EMSGSIZE;	/* XXX */
+	if((m->m_off > MMAXOFF || m->m_len < sizeof(struct hym_hdr)) &&
+	   (m = m_pullup(m, sizeof(struct hym_hdr))) == 0) {
+		error = EMSGSIZE; /* XXX */
 		goto bad;
 	}
 
-	sin = (struct sockaddr_in *)&rp->rcb_faddr;
+	sin = (struct sockaddr_in *) &rp->rcb_faddr;
 	/* no routing here */
 	ia = in_iaonnetof(in_netof(sin->sin_addr));
-	if (ia)
-		return (hyoutput(ia->ia_ifp, m, (struct sockaddr *)sin));
+	if(ia)
+		return (hyoutput(ia->ia_ifp, m, (struct sockaddr *) sin));
 	error = ENETUNREACH;
 bad:
 	m_freem(m);

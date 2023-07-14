@@ -68,27 +68,27 @@
 #include <news3400/iop/rsreg.h>
 #include <news3400/sio/sccparam.h>
 
-#define	RS_RXE	RXE
-#define	RS_TXE	TXE
-#define	RS_ON	(RXE|TXE|RTS|DTR)
-#define	RS_OFF	TXE
-#define	RS_RTS	RTS
-#define	RS_DTR	DTR
-#define	RS_CTS	CTS
-#define	RS_DCD	DCD
-#define	RS_DSR	DSR
-#define	RS_RI	RI
-#define	RS_BRK	XBREAK
+#define RS_RXE RXE
+#define RS_TXE TXE
+#define RS_ON (RXE | TXE | RTS | DTR)
+#define RS_OFF TXE
+#define RS_RTS RTS
+#define RS_DTR DTR
+#define RS_CTS CTS
+#define RS_DCD DCD
+#define RS_DSR DSR
+#define RS_RI RI
+#define RS_BRK XBREAK
 
 #ifdef AUTO_ENABLE
-#define	RS_AUTO_ENABLE	AUTO_ENABLE
+#define RS_AUTO_ENABLE AUTO_ENABLE
 #endif
 
 #ifdef CPU_SINGLE
-#define	iop_device	hb_device
-#define	ii_unit		hi_unit
-#define	ii_flags	hi_flags
-#define	ii_alive	hi_alive
+#define iop_device hb_device
+#define ii_unit hi_unit
+#define ii_flags hi_flags
+#define ii_alive hi_alive
 #endif
 
 /*
@@ -98,50 +98,49 @@ int rsprobe(), rsattach(), rsrint(), rsxint(), rssint();
 struct iop_device *rsinfo[NRS];
 
 #ifdef CPU_SINGLE
-struct hb_driver rsdriver = { rsprobe, 0, rsattach, 0, 0, "rs", rsinfo };
+struct hb_driver rsdriver = {rsprobe, 0, rsattach, 0, 0, "rs", rsinfo};
 #else
-struct iop_driver rsdriver = { rsprobe, 0, rsattach, 0, "rs", rsinfo };
+struct iop_driver rsdriver = {rsprobe, 0, rsattach, 0, "rs", rsinfo};
 #endif
 
 /*
  * Local variables for the driver
  */
 
-struct	tty rs_tty[NRS*4];
-char	rssoftCAR[NRS];
+struct tty rs_tty[NRS * 4];
+char rssoftCAR[NRS];
 
-int	rs_flags[NRS*4];
-int	rs_param[NRS*4];
-char	rs_active[NRS*4];
-char	rs_stopped[NRS*4];
+int rs_flags[NRS * 4];
+int rs_param[NRS * 4];
+char rs_active[NRS * 4];
+char rs_stopped[NRS * 4];
 
-int	rs_rate[NRS*4];
-int	rs_average[NRS*4];
-char	rs_timeout[NRS*4];
-char	rs_watch;
+int rs_rate[NRS * 4];
+int rs_average[NRS * 4];
+char rs_timeout[NRS * 4];
+char rs_watch;
 
 #ifndef lint
-int	nrs = NRS*4;			/* used by iostat */
+int nrs = NRS * 4; /* used by iostat */
 #endif
 
-extern	int tty00_is_console;
+extern int tty00_is_console;
 extern void rsstart();
 extern void ttrstrt();
 extern void rsctrl();
 
-#define	RS_CARR(unit) (rssoftCAR[(unit) >> 2] & (1 << ((unit) & 03)))
-#define	RS_FLAG(unit, flag) (rs_flags[unit] & (flag))
+#define RS_CARR(unit) (rssoftCAR[(unit) >> 2] & (1 << ((unit) &03)))
+#define RS_FLAG(unit, flag) (rs_flags[unit] & (flag))
 
-#define	RF_FLOWCTL	0x0010		/* use H/W flow control */
-#define	RF_EXTCLK	0x0100		/* allow external clock */
-#define	RF_NODELAY	0x1000		/* disable interrupt delay */
+#define RF_FLOWCTL 0x0010 /* use H/W flow control */
+#define RF_EXTCLK 0x0100  /* allow external clock */
+#define RF_NODELAY 0x1000 /* disable interrupt delay */
 
 /*
  * Routine for configuration
  */
 /*ARGSUSED*/
-rsprobe(ii)
-	struct iop_device *ii;
+rsprobe(ii) struct iop_device *ii;
 {
 
 	return (rs_probe(ii));
@@ -150,34 +149,32 @@ rsprobe(ii)
 /*
  * Routine called to attach a rs.
  */
-rsattach(ii)
-	register struct iop_device *ii;
+rsattach(ii) register struct iop_device *ii;
 {
 	int i;
 
 	rssoftCAR[ii->ii_unit] = ii->ii_flags;
-	for (i = 0; i < 4; i++)
+	for(i = 0; i < 4; i++)
 		rs_flags[ii->ii_unit * 4 + i] =
-		    (ii->ii_flags >> i) & (RF_FLOWCTL|RF_EXTCLK|RF_NODELAY);
-	if (rs_watch == 0) {
+		        (ii->ii_flags >> i) & (RF_FLOWCTL | RF_EXTCLK | RF_NODELAY);
+	if(rs_watch == 0) {
 		rs_watchdog();
 		rs_watch = 1;
 	}
 }
 
-rs_watchdog()
-{
+rs_watchdog() {
 	register int unit, s;
 
-	for (unit = 0; unit < NRS*4; unit++) {
-		if (rs_active[unit] == 0)
+	for(unit = 0; unit < NRS * 4; unit++) {
+		if(rs_active[unit] == 0)
 			continue;
-		s = spltty();
+		s                = spltty();
 		rs_average[unit] = (rs_average[unit] * 7 + rs_rate[unit]) >> 3;
-		rs_rate[unit] = 0;
+		rs_rate[unit]    = 0;
 		(void) splx(s);
 	}
-	timeout(rs_watchdog, (caddr_t)0, hz / 10);
+	timeout(rs_watchdog, (caddr_t) 0, hz / 10);
 }
 
 /*
@@ -185,9 +182,9 @@ rs_watchdog()
  */
 /*ARGSUSED*/
 rsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	register int unit;
 	register struct tty *tp;
@@ -195,18 +192,18 @@ rsopen(dev, flag, mode, p)
 	int s;
 
 	unit = minor(dev);
-	if (unit >= NRS*4 || (ii = rsinfo[unit >> 2]) == 0 || ii->ii_alive == 0)
+	if(unit >= NRS * 4 || (ii = rsinfo[unit >> 2]) == 0 || ii->ii_alive == 0)
 		return (ENXIO);
-	if (rs_active[unit] == 0) {
-		if (rs_init(unit) < 0)
+	if(rs_active[unit] == 0) {
+		if(rs_init(unit) < 0)
 			return (ENXIO);
 		rs_enable(unit);
 		rs_active[unit] = 1;
 	}
 	tp = &rs_tty[unit];
-	if (tp->t_state&TS_XCLUDE && curproc->p_ucred->cr_uid != 0)
+	if(tp->t_state & TS_XCLUDE && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
-	tp->t_addr = (caddr_t)0;
+	tp->t_addr  = (caddr_t) 0;
 	tp->t_oproc = rsstart;
 #ifdef notyet /* KU:XXX */
 	tp->t_ctrlproc = rsctrl;
@@ -214,14 +211,14 @@ rsopen(dev, flag, mode, p)
 	/*
 	 * If this is first open, initialze tty state to default.
 	 */
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
+		if(tp->t_ispeed == 0) {
+			tp->t_iflag  = TTYDEF_IFLAG;
+			tp->t_oflag  = TTYDEF_OFLAG;
+			tp->t_cflag  = TTYDEF_CFLAG;
+			tp->t_lflag  = TTYDEF_LFLAG;
 			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		}
 		rsparam(tp, &tp->t_termios);
@@ -234,15 +231,15 @@ rsopen(dev, flag, mode, p)
 	 * Wait for carrier, then process line discipline specific open.
 	 */
 	rsmctl(dev, RS_ON, DMSET);
-	if (rs_param[unit] & DCD || RS_CARR(unit))
+	if(rs_param[unit] & DCD || RS_CARR(unit))
 		tp->t_state |= TS_CARR_ON;
-	s = spltty();		/* spl5 -> spltty, 90/02/28 sak */
-	while ((tp->t_state & TS_CARR_ON) == 0) {
+	s = spltty(); /* spl5 -> spltty, 90/02/28 sak */
+	while((tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		sleep((caddr_t)&tp->t_rawq, TTIPRI);
+		sleep((caddr_t) &tp->t_rawq, TTIPRI);
 	}
 #ifdef notyet /* KU:XXX */
-	if (RS_FLAG(unit, RF_FLOWCTL)) {
+	if(RS_FLAG(unit, RF_FLOWCTL)) {
 		tp->t_state |= TS_HFLWCTL;
 		rsmctl(dev, RS_AUTO_ENABLE, DMBIS);
 	} else {
@@ -259,28 +256,28 @@ rsopen(dev, flag, mode, p)
  */
 /*ARGSUSED*/
 rsclose(dev, flag)
-	dev_t dev;
-	int flag;
+        dev_t dev;
+int flag;
 {
 	register struct tty *tp;
 	register unit;
 
 	unit = minor(dev);
-	tp = &rs_tty[unit];
+	tp   = &rs_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp);
 	(void) rsmctl(unit, RS_BRK, DMBIC);
-	if (tp->t_cflag & HUPCL || (tp->t_state & TS_ISOPEN) == 0)
+	if(tp->t_cflag & HUPCL || (tp->t_state & TS_ISOPEN) == 0)
 		(void) rsmctl(unit, RS_OFF, DMSET);
 	ttyclose(tp);
 
-	if (RS_FLAG(unit, RF_FLOWCTL))
-		(void)rsmctl(unit, RS_RTS, DMBIC);
+	if(RS_FLAG(unit, RF_FLOWCTL))
+		(void) rsmctl(unit, RS_RTS, DMBIC);
 }
 
 rsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
 	register struct tty *tp;
 
@@ -289,9 +286,9 @@ rsread(dev, uio, flag)
 }
 
 rswrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
 	register struct tty *tp;
 
@@ -299,8 +296,7 @@ rswrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
-rsenable(unit)
-	int unit;
+rsenable(unit) int unit;
 {
 
 	rs_timeout[unit] = 0;
@@ -310,10 +306,9 @@ rsenable(unit)
 /*
  * RS receiver interrupt.
  */
-_rsrint(unit, buf, n)
-	register int unit;
-	register char *buf;
-	register int n;
+_rsrint(unit, buf, n) register int unit;
+register char *buf;
+register int n;
 {
 	register struct iop_device *ii;
 	register struct tty *tp;
@@ -323,11 +318,11 @@ _rsrint(unit, buf, n)
 	intrcnt[INTR_RS0 + unit]++;
 #endif
 	ii = rsinfo[unit >> 2];
-	if (ii == 0 || ii->ii_alive == 0)
+	if(ii == 0 || ii->ii_alive == 0)
 		return;
 	tp = &rs_tty[unit];
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		wakeup((caddr_t)&tp->t_rawq);
+	if((tp->t_state & TS_ISOPEN) == 0) {
+		wakeup((caddr_t) &tp->t_rawq);
 		goto enable;
 	}
 	/*
@@ -335,9 +330,9 @@ _rsrint(unit, buf, n)
 	 * rs until there are no more in the silo.
 	 */
 	rint = linesw[tp->t_line].l_rint;
-	while (--n >= 0) {
+	while(--n >= 0) {
 #if NBK > 0
-		if (tp->t_line == NETLDISC) {
+		if(tp->t_line == NETLDISC) {
 			c &= 0177;
 			BKINPUT(c, tp);
 		} else
@@ -346,10 +341,10 @@ _rsrint(unit, buf, n)
 	}
 enable:
 	rs_rate[unit]++;
-	if (rs_average[unit] >= 10 && RS_FLAG(unit, RF_NODELAY) == 0) {
-		if (rs_timeout[unit] == 0) {
+	if(rs_average[unit] >= 10 && RS_FLAG(unit, RF_NODELAY) == 0) {
+		if(rs_timeout[unit] == 0) {
 			rs_timeout[unit] = 1;
-			timeout(rsenable, (caddr_t)unit, hz / 100);
+			timeout(rsenable, (caddr_t) unit, hz / 100);
 		}
 	} else
 		rs_enable(unit);
@@ -357,154 +352,166 @@ enable:
 
 /*ARGSUSED*/
 rsioctl(dev, cmd, data, flag)
-	dev_t dev;
-	caddr_t data;
+        dev_t dev;
+caddr_t data;
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
 	int error;
- 
-	tp = &rs_tty[unit];
+
+	tp    = &rs_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case TIOCSBRK:
-		(void) rsmctl(dev, RS_BRK, DMBIS);
-		break;
+		case TIOCSBRK:
+			(void) rsmctl(dev, RS_BRK, DMBIS);
+			break;
 
-	case TIOCCBRK:
-		(void) rsmctl(dev, RS_BRK, DMBIC);
-		break;
+		case TIOCCBRK:
+			(void) rsmctl(dev, RS_BRK, DMBIC);
+			break;
 
-	case TIOCSDTR:
-		(void) rsmctl(dev, RS_DTR|RS_RTS, DMBIS);
-		break;
+		case TIOCSDTR:
+			(void) rsmctl(dev, RS_DTR | RS_RTS, DMBIS);
+			break;
 
-	case TIOCCDTR:
-		if (curproc->p_ucred->cr_uid &&
-		    curproc->p_session->s_ttyp != tp)
-			return (EACCES);
-		(void) rsmctl(dev, RS_DTR|RS_RTS, DMBIC);
-		break;
+		case TIOCCDTR:
+			if(curproc->p_ucred->cr_uid &&
+			   curproc->p_session->s_ttyp != tp)
+				return (EACCES);
+			(void) rsmctl(dev, RS_DTR | RS_RTS, DMBIC);
+			break;
 
-	case TIOCMSET:
-		(void) rsmctl(dev, dmtors(*(int *)data), DMSET);
-		break;
+		case TIOCMSET:
+			(void) rsmctl(dev, dmtors(*(int *) data), DMSET);
+			break;
 
-	case TIOCMBIS:
-		(void) rsmctl(dev, dmtors(*(int *)data), DMBIS);
-		break;
+		case TIOCMBIS:
+			(void) rsmctl(dev, dmtors(*(int *) data), DMBIS);
+			break;
 
-	case TIOCMBIC:
-		(void) rsmctl(dev, dmtors(*(int *)data), DMBIC);
-		break;
+		case TIOCMBIC:
+			(void) rsmctl(dev, dmtors(*(int *) data), DMBIC);
+			break;
 
-	case TIOCMGET:
-		*(int *)data = rstodm(rsmctl(dev, 0, DMGET));
-		break;
+		case TIOCMGET:
+			*(int *) data = rstodm(rsmctl(dev, 0, DMGET));
+			break;
 
-	default:
-		return (ENOTTY);
+		default:
+			return (ENOTTY);
 	}
 	return (0);
 }
 
-dmtors(bits)
-	register int bits;
+dmtors(bits) register int bits;
 {
 	register int b;
 
 	b = 0;
-	if (bits & DML_LE)  b |= RS_TXE|RS_RXE;
-	if (bits & DML_DTR) b |= RS_DTR;
-	if (bits & DML_RTS) b |= RS_RTS;
-	if (bits & DML_CTS) b |= RS_CTS;
-	if (bits & DML_CAR) b |= RS_DCD;
-	if (bits & DML_RNG) b |= RS_RI;
-	if (bits & DML_DSR) b |= RS_DSR;
+	if(bits & DML_LE)
+		b |= RS_TXE | RS_RXE;
+	if(bits & DML_DTR)
+		b |= RS_DTR;
+	if(bits & DML_RTS)
+		b |= RS_RTS;
+	if(bits & DML_CTS)
+		b |= RS_CTS;
+	if(bits & DML_CAR)
+		b |= RS_DCD;
+	if(bits & DML_RNG)
+		b |= RS_RI;
+	if(bits & DML_DSR)
+		b |= RS_DSR;
 #ifdef AUTO_ENABLE
-	if (bits & DML_USR) b |= RS_AUTO_ENABLE;
+	if(bits & DML_USR)
+		b |= RS_AUTO_ENABLE;
 #endif /* AUTO_ENABLE */
-	return(b);
+	return (b);
 }
 
-rstodm(bits)
-	register int bits;
+rstodm(bits) register int bits;
 {
 	register int b;
 
 	b = 0;
-	if (bits & (RS_TXE|RS_RXE)) b |= DML_LE;
-	if (bits & RS_DTR) b |= DML_DTR;
-	if (bits & RS_RTS) b |= DML_RTS;
-	if (bits & RS_CTS) b |= DML_CTS;
-	if (bits & RS_DCD) b |= DML_CAR;
-	if (bits & RS_RI)  b |= DML_RNG;
-	if (bits & RS_DSR) b |= DML_DSR;
+	if(bits & (RS_TXE | RS_RXE))
+		b |= DML_LE;
+	if(bits & RS_DTR)
+		b |= DML_DTR;
+	if(bits & RS_RTS)
+		b |= DML_RTS;
+	if(bits & RS_CTS)
+		b |= DML_CTS;
+	if(bits & RS_DCD)
+		b |= DML_CAR;
+	if(bits & RS_RI)
+		b |= DML_RNG;
+	if(bits & RS_DSR)
+		b |= DML_DSR;
 #ifdef AUTO_ENABLE
-	if (bits & RS_AUTO_ENABLE) b |= DML_USR;
+	if(bits & RS_AUTO_ENABLE)
+		b |= DML_USR;
 #endif
-	return(b);
+	return (b);
 }
- 
+
 /*
  * compat table
  */
 struct speedtab rsspeedtab[] = {
-	0,	0,
-	50,	1,
-	75,	2,
-	110,	3,
-	134,	4,
-	150,	5,
-	200,	6,
-	300,	7,
-	600,	8,
-	1200,	9,
-	1800,	10,
-	2400,	11,
-	4800,	12,
-	9600,	13,
-	19200,	14,
-	38400,	15,
-	-1,	-1
-};
+        0, 0,
+        50, 1,
+        75, 2,
+        110, 3,
+        134, 4,
+        150, 5,
+        200, 6,
+        300, 7,
+        600, 8,
+        1200, 9,
+        1800, 10,
+        2400, 11,
+        4800, 12,
+        9600, 13,
+        19200, 14,
+        38400, 15,
+        -1, -1};
 
 /*
  * Set parameters from open or stty into the RS hardware
  * registers.
  */
-rsparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+rsparam(tp, t) register struct tty *tp;
+register struct termios *t;
 {
 	register int param;
 	register int cflag = t->c_cflag;
-	int unit = minor(tp->t_dev);
+	int unit           = minor(tp->t_dev);
 	int s;
 	int ospeed = ttspeedtab(t->c_ospeed, rsspeedtab);
 
 	/* check requested parameters */
-	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed) ||
-	    (cflag & CSIZE) == CS5 || (cflag & CSIZE) == CS6)
+	if(ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed) ||
+	   (cflag & CSIZE) == CS5 || (cflag & CSIZE) == CS6)
 		return (EINVAL);
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
-	tp->t_cflag = cflag;
+	tp->t_cflag  = cflag;
 
 	/*
 	 * Block interrupts so parameters will be set
 	 * before the line interrupts.
 	 */
 	s = spltty();
-	if (tp->t_ospeed == 0) {
+	if(tp->t_ospeed == 0) {
 		tp->t_cflag |= HUPCL;
 		(void) rsmctl(unit, RS_OFF, DMSET);
 		(void) splx(s);
@@ -512,27 +519,27 @@ rsparam(tp, t)
 	}
 
 	param = rs_get_param(unit) &
-		~(CHAR_SIZE|PARITY|EVEN|STOPBIT|BAUD_RATE|NOCHECK);
-	if ((cflag & CREAD) == 0)
+	        ~(CHAR_SIZE | PARITY | EVEN | STOPBIT | BAUD_RATE | NOCHECK);
+	if((cflag & CREAD) == 0)
 		param &= ~RXE;
-	if (cflag & CS6)
+	if(cflag & CS6)
 		param |= C6BIT;
-	if (cflag & CS7)
+	if(cflag & CS7)
 		param |= C7BIT;
-	if (cflag & PARENB)
+	if(cflag & PARENB)
 		param |= PARITY;
-	if ((cflag & PARODD) == 0)
+	if((cflag & PARODD) == 0)
 		param |= EVEN;
-	if ((tp->t_iflag & INPCK) == 0)
+	if((tp->t_iflag & INPCK) == 0)
 		param |= NOCHECK;
-	if (cflag & CSTOPB)
+	if(cflag & CSTOPB)
 		param |= STOP2;
 	else
 		param |= STOP1;
 
 	rs_param[unit] = param | ospeed;
 
-	if (RS_FLAG(unit, RF_EXTCLK))
+	if(RS_FLAG(unit, RF_EXTCLK))
 		rs_param[unit] |= EXTCLK_ENABLE;
 	else
 		rs_param[unit] &= ~EXTCLK_ENABLE;
@@ -546,9 +553,8 @@ rsparam(tp, t)
  * RS transmitter interrupt.
  * Restart the idle line.
  */
-_rsxint(unit, count)
-	int unit;
-	int count;
+_rsxint(unit, count) int unit;
+int count;
 {
 	register struct tty *tp;
 	register int s;
@@ -557,15 +563,15 @@ _rsxint(unit, count)
 	intrcnt[INTR_RS0 + unit]++;
 #endif
 	rs_stopped[unit] = 0;
-	tp = &rs_tty[unit];
+	tp               = &rs_tty[unit];
 	tp->t_state &= ~TS_BUSY;
 	s = spltty();
-	if (tp->t_state & TS_FLUSH)
+	if(tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
 	else
 		ndflush(&tp->t_outq, count);
 	(void) splx(s);
-	if (tp->t_line)
+	if(tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
 	else
 		rsstart(tp);
@@ -575,8 +581,7 @@ _rsxint(unit, count)
  * Start (restart) transmission on the given RS line.
  */
 void
-rsstart(tp)
-	register struct tty *tp;
+        rsstart(tp) register struct tty *tp;
 {
 	register int unit, nch;
 	int s;
@@ -591,13 +596,13 @@ rsstart(tp)
 	/*
 	 * If it's currently active, or delaying, no need to do anything.
 	 */
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if(tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
 		goto out;
 	/*
 	 * If ther are still characters in the IOP,
 	 * just reenable transmit.
 	 */
-	if (rs_stopped[unit]) {
+	if(rs_stopped[unit]) {
 		rs_start(unit);
 		rs_stopped[unit] = 0;
 		goto out;
@@ -606,10 +611,10 @@ rsstart(tp)
 	 * If there are sleepers, and output has drained below low
 	 * water mark, wake up the sleepers.
 	 */
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
+	if(tp->t_outq.c_cc <= tp->t_lowat) {
+		if(tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t) &tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -617,18 +622,18 @@ rsstart(tp)
 	 * Now restart transmission unless the output queue is
 	 * empty.
 	 */
-	if (tp->t_outq.c_cc == 0)
+	if(tp->t_outq.c_cc == 0)
 		goto out;
-	if (tp->t_flags & (RAW|LITOUT))
+	if(tp->t_flags & (RAW | LITOUT))
 		nch = ndqb(&tp->t_outq, 0);
 	else {
 		nch = ndqb(&tp->t_outq, 0200);
 		/*
 		 * If first thing on queue is a delay process it.
 		 */
-		if (nch == 0) {
+		if(nch == 0) {
 			nch = getc(&tp->t_outq);
-			timeout(ttrstrt, (caddr_t)tp, (nch&0x7f)+6);
+			timeout(ttrstrt, (caddr_t) tp, (nch & 0x7f) + 6);
 			tp->t_state |= TS_TIMEOUT;
 			goto out;
 		}
@@ -636,7 +641,7 @@ rsstart(tp)
 	/*
 	 * If characters to transmit, restart transmission.
 	 */
-	if (nch) {
+	if(nch) {
 		tp->t_state |= TS_BUSY;
 		rs_output(unit, nch);
 	}
@@ -648,17 +653,16 @@ out:
  * Stop output on a line, e.g. for ^S/^Q or output flush.
  */
 /*ARGSUSED*/
-rsstop(tp, flag)
-	register struct tty *tp;
+rsstop(tp, flag) register struct tty *tp;
 {
 	register int unit, s;
 
 	unit = minor(tp->t_dev);
-	s = spltty();
-	if (tp->t_state & TS_BUSY) {
+	s    = spltty();
+	if(tp->t_state & TS_BUSY) {
 		rs_stop(unit, 0);
 		rs_stopped[unit] = 1;
-		if ((tp->t_state & TS_TTSTOP) == 0) {
+		if((tp->t_state & TS_TTSTOP) == 0) {
 			tp->t_state |= TS_FLUSH;
 			rs_stop(unit, 1);
 		}
@@ -670,45 +674,45 @@ rsstop(tp, flag)
  * RS modem control
  */
 rsmctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
+        dev_t dev;
+int bits, how;
 {
 	register int unit, mbits;
 	int s;
 
 #ifdef AUTO_ENABLE
-	bits &= (RS_RXE|RS_TXE|RS_RTS|RS_DTR|RS_BRK|RS_AUTO_ENABLE);
+	bits &= (RS_RXE | RS_TXE | RS_RTS | RS_DTR | RS_BRK | RS_AUTO_ENABLE);
 #else
-	bits &= (RS_RXE|RS_TXE|RS_RTS|RS_DTR|RS_BRK);
+	bits &= (RS_RXE | RS_TXE | RS_RTS | RS_DTR | RS_BRK);
 #endif
 
 	unit = minor(dev);
-	s = spltty();		/* spl5 -> spltty, 90/02/28 sak */
+	s    = spltty(); /* spl5 -> spltty, 90/02/28 sak */
 
 	mbits = rs_get_param(unit);
-	switch (how) {
+	switch(how) {
 
-	case DMSET:
-		mbits = mbits & ~(RS_RXE|RS_TXE|RS_RTS|RS_DTR|RS_BRK) | bits;
-		break;
+		case DMSET:
+			mbits = mbits & ~(RS_RXE | RS_TXE | RS_RTS | RS_DTR | RS_BRK) | bits;
+			break;
 
-	case DMBIS:
-		mbits |= bits;
-		break;
+		case DMBIS:
+			mbits |= bits;
+			break;
 
-	case DMBIC:
-		mbits &= ~bits;
-		break;
+		case DMBIC:
+			mbits &= ~bits;
+			break;
 
-	case DMGET:
-		(void) splx(s);
-		return(mbits);
+		case DMGET:
+			(void) splx(s);
+			return (mbits);
 	}
 	rs_param[unit] = mbits;
 	rs_set_param(unit, rs_param[unit]);
 
 	(void) splx(s);
-	return(mbits);
+	return (mbits);
 }
 
 /*
@@ -716,19 +720,18 @@ rsmctl(dev, bits, how)
  * Reset the parameter and status, and
  * restart transmitters.
  */
-rsreset()
-{
+rsreset() {
 	register int unit;
 	register struct tty *tp;
 	register struct iop_device *ii;
 
-	for (unit = 0; unit < NRS * 4; unit++) {
+	for(unit = 0; unit < NRS * 4; unit++) {
 		ii = rsinfo[unit >> 2];
-		if (ii == 0 || ii->ii_alive == 0)
+		if(ii == 0 || ii->ii_alive == 0)
 			continue;
 		printf(" rs%d", unit);
 		tp = &rs_tty[unit];
-		if (tp->t_state & (TS_ISOPEN|TS_WOPEN)) {
+		if(tp->t_state & (TS_ISOPEN | TS_WOPEN)) {
 			rs_reset(unit);
 			rsparam(tp, &tp->t_termios);
 			(void) rsmctl(unit, RS_ON, DMSET);
@@ -741,9 +744,8 @@ rsreset()
 /*
  * RS status interrupt
  */
-_rssint(unit, stat)
-	int unit;
-	int stat;
+_rssint(unit, stat) int unit;
+int stat;
 {
 	register struct tty *tp;
 
@@ -751,32 +753,30 @@ _rssint(unit, stat)
 	intrcnt[INTR_RS0 + unit]++;
 #endif
 	tp = &rs_tty[unit];
-	if (stat & RS_DCD) {
+	if(stat & RS_DCD) {
 		rs_param[unit] |= RS_DCD;
-		(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-	} else if (RS_CARR(unit) == 0 &&
-	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+		(void) (*linesw[tp->t_line].l_modem)(tp, 1);
+	} else if(RS_CARR(unit) == 0 &&
+	          (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
 		rs_param[unit] &= ~(RS_DCD | RS_DTR);
 		rs_set_param(unit, rs_param[unit]);
 	}
-	if (stat & OVERRUN_ERROR) {
+	if(stat & OVERRUN_ERROR) {
 		printf("rs%d: fifo overflow\n", unit);
 		rs_param[unit] &= ~OVERRUN_ERROR;
 		rs_set_param(unit, rs_param[unit]);
 	}
-	if (stat & RBREAK) {
+	if(stat & RBREAK) {
 		rs_param[unit] &= ~RBREAK;
-		if (tp->t_state & TS_ISOPEN)
-			(*linesw[tp->t_line].l_rint)
-			    (tp->t_flags & RAW ? '\0' : tp->t_cc[VINTR], tp);
+		if(tp->t_state & TS_ISOPEN)
+			(*linesw[tp->t_line].l_rint)(tp->t_flags &RAW ? '\0' : tp->t_cc[VINTR], tp);
 	}
 }
 
 /*
  * RS control interrupt
  */
-rscint(rs)
-	int rs;
+rscint(rs) int rs;
 {
 
 	printf("rscint: %d\n", rs);
@@ -786,37 +786,35 @@ rscint(rs)
  * RS H/W control
  */
 void
-rsctrl(tp, cmd, arg)
-	struct tty *tp;
-	int cmd;
-	int arg;
+        rsctrl(tp, cmd, arg) struct tty *tp;
+int cmd;
+int arg;
 {
 #ifdef notyet /* KU:XXX */
 	int unit = minor(tp->t_dev);
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case TC_HBLOCK:
-		if (RS_FLAG(unit, RF_FLOWCTL))
-			rsflowctl(unit, arg);
-		break;
+		case TC_HBLOCK:
+			if(RS_FLAG(unit, RF_FLOWCTL))
+				rsflowctl(unit, arg);
+			break;
 
-	default:
-		break;
+		default:
+			break;
 	}
 
 	return (0);
 #endif
 }
 
-rsflowctl(unit, block)
-	int unit;
-	int block;
+rsflowctl(unit, block) int unit;
+int block;
 {
 	int s;
 
 	s = spltty();
-	if (block)
+	if(block)
 		rs_param[unit] &= ~RS_RTS;
 	else
 		rs_param[unit] |= RS_RTS;
@@ -845,110 +843,98 @@ rsflowctl(unit, block)
 #include <news3400/hbdev/rsreg.h>
 #include <news3400/sio/scc.h>
 
-int	rslastcount[NRS*4];
-int	scc_unit[] = { 0, 1, -1, -1, 2, 3, 4, 5, 6, 7, 8, 9 };
-int	rs_unit[] = { 0, 1, 4, 5, 6, 7, 8, 9, 10, 11 };
+int rslastcount[NRS * 4];
+int scc_unit[] = {0, 1, -1, -1, 2, 3, 4, 5, 6, 7, 8, 9};
+int rs_unit[]  = {0, 1, 4, 5, 6, 7, 8, 9, 10, 11};
 
-rs_probe(hi)
-	struct hb_device *hi;
+rs_probe(hi) struct hb_device *hi;
 {
 	register int i, cmax;
 
-	for (i = (hi->hi_unit << 2), cmax = 4; cmax > 0; cmax--, i++) {
-		if (i == 2 || i == 3)
+	for(i = (hi->hi_unit << 2), cmax = 4; cmax > 0; cmax--, i++) {
+		if(i == 2 || i == 3)
 			continue;
-		if (scc_probe(scc_unit[i]))
+		if(scc_probe(scc_unit[i]))
 			continue;
 		return (0);
 	}
 	return (1);
 }
 
-rs_init(unit)
-	int unit;
+rs_init(unit) int unit;
 {
 
-	if (scc_open(scc_unit[unit])) {
+	if(scc_open(scc_unit[unit])) {
 		printf("rs_init: chan %d open failed.\n", scc_unit[unit]);
 		return (-1);
 	}
 	return (0);
 }
 
-rs_enable(unit)
-	int unit;
+rs_enable(unit) int unit;
 {
 
 	scc_enable(scc_unit[unit]);
 }
 
-rsrint(scc, buf, cnt)
-	int scc;
-	char *buf;
-	int cnt;
+rsrint(scc, buf, cnt) int scc;
+char *buf;
+int cnt;
 {
 
 	_rsrint(rs_unit[scc], buf, cnt);
 }
 
-rsxint(scc)
-	int scc;
+rsxint(scc) int scc;
 {
 	int unit = rs_unit[scc];
 
 	_rsxint(unit, rslastcount[unit]);
 }
 
-rssint(scc, stat)
-	int scc;
-	int stat;
+rssint(scc, stat) int scc;
+int stat;
 {
 
 	_rssint(rs_unit[scc], stat);
 }
 
-rs_start(unit)
-	int unit;
+rs_start(unit) int unit;
 {
 
 	scc_start(scc_unit[unit]);
 }
 
-rs_output(unit, n)
-	int unit;
-	int n;
+rs_output(unit, n) int unit;
+int n;
 {
 
 	rslastcount[unit] =
-	    scc_write(scc_unit[unit], rs_tty[unit].t_outq.c_cf, n);
+	        scc_write(scc_unit[unit], rs_tty[unit].t_outq.c_cf, n);
 }
 
-rs_stop(unit, flush)
-	int unit;
-	int flush;
+rs_stop(unit, flush) int unit;
+int flush;
 {
 
-	if (flush)
+	if(flush)
 		scc_flush(scc_unit[unit]);
 }
 
-rs_reset(unit)
-	int unit;
+rs_reset(unit) int unit;
 {
 
 	scc_reset(scc_unit[unit]);
 }
 
-rs_get_param(unit)
-	int unit;
+rs_get_param(unit) int unit;
 {
 
 	return (scc_get_param(scc_unit[unit]));
 }
 
-rs_set_param(unit, param)
-	int unit;
-	int param;
+rs_set_param(unit, param) int unit;
+int param;
 {
 
 	scc_set_param(scc_unit[unit], param);
@@ -960,36 +946,35 @@ rs_set_param(unit, param)
 #include "../mrx/h/scc.h"
 #include "../mrx/h/cio.h"
 
-int	port_rsrecv[NRS*4];
-int	port_rsxmit[NRS*4];
-int	port_rsstat[NRS*4];
-int	port_rsctrl[NRS*4];
-int	port_recv_iop[NRS*4];
-int	port_xmit_iop[NRS*4];
-int	port_ctrl_iop[NRS*4];
-int	port_stat_iop[NRS*4];
+int port_rsrecv[NRS * 4];
+int port_rsxmit[NRS * 4];
+int port_rsstat[NRS * 4];
+int port_rsctrl[NRS * 4];
+int port_recv_iop[NRS * 4];
+int port_xmit_iop[NRS * 4];
+int port_ctrl_iop[NRS * 4];
+int port_stat_iop[NRS * 4];
 
 /*
  *	minor No: 0 - 12 ----> SCC unit No : 0 - 9
  */
-int	scc_unit[] = { 1, 0, -1, -1, 3, 2, 5, 4, 7, 6, 9, 8 };
+int scc_unit[] = {1, 0, -1, -1, 3, 2, 5, 4, 7, 6, 9, 8};
 
-rs_probe(ii)
-	struct iop_device *ii;
+rs_probe(ii) struct iop_device *ii;
 {
 	register int base = ii->ii_unit << 2;
 	register int i, j;
 	char buf[16];
 
-#define	PT_CREATE(buf, name, unit, func, arg)	\
+#define PT_CREATE(buf, name, unit, func, arg) \
 	port_create(make_name(buf, name, unit), func, arg)
-#define	OB_QUERY(buf, name, unit) \
+#define OB_QUERY(buf, name, unit) \
 	object_query(make_name(buf, name, unit))
-	for (i = base; i < base+4; i++) {
-		if ((j = scc_unit[i]) < 0)
+	for(i = base; i < base + 4; i++) {
+		if((j = scc_unit[i]) < 0)
 			continue;
 		port_recv_iop[i] = OB_QUERY(buf, "scc_inputX", j);
-		if (port_recv_iop[i] <= 0)
+		if(port_recv_iop[i] <= 0)
 			return (0);
 		port_xmit_iop[i] = OB_QUERY(buf, "scc_outputX", j);
 		port_ctrl_iop[i] = OB_QUERY(buf, "scc_ctrlX", j);
@@ -1003,8 +988,7 @@ rs_probe(ii)
 	return (1);
 }
 
-rs_init(unit)
-	int unit;
+rs_init(unit) int unit;
 {
 	int len;
 
@@ -1012,8 +996,7 @@ rs_init(unit)
 	return (0);
 }
 
-rs_enable(unit)
-	int unit;
+rs_enable(unit) int unit;
 {
 	int len;
 
@@ -1021,8 +1004,7 @@ rs_enable(unit)
 	msg_send(port_recv_iop[unit], port_rsrecv[unit], &len, sizeof(len), 0);
 }
 
-rsrint(unit)
-	register int	unit;
+rsrint(unit) register int unit;
 {
 	char *addr;
 	int from, len;
@@ -1034,8 +1016,7 @@ rsrint(unit)
 	_rsrint(unit, addr, len);
 }
 
-rsxint(unit)
-	register int unit;
+rsxint(unit) register int unit;
 {
 	int from, *len;
 
@@ -1043,8 +1024,7 @@ rsxint(unit)
 	_rsxint(unit, *len);
 }
 
-rssint(unit)
-	register int unit;
+rssint(unit) register int unit;
 {
 	int from, *reply;
 
@@ -1053,8 +1033,7 @@ rssint(unit)
 	msg_send(from, port_rsstat[unit], NULL, 0, 0);
 }
 
-rs_start(unit)
-	int unit;
+rs_start(unit) int unit;
 {
 	int func;
 
@@ -1062,18 +1041,16 @@ rs_start(unit)
 	msg_send(port_ctrl_iop[unit], 0, &func, sizeof(func), 0);
 }
 
-rs_output(unit, n)
-	int unit;
-	int n;
+rs_output(unit, n) int unit;
+int n;
 {
 
 	msg_send(port_xmit_iop[unit], port_rsxmit[unit],
-	    rs_tty[unit].t_outq.c_cf, min(n, MAX_CIO), 0);
+	         rs_tty[unit].t_outq.c_cf, min(n, MAX_CIO), 0);
 }
 
-rs_stop(unit, flush)
-	int unit;
-	int flush;
+rs_stop(unit, flush) int unit;
+int flush;
 {
 	int func;
 
@@ -1081,8 +1058,7 @@ rs_stop(unit, flush)
 	msg_send(port_ctrl_iop[unit], 0, &func, sizeof(func), 0);
 }
 
-rs_reset(unit)
-	int unit;
+rs_reset(unit) int unit;
 {
 	int func;
 
@@ -1090,14 +1066,13 @@ rs_reset(unit)
 	msg_send(port_ctrl_iop[unit], 0, &func, sizeof(func), 0);
 }
 
-rs_get_param(unit)
-	register int unit;
+rs_get_param(unit) register int unit;
 {
 	register int port;
 	struct scc_ctrl_req req;
 	int param, *reply;
 
-	port = port_rsctrl[unit];
+	port         = port_rsctrl[unit];
 	req.scc_func = CIO_GETPARAMS;
 
 	/* message length 8 means 2 * sizeof(int) : func and status */
@@ -1110,14 +1085,13 @@ rs_get_param(unit)
 	return (param);
 }
 
-rs_set_param(unit, param)
-	register int unit;
-	int param;
+rs_set_param(unit, param) register int unit;
+int param;
 {
 	struct scc_ctrl_req req;
 
 	req.scc_func = CIO_SETPARAMS;
-	req.scc_arg = param;
+	req.scc_arg  = param;
 
 	/* message length 8 means 2 * sizeof(int) : func and param */
 	msg_send(port_ctrl_iop[unit], 0, &req, 8, 0);

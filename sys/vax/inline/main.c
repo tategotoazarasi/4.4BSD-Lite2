@@ -33,7 +33,7 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1984, 1986 The Regents of the University of California.\n\
+        "@(#) Copyright (c) 1984, 1986 The Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
@@ -49,31 +49,29 @@ static char sccsid[] = "@(#)main.c	7.2 (Berkeley) 5/8/91";
  * These are the pattern tables to be loaded
  */
 struct pats *vax_inittables[] = {
-	language_ptab,
-	libc_ptab,
-	vax_libc_ptab,
-	machine_ptab,
-	vax_ptab,
-	0
-};
+        language_ptab,
+        libc_ptab,
+        vax_libc_ptab,
+        machine_ptab,
+        vax_ptab,
+        0};
 
 struct pats *vaxsubset_inittables[] = {
-	language_ptab,
-	libc_ptab,
-	vaxsubset_libc_ptab,
-	machine_ptab,
-	vaxsubset_ptab,
-	0
-};
+        language_ptab,
+        libc_ptab,
+        vaxsubset_libc_ptab,
+        machine_ptab,
+        vaxsubset_ptab,
+        0};
 
 /*
  * Statistics collection
  */
 struct stats {
-	int	attempted;	/* number of expansion attempts */
-	int	finished;	/* expansions done before end of basic block */
-	int	lostmodified;	/* mergers inhibited by intervening mod */
-	int	savedpush;	/* successful push/pop merger */
+	int attempted;    /* number of expansion attempts */
+	int finished;     /* expansions done before end of basic block */
+	int lostmodified; /* mergers inhibited by intervening mod */
+	int savedpush;    /* successful push/pop merger */
 } stats;
 
 extern char *strcpy();
@@ -82,9 +80,8 @@ char *whoami;
 int lineno = 0;
 int dflag;
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(argc, argv) int argc;
+char *argv[];
 {
 	register char *cp, *lp;
 	register char *bufp;
@@ -98,83 +95,83 @@ main(argc, argv)
 	whoami = argv[0];
 	argc--;
 	argv++;
-	while (argc > 0 && argv[0][0] == '-') {
+	while(argc > 0 && argv[0][0] == '-') {
 		switch(argv[0][1]) {
 
-		case 's':
-			subset++;
-			break;
+			case 's':
+				subset++;
+				break;
 
-		case 'd':
-			dflag++;
-			break;
+			case 'd':
+				dflag++;
+				break;
 
-		default:
-			break;
+			default:
+				break;
 		}
 		argc--, argv++;
 	}
-	if (argc > 0)
+	if(argc > 0)
 		freopen(argv[0], "r", stdin);
-	if (argc > 1)
+	if(argc > 1)
 		freopen(argv[1], "w", stdout);
 	/*
 	 * Set up the hash table for the patterns.
 	 */
-	if (subset)
+	if(subset)
 		tablep = vaxsubset_inittables;
 	else
 		tablep = vax_inittables;
-	for ( ; *tablep; tablep++) {
-		for (pp = *tablep; pp->name[0] != '\0'; pp++) {
-			php = &patshdr[hash(pp->name, &size)];
+	for(; *tablep; tablep++) {
+		for(pp = *tablep; pp->name[0] != '\0'; pp++) {
+			php      = &patshdr[hash(pp->name, &size)];
 			pp->size = size;
 			pp->next = *php;
-			*php = pp;
+			*php     = pp;
 		}
 	}
 	/*
 	 * Set up the hash table for the instruction stop table.
 	 */
-	for (itp = inststoptable; itp->name[0] != '\0'; itp++) {
-		ithp = &inststoptblhdr[hash(itp->name, &size)];
+	for(itp = inststoptable; itp->name[0] != '\0'; itp++) {
+		ithp      = &inststoptblhdr[hash(itp->name, &size)];
 		itp->size = size;
 		itp->next = *ithp;
-		*ithp = itp;
+		*ithp     = itp;
 	}
 	/*
 	 * check each line and replace as appropriate
 	 */
 	buftail = bufhead = 0;
-	bufp = line[0];
-	while (fgets(bufp, MAXLINELEN, stdin)) {
+	bufp              = line[0];
+	while(fgets(bufp, MAXLINELEN, stdin)) {
 		lineno++;
 		lp = index(bufp, LABELCHAR);
-		if (lp != NULL) {
-			for (cp = bufp; cp < lp; cp++)
-				if (!isalnum(*cp))
+		if(lp != NULL) {
+			for(cp = bufp; cp < lp; cp++)
+				if(!isalnum(*cp))
 					break;
-			if (cp == lp) {
+			if(cp == lp) {
 				bufp = newline();
-				if (*++lp == '\n') {
+				if(*++lp == '\n') {
 					emptyqueue();
 					continue;
 				}
 				(void) strcpy(bufp, lp);
 				*lp++ = '\n';
-				*lp = '\0';
+				*lp   = '\0';
 				emptyqueue();
 			}
 		}
-		for (cp = bufp; isspace(*cp); cp++)
+		for(cp = bufp; isspace(*cp); cp++)
 			/* void */;
-		if ((cp = doreplaceon(cp)) == 0) {
+		if((cp = doreplaceon(cp)) == 0) {
 			bufp = newline();
 			continue;
 		}
-		for (pp = patshdr[hash(cp, &size)]; pp; pp = pp->next) {
-			if (pp->size == size && bcmp(pp->name, cp, size) == 0) {
-				if (argcounterr(pp->args, countargs(bufp), pp->name)) {
+		for(pp = patshdr[hash(cp, &size)]; pp; pp = pp->next) {
+			if(pp->size == size && bcmp(pp->name, cp, size) == 0) {
+				if(argcounterr(pp->args, countargs(bufp), pp->name)) {
 					pp = NULL;
 					break;
 				}
@@ -183,27 +180,26 @@ main(argc, argv)
 				break;
 			}
 		}
-		if (!pp) {
+		if(!pp) {
 			emptyqueue();
 			fputs(bufp, stdout);
 		}
 	}
 	emptyqueue();
-	if (dflag)
+	if(dflag)
 		fprintf(stderr, "%s: %s %d, %s %d, %s %d, %s %d\n",
-			whoami,
-			"attempts", stats.attempted,
-			"finished", stats.finished,
-			"inhibited", stats.lostmodified,
-			"merged", stats.savedpush);
+		        whoami,
+		        "attempts", stats.attempted,
+		        "finished", stats.finished,
+		        "inhibited", stats.lostmodified,
+		        "merged", stats.savedpush);
 	exit(0);
 }
 
 /*
  * Integrate an expansion into the assembly stream
  */
-expand(replace)
-	char *replace;
+expand(replace) char *replace;
 {
 	register int curptr;
 	char *nextreplace, *argv[MAXARGS];
@@ -211,39 +207,39 @@ expand(replace)
 	char parsebuf[BUFSIZ];
 
 	stats.attempted++;
-	for (curptr = bufhead; ; ) {
+	for(curptr = bufhead;;) {
 		nextreplace = copyline(replace, line[bufhead]);
-		argc = parseline(line[bufhead], argv, parsebuf);
-		argreg = nextarg(argc, argv);
-		if (argreg == -1)
+		argc        = parseline(line[bufhead], argv, parsebuf);
+		argreg      = nextarg(argc, argv);
+		if(argreg == -1)
 			break;
 		args++;
-		for (foundarg = 0; curptr != buftail; ) {
+		for(foundarg = 0; curptr != buftail;) {
 			curptr = PRED(curptr);
-			argc = parseline(line[curptr], argv, parsebuf);
-			if (isendofblock(argc, argv))
+			argc   = parseline(line[curptr], argv, parsebuf);
+			if(isendofblock(argc, argv))
 				break;
-			if (foundarg = ispusharg(argc, argv))
+			if(foundarg = ispusharg(argc, argv))
 				break;
 			mod |= 1 << modifies(argc, argv);
 		}
-		if (!foundarg)
+		if(!foundarg)
 			break;
 		replace = nextreplace;
-		if (mod & (1 << argreg)) {
+		if(mod & (1 << argreg)) {
 			stats.lostmodified++;
-			if (curptr == buftail) {
-				(void)newline();
+			if(curptr == buftail) {
+				(void) newline();
 				break;
 			}
-			(void)newline();
+			(void) newline();
 		} else {
 			stats.savedpush++;
 			rewrite(line[curptr], argc, argv, argreg);
 			mod |= 1 << argreg;
 		}
 	}
-	if (argreg == -1)
+	if(argreg == -1)
 		stats.finished++;
 	emptyqueue();
 	fputs(replace, stdout);
@@ -253,36 +249,35 @@ expand(replace)
 /*
  * Parse a line of assembly language into opcode and arguments.
  */
-parseline(linep, argv, linebuf)
-	char *linep;
-	char *argv[];
-	char *linebuf;
+parseline(linep, argv, linebuf) char *linep;
+char *argv[];
+char *linebuf;
 {
 	register char *bufp = linebuf, *cp = linep;
 	register int argc = 0;
 
-	for (;;) {
+	for(;;) {
 		/*
 		 * skip over white space
 		 */
-		while (isspace(*cp))
+		while(isspace(*cp))
 			cp++;
-		if (*cp == '\0')
+		if(*cp == '\0')
 			return (argc);
 		/*
 		 * copy argument
 		 */
-		if (argc == MAXARGS - 1) {
+		if(argc == MAXARGS - 1) {
 			fprintf(stderr, "instruction too long->%s", linep);
 			return (argc);
 		}
 		argv[argc++] = bufp;
-		while (!isspace(*cp) && *cp != ARGSEPCHAR && *cp != COMMENTCHAR)
+		while(!isspace(*cp) && *cp != ARGSEPCHAR && *cp != COMMENTCHAR)
 			*bufp++ = *cp++;
 		*bufp++ = '\0';
-		if (*cp == COMMENTCHAR)
+		if(*cp == COMMENTCHAR)
 			return (argc);
-		if (*cp == ARGSEPCHAR)
+		if(*cp == ARGSEPCHAR)
 			cp++;
 	}
 }
@@ -290,17 +285,16 @@ parseline(linep, argv, linebuf)
 /*
  * Check for instructions that end a basic block.
  */
-isendofblock(argc, argv)
-	int argc;
-	char *argv[];
+isendofblock(argc, argv) int argc;
+char *argv[];
 {
 	register struct inststoptbl *itp;
 	int size;
 
-	if (argc == 0)
+	if(argc == 0)
 		return (0);
-	for (itp = inststoptblhdr[hash(argv[0], &size)]; itp; itp = itp->next)
-		if (itp->size == size && bcmp(argv[0], itp->name, size) == 0)
+	for(itp = inststoptblhdr[hash(argv[0], &size)]; itp; itp = itp->next)
+		if(itp->size == size && bcmp(argv[0], itp->name, size) == 0)
 			return (1);
 	return (0);
 }
@@ -311,13 +305,13 @@ isendofblock(argc, argv)
  */
 char *
 copyline(from, to)
-	register char *from, *to;
+register char *from, *to;
 {
 
-	while (*from != '\n')
+	while(*from != '\n')
 		*to++ = *from++;
 	*to++ = *from++;
-	*to = '\0';
+	*to   = '\0';
 	return (from);
 }
 
@@ -326,29 +320,28 @@ copyline(from, to)
  * is called with and the number which we expect to see.
  * If the error is unrecoverable, return 1, otherwise 0.
  */
-argcounterr(args, callargs, name)
-	int args, callargs;
-	char *name;
+argcounterr(args, callargs, name) int args, callargs;
+char *name;
 {
 	register char *cp;
 	char namebuf[MAXLINELEN];
 
-	if (args == callargs)
+	if(args == callargs)
 		return (0);
 	cp = strcpy(namebuf, name);
-	while (*cp != '\0' && *cp != '\n')
+	while(*cp != '\0' && *cp != '\n')
 		++cp;
-	if (*cp == '\n')
+	if(*cp == '\n')
 		*cp = '\0';
-	if (callargs >= 0) {
+	if(callargs >= 0) {
 		fprintf(stderr,
-		"%s: error: arg count mismatch, %d != %d for '%s' at line %d\n",
-			whoami, callargs, args, namebuf, lineno);
+		        "%s: error: arg count mismatch, %d != %d for '%s' at line %d\n",
+		        whoami, callargs, args, namebuf, lineno);
 		return (1);
 	}
 	fprintf(stderr,
-		"%s: warning: can't verify arg count for '%s' at line %d\n",
-		whoami, namebuf, lineno);
+	        "%s: warning: can't verify arg count for '%s' at line %d\n",
+	        whoami, namebuf, lineno);
 	return (0);
 }
 
@@ -356,10 +349,9 @@ argcounterr(args, callargs, name)
  * open space for next line in the queue
  */
 char *
-newline()
-{
+newline() {
 	bufhead = SUCC(bufhead);
-	if (bufhead == buftail) {
+	if(bufhead == buftail) {
 		fputs(line[buftail], stdout);
 		buftail = SUCC(buftail);
 	}
@@ -369,9 +361,8 @@ newline()
 /*
  * empty the queue by printing out all its lines.
  */
-emptyqueue()
-{
-	while (buftail != bufhead) {
+emptyqueue() {
+	while(buftail != bufhead) {
 		fputs(line[buftail], stdout);
 		buftail = SUCC(buftail);
 	}
@@ -381,15 +372,14 @@ emptyqueue()
  * Compute the hash of a string.
  * Return the hash and the size of the item hashed
  */
-hash(cp, size)
-	char *cp;
-	int *size;
+hash(cp, size) char *cp;
+int *size;
 {
 	register char *cp1 = cp;
-	register int hash = 0;
+	register int hash  = 0;
 
-	while (*cp1 && *cp1 != '\n')
-		hash += (int)*cp1++;
+	while(*cp1 && *cp1 != '\n')
+		hash += (int) *cp1++;
 	*size = cp1 - cp + 1;
 	hash &= HSHSIZ - 1;
 	return (hash);

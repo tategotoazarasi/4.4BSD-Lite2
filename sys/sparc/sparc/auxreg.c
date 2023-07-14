@@ -53,15 +53,14 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-static int auxregmatch __P((struct device *, struct cfdata *, void *));
-static void auxregattach __P((struct device *, struct device *, void *));
+static int auxregmatch __P((struct device *, struct cfdata *, void *) );
+static void auxregattach __P((struct device *, struct device *, void *) );
 struct cfdriver auxregcd =
-    { 0, "auxreg", auxregmatch, auxregattach, DV_DULL, sizeof(struct device) };
+        {0, "auxreg", auxregmatch, auxregattach, DV_DULL, sizeof(struct device)};
 
 #ifdef BLINK
 static int
-blink(zero)
-	void *zero;
+        blink(zero) void *zero;
 {
 	register int s;
 	register fixpt_t lav;
@@ -77,7 +76,7 @@ blink(zero)
 	 * etc.
 	 */
 	s = (((averunnable[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout(blink, (caddr_t)0, s);
+	timeout(blink, (caddr_t) 0, s);
 }
 #endif
 
@@ -86,25 +85,25 @@ blink(zero)
  */
 static int
 auxregmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+struct device *parent;
+struct cfdata *cf;
+void *aux;
 {
 
-	return (strcmp("auxiliary-io", ((struct romaux *)aux)->ra_name) == 0);
+	return (strcmp("auxiliary-io", ((struct romaux *) aux)->ra_name) == 0);
 }
 
 /* ARGSUSED */
 static void
-auxregattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+        auxregattach(parent, self, aux) struct device *parent,
+        *self;
+void *aux;
 {
 	struct romaux *ra = aux;
 
-	(void)mapdev(ra->ra_paddr, AUXREG_VA, sizeof(long));
+	(void) mapdev(ra->ra_paddr, AUXREG_VA, sizeof(long));
 	printf("\n");
 #ifdef BLINK
-	blink((caddr_t)0);
+	blink((caddr_t) 0);
 #endif
 }

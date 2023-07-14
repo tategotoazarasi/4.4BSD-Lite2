@@ -56,13 +56,13 @@
 #include <news3400/iodev/scsireg.h>
 #include <news3400/iodev/sdreg.h>
 
-struct iop/**/_ctlr *sdminfo[NSDC];
-struct iop/**/_device *sddinfo[NSD];
-struct iop/**/_device *sdip[NSDC][MAXSLAVE];
+struct iop /**/ _ctlr *sdminfo[NSDC];
+struct iop /**/ _device *sddinfo[NSD];
+struct iop /**/ _device *sdip[NSDC][MAXSLAVE];
 
-struct buf rsdbuf[NSD];			/* buffer for raw I/O */
-struct buf csdbuf[NSD];			/* buffer for controll */
-struct buf sdutab[NSD];			/* per drive buffers */
+struct buf rsdbuf[NSD]; /* buffer for raw I/O */
+struct buf csdbuf[NSD]; /* buffer for controll */
+struct buf sdutab[NSD]; /* per drive buffers */
 
 struct sdc_softc sdc_softc[NSDC];
 struct sdd_softc sdd_softc[NSD];
@@ -78,7 +78,7 @@ u_char sdc_rsense[NSDC][RSEN_CNT];
 
 struct sync_param sd_sync_param[NSD];
 
-int nsd = NSD;
+int nsd  = NSD;
 int nsdc = NSDC;
 
 #endif /* NSD > 0 */

@@ -82,13 +82,13 @@ SOFTWARE.
 #include <netiso/argo_debug.h>
 
 static struct clnp_fixed er_template = {
-	ISO8473_CLNP,	/* network identifier */
-	0,				/* length */
-	ISO8473_V1,		/* version */
-	CLNP_TTL,		/* ttl */
-	CLNP_ER,		/* type */
-	0,				/* segment length */
-	0				/* checksum */
+        ISO8473_CLNP, /* network identifier */
+        0,            /* length */
+        ISO8473_V1,   /* version */
+        CLNP_TTL,     /* ttl */
+        CLNP_ER,      /* type */
+        0,            /* segment length */
+        0             /* checksum */
 };
 
 /*
@@ -102,47 +102,46 @@ static struct clnp_fixed er_template = {
  *
  * NOTES:			
  */
-clnp_er_input(m, src, reason)
-struct mbuf		*m;		/* ptr to packet itself */
-struct iso_addr	*src;	/* ptr to src of er */
-u_char			reason;	/* reason code of er */
+clnp_er_input(m, src, reason) struct mbuf *m; /* ptr to packet itself */
+struct iso_addr *src;                         /* ptr to src of er */
+u_char reason;                                /* reason code of er */
 {
-	int	cmd = -1;
+	int cmd = -1;
 	extern u_char clnp_protox[];
 
 	IFDEBUG(D_CTLINPUT)
-		printf("clnp_er_input: m x%x, src %s, reason x%x\n", m, 
-			clnp_iso_addrp(src), reason);
+	printf("clnp_er_input: m x%x, src %s, reason x%x\n", m,
+	       clnp_iso_addrp(src), reason);
 	ENDDEBUG
 
 	INCSTAT(cns_er_inhist[clnp_er_index(reason)]);
-	switch (reason) {
+	switch(reason) {
 		case GEN_NOREAS:
 		case GEN_PROTOERR:
 			break;
-		case GEN_BADCSUM:		
+		case GEN_BADCSUM:
 			cmd = PRC_PARAMPROB;
 			break;
-		case GEN_CONGEST:		
+		case GEN_CONGEST:
 			cmd = PRC_QUENCH;
 			break;
-		case GEN_HDRSYNTAX:		
+		case GEN_HDRSYNTAX:
 			cmd = PRC_PARAMPROB;
 			break;
-		case GEN_SEGNEEDED:		
-			cmd = PRC_MSGSIZE; 
+		case GEN_SEGNEEDED:
+			cmd = PRC_MSGSIZE;
 			break;
-		case GEN_INCOMPLETE:	
-			cmd = PRC_PARAMPROB; 		
+		case GEN_INCOMPLETE:
+			cmd = PRC_PARAMPROB;
 			break;
-		case GEN_DUPOPT:		
-			cmd = PRC_PARAMPROB;		
+		case GEN_DUPOPT:
+			cmd = PRC_PARAMPROB;
 			break;
-		case ADDR_DESTUNREACH:	
-			cmd = PRC_UNREACH_HOST; 	
+		case ADDR_DESTUNREACH:
+			cmd = PRC_UNREACH_HOST;
 			break;
-		case ADDR_DESTUNKNOWN:	
-			cmd = PRC_UNREACH_PROTOCOL; 
+		case ADDR_DESTUNKNOWN:
+			cmd = PRC_UNREACH_PROTOCOL;
 			break;
 		case SRCRT_UNSPECERR:
 		case SRCRT_SYNTAX:
@@ -150,20 +149,20 @@ u_char			reason;	/* reason code of er */
 		case SRCRT_BADPATH:
 			cmd = PRC_UNREACH_SRCFAIL;
 			break;
-		case TTL_EXPTRANSIT:	
-			cmd = PRC_TIMXCEED_INTRANS;	
+		case TTL_EXPTRANSIT:
+			cmd = PRC_TIMXCEED_INTRANS;
 			break;
-		case TTL_EXPREASS:		
-			cmd = PRC_TIMXCEED_REASS;	
+		case TTL_EXPREASS:
+			cmd = PRC_TIMXCEED_REASS;
 			break;
 		case DISC_UNSUPPOPT:
 		case DISC_UNSUPPVERS:
 		case DISC_UNSUPPSECURE:
 		case DISC_UNSUPPSRCRT:
 		case DISC_UNSUPPRECRT:
-			cmd = PRC_PARAMPROB; 
+			cmd = PRC_PARAMPROB;
 			break;
-		case REASS_INTERFERE:	
+		case REASS_INTERFERE:
 			cmd = PRC_TIMXCEED_REASS;
 			break;
 	}
@@ -172,7 +171,7 @@ u_char			reason;	/* reason code of er */
 	 *	tpclnp_ctlinput1 is called directly so that we don't
 	 *	have to build an iso_sockaddr out of src.
 	 */
-	if (cmd >= 0)
+	if(cmd >= 0)
 		tpclnp_ctlinput1(cmd, src);
 
 	m_freem(m);
@@ -190,22 +189,21 @@ u_char			reason;	/* reason code of er */
  * NOTES:			This code assumes that we have previously tried to pull
  *					up the header of the datagram into one mbuf.
  */
-clnp_discard(m, reason)
-struct mbuf	*m;		/* header of packet to discard */
-char					reason;	/* reason for discard */
+clnp_discard(m, reason) struct mbuf *m; /* header of packet to discard */
+char reason;                            /* reason for discard */
 {
 	IFDEBUG(D_DISCARD)
-		printf("clnp_discard: m x%x, reason x%x\n", m, reason);
+	printf("clnp_discard: m x%x, reason x%x\n", m, reason);
 	ENDDEBUG
 
-	if (m != NULL) {
-		if (m->m_len >= sizeof(struct clnp_fixed)) {
+	if(m != NULL) {
+		if(m->m_len >= sizeof(struct clnp_fixed)) {
 			register struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
 
-			if (((clnp->cnf_type & CNF_TYPE) != CLNP_ER) &&
-				(clnp->cnf_type & CNF_ERR_OK)) {
-					clnp_emit_er(m, reason);
-					return;
+			if(((clnp->cnf_type & CNF_TYPE) != CLNP_ER) &&
+			   (clnp->cnf_type & CNF_ERR_OK)) {
+				clnp_emit_er(m, reason);
+				return;
 			}
 		}
 		m_freem(m);
@@ -229,99 +227,98 @@ char					reason;	/* reason for discard */
  *					was created by us; in this case, do not send
  *					an ER.
  */
-clnp_emit_er(m, reason)
-struct mbuf	*m;		/* header of packet to discard */
-char					reason;	/* reason for discard */
+clnp_emit_er(m, reason) struct mbuf *m; /* header of packet to discard */
+char reason;                            /* reason for discard */
 {
-	register struct clnp_fixed	*clnp = mtod(m, struct clnp_fixed *);
-	register struct clnp_fixed	*er;
-	struct route_iso			route;
-	struct ifnet				*ifp;
-	struct sockaddr				*first_hop;
-	struct iso_addr				src, dst, *our_addr;
-	caddr_t						hoff, hend;
-	int							total_len;		/* total len of dg */
-	struct mbuf 				*m0;			/* contains er pdu hdr */
-	struct iso_ifaddr			*ia = 0;
+	register struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
+	register struct clnp_fixed *er;
+	struct route_iso route;
+	struct ifnet *ifp;
+	struct sockaddr *first_hop;
+	struct iso_addr src, dst, *our_addr;
+	caddr_t hoff, hend;
+	int total_len;   /* total len of dg */
+	struct mbuf *m0; /* contains er pdu hdr */
+	struct iso_ifaddr *ia = 0;
 
 	IFDEBUG(D_DISCARD)
-		printf("clnp_emit_er: m x%x, hdr len %d\n", m, clnp->cnf_hdr_len);
+	printf("clnp_emit_er: m x%x, hdr len %d\n", m, clnp->cnf_hdr_len);
 	ENDDEBUG
 
-	bzero((caddr_t)&route, sizeof(route));
+	bzero((caddr_t) &route, sizeof(route));
 
 	/*
 	 *	If header length is incorrect, or entire header is not contained
 	 *	in this mbuf, we punt
 	 */
-	if ((clnp->cnf_hdr_len < CLNP_HDR_MIN) ||
-		(clnp->cnf_hdr_len > CLNP_HDR_MAX) ||
-		(clnp->cnf_hdr_len > m->m_len))
+	if((clnp->cnf_hdr_len < CLNP_HDR_MIN) ||
+	   (clnp->cnf_hdr_len > CLNP_HDR_MAX) ||
+	   (clnp->cnf_hdr_len > m->m_len))
 		goto bad;
-	
+
 	/* extract src, dest address */
-	hend = (caddr_t)clnp + clnp->cnf_hdr_len;
-	hoff = (caddr_t)clnp + sizeof(struct clnp_fixed);
+	hend = (caddr_t) clnp + clnp->cnf_hdr_len;
+	hoff = (caddr_t) clnp + sizeof(struct clnp_fixed);
 	CLNP_EXTRACT_ADDR(dst, hoff, hend);
-	if (hoff == (caddr_t)0) {
+	if(hoff == (caddr_t) 0) {
 		goto bad;
 	}
 	CLNP_EXTRACT_ADDR(src, hoff, hend);
-	if (hoff == (caddr_t)0) {
+	if(hoff == (caddr_t) 0) {
 		goto bad;
 	}
-	
+
 	/*
 	 *	Do not send ER if we generated the packet.
 	 */
-	if (clnp_ours(&src))
+	if(clnp_ours(&src))
 		goto bad;
 
 	/* 
 	 *	Trim mbuf to hold only the header.
 	 *	This mbuf will be the 'data' of the er pdu
 	 */
-	if (m->m_next != NULL) {
+	if(m->m_next != NULL) {
 		m_freem(m->m_next);
 		m->m_next = NULL;
 	}
 
-	if (m->m_len > clnp->cnf_hdr_len)
-		m_adj(m, (int)-(m->m_len - (int)clnp->cnf_hdr_len));
+	if(m->m_len > clnp->cnf_hdr_len)
+		m_adj(m, (int) -(m->m_len - (int) clnp->cnf_hdr_len));
 
 	/* route er pdu: note we send pkt to src of original packet  */
-	if (clnp_route(&src, &route, /* flags */0, &first_hop, &ia) != 0)
+	if(clnp_route(&src, &route, /* flags */ 0, &first_hop, &ia) != 0)
 		goto bad;
 
 	/* compute our address based upon firsthop/ifp */
-	if (ia)
-			our_addr = &ia->ia_addr.siso_addr;
+	if(ia)
+		our_addr = &ia->ia_addr.siso_addr;
 	else
-			goto bad;
+		goto bad;
 	ifp = ia->ia_ifp;
 
 	IFDEBUG(D_DISCARD)
-		printf("clnp_emit_er: to %s", clnp_iso_addrp(&src));
-		printf(" from %s\n", clnp_iso_addrp(our_addr));
+	printf("clnp_emit_er: to %s", clnp_iso_addrp(&src));
+	printf(" from %s\n", clnp_iso_addrp(our_addr));
 	ENDDEBUG
 
 	IFDEBUG(D_DISCARD)
-		printf("clnp_emit_er: packet routed to %s\n", 
-			clnp_iso_addrp(&((struct sockaddr_iso *)first_hop)->siso_addr));
+	printf("clnp_emit_er: packet routed to %s\n",
+	       clnp_iso_addrp(&((struct sockaddr_iso *) first_hop)->siso_addr));
 	ENDDEBUG
 
 	/* allocate mbuf for er pdu header: punt on no space */
 	MGET(m0, M_DONTWAIT, MT_HEADER);
-	if (m0 == 0)
+	if(m0 == 0)
 		goto bad;
-	
+
 	m0->m_next = m;
-	er = mtod(m0, struct clnp_fixed *);
-	*er = er_template;
+	er         = mtod(m0, struct clnp_fixed *);
+	*er        = er_template;
 
 	/* setup src/dst on er pdu */
 	/* NOTE REVERSAL OF SRC/DST */
-	hoff = (caddr_t)er + sizeof(struct clnp_fixed);
+	hoff = (caddr_t) er + sizeof(struct clnp_fixed);
 	CLNP_INSERT_ADDR(hoff, src);
 	CLNP_INSERT_ADDR(hoff, *our_addr);
 
@@ -331,23 +328,23 @@ char					reason;	/* reason for discard */
 	 */
 
 	/* add er option */
-	*hoff++ = CLNPOVAL_ERREAS;	/* code */
-	*hoff++ = 2;				/* length */
-	*hoff++ = reason;			/* discard reason */
-	*hoff++ = 0;				/* error localization = not specified */
+	*hoff++ = CLNPOVAL_ERREAS; /* code */
+	*hoff++ = 2;               /* length */
+	*hoff++ = reason;          /* discard reason */
+	*hoff++ = 0;               /* error localization = not specified */
 
 	/* set length */
-	er->cnf_hdr_len = m0->m_len = (u_char)(hoff - (caddr_t)er);
-	total_len = m0->m_len + m->m_len;
+	er->cnf_hdr_len = m0->m_len = (u_char) (hoff - (caddr_t) er);
+	total_len                   = m0->m_len + m->m_len;
 	HTOC(er->cnf_seglen_msb, er->cnf_seglen_lsb, total_len);
 
 	/* compute checksum (on header only) */
-	iso_gen_csum(m0, CLNP_CKSUM_OFF, (int)er->cnf_hdr_len);
+	iso_gen_csum(m0, CLNP_CKSUM_OFF, (int) er->cnf_hdr_len);
 
 	/* trim packet if too large for interface */
-	if (total_len > ifp->if_mtu)
+	if(total_len > ifp->if_mtu)
 		m_adj(m0, -(total_len - ifp->if_mtu));
-	
+
 	/* send packet */
 	INCSTAT(cns_er_outhist[clnp_er_index(reason)]);
 	(void) (*ifp->if_output)(ifp, m0, first_hop, route.ro_rt);
@@ -358,17 +355,17 @@ bad:
 
 done:
 	/* free route if it is a temp */
-	if (route.ro_rt != NULL)
+	if(route.ro_rt != NULL)
 		RTFREE(route.ro_rt);
 }
 
 clnp_er_index(p)
-u_char p;
+        u_char p;
 {
 	register u_char *cp = clnp_er_codes + CLNP_ERRORS;
-	while (cp > clnp_er_codes) {
+	while(cp > clnp_er_codes) {
 		cp--;
-		if (*cp == p)
+		if(*cp == p)
 			return (cp - clnp_er_codes);
 	}
 	return (CLNP_ERRORS + 1);

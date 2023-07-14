@@ -38,21 +38,20 @@
 
 int eval;
 
-main(argc, argv)
-	int argc;
-	char **argv;
+main(argc, argv) int argc;
+char **argv;
 {
-	if (*++argv && **argv == '-') {
+	if(*++argv && **argv == '-') {
 		err("no options available", 0);
 		_exit(1);
 	}
-	for (eval = 0; *argv; ++argv)
-		if (unmount(*argv, MNT_NOFORCE)) {
+	for(eval = 0; *argv; ++argv)
+		if(unmount(*argv, MNT_NOFORCE)) {
 			err(*argv, 1);
 			eval = 1;
 		}
 	_exit(eval);
 }
 
-#define	PROGNAME	"umount: "
+#define PROGNAME "umount: "
 #include "errfunction"

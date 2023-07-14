@@ -30,26 +30,26 @@
  * Manifest Constants
  ******************************************************************************
  */
-#define	_SERVER_NAME		"BB_SERVER"	/* environment variable to
+#define _SERVER_NAME "BB_SERVER" /* environment variable to
 						   set the billboard server 
 						   name */
-#define	_SERVER_NAME_LEN	64
+#define _SERVER_NAME_LEN 64
 
 /*
  ******************************************************************************
  * Global Declarations
  ******************************************************************************
  */
-CLIENT	*client_handle_p;		/* request client handle */
-char	server_name[_SERVER_NAME_LEN]; 	/* name of the billboard server */
+CLIENT *client_handle_p;            /* request client handle */
+char server_name[_SERVER_NAME_LEN]; /* name of the billboard server */
 
 /*
  ******************************************************************************
  * Function Declarations
  ******************************************************************************
  */
-static CLIENT 	*_get_handle();
-char 		*bb_call_rpc();
+static CLIENT *_get_handle();
+char *bb_call_rpc();
 
 /*
  ******************************************************************************
@@ -76,20 +76,20 @@ char 		*bb_call_rpc();
  */
 char *
 bb_call_rpc(func_p, arg_p)
-char	*(*func_p)();
-char	*arg_p;
+char *(*func_p)();
+char *arg_p;
 {
 
 	/*
 	 * gets client handle
 	 */
-	if (client_handle_p == NULL)
-		client_handle_p= _get_handle();
+	if(client_handle_p == NULL)
+		client_handle_p = _get_handle();
 
 	/*
 	 * do the RPC call
 	 */
-	return((char *)(*func_p)(arg_p, client_handle_p));
+	return ((char *) (*func_p)(arg_p, client_handle_p));
 }
 
 
@@ -117,35 +117,32 @@ char	*arg_p;
  *
  ******************************************************************************
  */
-static
-CLIENT *
-_get_handle()
-{
-char	*server_p;
-char	buffer[BB_MAX_LINE_LEN];
-char	*getenv();
-CLIENT 	*cl_handle_p;
+static CLIENT *
+_get_handle() {
+	char *server_p;
+	char buffer[BB_MAX_LINE_LEN];
+	char *getenv();
+	CLIENT *cl_handle_p;
 
 	/*
 	 * gets the server name from the environment variable, if not specified
 	 * the user will be prompted
 	 */
-	if ((server_p= getenv(_SERVER_NAME)) == NULL) {
+	if((server_p = getenv(_SERVER_NAME)) == NULL) {
 		printf("Server name: ");
 		gets(buffer);
-		sscanf(buffer, "%s", server_name);		
+		sscanf(buffer, "%s", server_name);
 	} else
 		strcpy(server_name, server_p);
 
 	/*
 	 * gets a client handle
 	 */
-	if ((cl_handle_p= clnt_create(server_name, BILLBOARD_PROG, 
-					BILLBOARD_VERS, "tcp")) == NULL) {
+	if((cl_handle_p = clnt_create(server_name, BILLBOARD_PROG,
+	                              BILLBOARD_VERS, "tcp")) == NULL) {
 		clnt_pcreateerror(server_name);
 		exit(1);
 	}
 
-	return(cl_handle_p);
+	return (cl_handle_p);
 }
-

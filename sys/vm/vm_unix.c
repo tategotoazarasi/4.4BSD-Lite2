@@ -51,86 +51,83 @@
 #include <vm/vm.h>
 
 struct obreak_args {
-	char	*nsiz;
+	char *nsiz;
 };
 /* ARGSUSED */
-int
-obreak(p, uap, retval)
-	struct proc *p;
-	struct obreak_args *uap;
-	int *retval;
+int obreak(p, uap, retval)
+struct proc *p;
+struct obreak_args *uap;
+int *retval;
 {
 	register struct vmspace *vm = p->p_vmspace;
 	vm_offset_t new, old;
 	int rv;
 	register int diff;
 
-	old = (vm_offset_t)vm->vm_daddr;
+	old = (vm_offset_t) vm->vm_daddr;
 	new = round_page(uap->nsiz);
-	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
-		return(ENOMEM);
-	old = round_page(old + ctob(vm->vm_dsize));
+	if((int) (new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+		return (ENOMEM);
+	old  = round_page(old + ctob(vm->vm_dsize));
 	diff = new - old;
-	if (diff > 0) {
+	if(diff > 0) {
 		rv = vm_allocate(&vm->vm_map, &old, diff, FALSE);
-		if (rv != KERN_SUCCESS) {
+		if(rv != KERN_SUCCESS) {
 			uprintf("sbrk: grow failed, return = %d\n", rv);
-			return(ENOMEM);
+			return (ENOMEM);
 		}
 		vm->vm_dsize += btoc(diff);
-	} else if (diff < 0) {
+	} else if(diff < 0) {
 		diff = -diff;
-		rv = vm_deallocate(&vm->vm_map, new, diff);
-		if (rv != KERN_SUCCESS) {
+		rv   = vm_deallocate(&vm->vm_map, new, diff);
+		if(rv != KERN_SUCCESS) {
 			uprintf("sbrk: shrink failed, return = %d\n", rv);
-			return(ENOMEM);
+			return (ENOMEM);
 		}
 		vm->vm_dsize -= btoc(diff);
 	}
-	return(0);
+	return (0);
 }
 
 /*
  * Enlarge the "stack segment" to include the specified
  * stack pointer for the process.
  */
-int
-grow(p, sp)
-	struct proc *p;
-	vm_offset_t sp;
+int grow(p, sp)
+struct proc *p;
+vm_offset_t sp;
 {
 	register struct vmspace *vm = p->p_vmspace;
 	register int si;
 
 	/*
-	 * For user defined stacks (from sendsig).
-	 */
-	if (sp < (vm_offset_t)vm->vm_maxsaddr)
+     * For user defined stacks (from sendsig).
+     */
+	if(sp < (vm_offset_t) vm->vm_maxsaddr)
 		return (0);
 	/*
-	 * For common case of already allocated (from trap).
-	 */
-	if (sp >= USRSTACK - ctob(vm->vm_ssize))
+     * For common case of already allocated (from trap).
+     */
+	if(sp >= USRSTACK - ctob(vm->vm_ssize))
 		return (1);
 	/*
-	 * Really need to check vs limit and increment stack size if ok.
-	 */
-	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
-	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+     * Really need to check vs limit and increment stack size if ok.
+     */
+	si = clrnd(btoc(USRSTACK - sp) - vm->vm_ssize);
+	if(vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize += si;
 	return (1);
 }
 
 struct ovadvise_args {
-	int	anom;
+	int anom;
 };
 /* ARGSUSED */
-int
-ovadvise(p, uap, retval)
-	struct proc *p;
-	struct ovadvise_args *uap;
-	int *retval;
+int ovadvise(p, uap, retval)
+struct proc *p;
+struct ovadvise_args *uap;
+int *retval;
 {
 
 	return (EINVAL);

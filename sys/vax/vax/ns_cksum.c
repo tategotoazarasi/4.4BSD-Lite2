@@ -46,36 +46,36 @@
 
 u_short
 ns_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+register struct mbuf *m;
+register int len;
 {
-	register u_short *w;		/* on vax, known to be r9 */
-	register int sum = 0;		/* on vax, known to be r8 */
-	register int low = 0;		/* on vax, known to be r7 */
-	register int mlen = low;	/* want 0, shuts lint up about low */
+	register u_short *w;     /* on vax, known to be r9 */
+	register int sum  = 0;   /* on vax, known to be r8 */
+	register int low  = 0;   /* on vax, known to be r7 */
+	register int mlen = low; /* want 0, shuts lint up about low */
 
-	for (;;) {
+	for(;;) {
 		/*
 		 * Each trip around loop adds in
 		 * word from one mbuf segment.
 		 */
 		w = mtod(m, u_short *);
-		if (mlen == -1) {
+		if(mlen == -1) {
 			/*
 			 * There is a byte left from the last segment;
 			 * add it into the checksum.  Don't have to worry
 			 * about a carry-out here because we make sure
 			 * that high part of (32 bit) sum is small below.
 			 */
-			sum += *(u_char *)w << 8;
+			sum += *(u_char *) w << 8;
 			sum += sum;
-			w = (u_short *)((char *)w + 1);
+			w    = (u_short *) ((char *) w + 1);
 			mlen = m->m_len - 1;
 			len--;
 		} else
 			mlen = m->m_len;
 		m = m->m_next;
-		if (len < mlen)
+		if(len < mlen)
 			mlen = len;
 		len -= mlen;
 		/*
@@ -83,7 +83,7 @@ ns_cksum(m, len)
 		 * memory operations.  It is too hard to do byte
 		 * adjustment, do only word adjustment.
 		 */
-		if (((int)w&0x2) && mlen >= 2) {
+		if(((int) w & 0x2) && mlen >= 2) {
 			sum += *w++;
 			sum += sum;
 			mlen -= 2;
@@ -97,22 +97,42 @@ ns_cksum(m, len)
 		 * so long as we fold back before 16 carries have occured.
 		 *
 		 */
-		while ((mlen -= 32) >= 0) {
+		while((mlen -= 32) >= 0) {
 			/*asm("bicpsw $1");		 clears carry */
 #undef ADD
-#define ADD asm("movw (r9)+,r7")asm("addl2 r7,r8")asm("addl2 r8,r8")
-#define FOLD { asm("ashl $-16,r8,r0")asm(" addw2 r0,r8"); \
-		  asm("adwc $0,r8")asm(" movzwl r8,r8"); }
+#define ADD asm("movw (r9)+,r7") asm("addl2 r7,r8") asm("addl2 r8,r8")
+#define FOLD                                        \
+	{                                               \
+		asm("ashl $-16,r8,r0") asm(" addw2 r0,r8"); \
+		asm("adwc $0,r8") asm(" movzwl r8,r8");     \
+	}
 			FOLD;
-			ADD; ADD; ADD; ADD; ADD; ADD; ADD; ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
 			FOLD;
-			ADD; ADD; ADD; ADD; ADD; ADD; ADD; ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
 		}
 		mlen += 32;
-		while ((mlen -= 8) >= 0) {
+		while((mlen -= 8) >= 0) {
 			/*asm("bicpsw $1");		 clears carry */
 			FOLD;
-			ADD; ADD; ADD; ADD;
+			ADD;
+			ADD;
+			ADD;
+			ADD;
 		}
 		mlen += 8;
 		/*
@@ -122,13 +142,13 @@ ns_cksum(m, len)
 		 * and maybe an odd byte.
 		 */
 		FOLD;
-		while ((mlen -= 2) >= 0) {
+		while((mlen -= 2) >= 0) {
 			ADD;
 		}
-		if (mlen == -1) {
-			sum += *(u_char *)w;
+		if(mlen == -1) {
+			sum += *(u_char *) w;
 		}
-		if (len == 0)
+		if(len == 0)
 			break;
 		/*
 		 * Locate the next block with some data.
@@ -136,12 +156,12 @@ ns_cksum(m, len)
 		 * will wrap to the top with mlen == -1 and
 		 * then add it in shifted appropriately.
 		 */
-		for (;;) {
-			if (m == 0) {
+		for(;;) {
+			if(m == 0) {
 				printf("idpcksum: out of data\n");
 				goto done;
 			}
-			if (m->m_len)
+			if(m->m_len)
 				break;
 			m = m->m_next;
 		}
@@ -154,7 +174,8 @@ done:
 	 * carry here.
 	 */
 	FOLD;
-	
-	if(sum==0xffff) sum = 0;
+
+	if(sum == 0xffff)
+		sum = 0;
 	return (sum);
 }

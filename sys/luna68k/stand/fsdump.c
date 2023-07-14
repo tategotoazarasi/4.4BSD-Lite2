@@ -51,14 +51,14 @@
 
 #define LABEL_SIZE 512
 
-#define BUF_BLOCK	(20 * 12 * 38)			/* 20 Cylinder */
-#define BUF_BYTES	BUF_BLOCK << DEV_BSHIFT
+#define BUF_BLOCK (20 * 12 * 38) /* 20 Cylinder */
+#define BUF_BYTES BUF_BLOCK << DEV_BSHIFT
 
 static u_char index[LABEL_SIZE];
 
-struct disklabel *lp  = (struct disklabel *)((struct scd_dk_label *) index)->dkl_pad;
+struct disklabel *lp = (struct disklabel *) ((struct scd_dk_label *) index)->dkl_pad;
 
-extern dev_t  rst0;
+extern dev_t rst0;
 extern dev_t nrst0;
 
 static u_char *dump_buf = (u_char *) 0x100000;
@@ -67,10 +67,9 @@ extern int scsi_device;
 char cons_buf[100];
 
 
-int
-fsdump(argc, argv)
-	int   argc;
-	char *argv[];
+int fsdump(argc, argv)
+int argc;
+char *argv[];
 {
 	register int i, j, io;
 	register char *p;
@@ -78,26 +77,26 @@ fsdump(argc, argv)
 	register int block, bytes;
 	int scsi_id, blk, nblks, size, mark;
 	struct stat boot_stat;
-	struct	partition *pp;
+	struct partition *pp;
 	scsi_id = scsi_device;
 
 	printf("Current SCSI device = ID %d\n", scsi_id);
 	getline("Is it sure ? (y/n) ", cons_buf);
 
-	if ((cons_buf[0] != 'y') && (cons_buf[0] != 'Y'))
-		return(ST_ERROR);
+	if((cons_buf[0] != 'y') && (cons_buf[0] != 'Y'))
+		return (ST_ERROR);
 
 	scsi_read_raw(scsi_id, 0, 1, index, LABEL_SIZE);
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for(i = 0; i < MAXPARTITIONS; i++) {
 		pp = &(lp->d_partitions[i]);
-		if ((i != 0) &&
-		    (i != 3) &&
-		    (i != 4) &&
-		    (i != 5)) {
+		if((i != 0) &&
+		   (i != 3) &&
+		   (i != 4) &&
+		   (i != 5)) {
 			pp->p_size = 0;
 		}
-		if (i == 5 && argc > 1 && !strcmp(argv[1], "tailor"))
+		if(i == 5 && argc > 1 && !strcmp(argv[1], "tailor"))
 			pp->p_size = 0;
 	}
 
@@ -105,14 +104,14 @@ fsdump(argc, argv)
 
 	printf("Boot Program		");
 	io = open("sd(0,0)boot", 0);
-	if (io >= 0) {
+	if(io >= 0) {
 		printf("read ... ");
 		size = read(io, dump_buf, 1048576);
 		close(io);
 		printf("%d bytes ... ", size);
-		if (size <= 0) {
+		if(size <= 0) {
 			printf("failed\n");
-			return(ST_ERROR);
+			return (ST_ERROR);
 		}
 		boot_stat.st_size = size;
 	}
@@ -121,9 +120,9 @@ fsdump(argc, argv)
 	status = stwrite(rst0, dump_buf, size);
 	st_write_EOF(rst0);
 
-	if (status < size) {
+	if(status < size) {
 		printf("failed\n");
-		return(ST_ERROR);
+		return (ST_ERROR);
 	}
 
 	printf("done\n");
@@ -134,20 +133,20 @@ fsdump(argc, argv)
 	status = stwrite(rst0, index, LABEL_SIZE);
 	st_write_EOF(rst0);
 
-	if (status < LABEL_SIZE) {
+	if(status < LABEL_SIZE) {
 		printf("failed\n");
-		return(ST_ERROR);
+		return (ST_ERROR);
 	}
 
 	printf("done\n\n");
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for(i = 0; i < MAXPARTITIONS; i++) {
 		pp = &(lp->d_partitions[i]);
-		if (pp->p_size > 0) {
+		if(pp->p_size > 0) {
 			printf("%c: ", i + 'A');
 			printf("size = %d(0x%s), ", pp->p_size, hexstr(pp->p_size, 8));
 			printf("offset = %d(0x%s)\n", pp->p_offset, hexstr(pp->p_offset, 8));
-			
+
 			blk   = pp->p_offset;
 			nblks = pp->p_size;
 			size  = nblks << DEV_BSHIFT;
@@ -156,32 +155,32 @@ fsdump(argc, argv)
 			bytes = BUF_BYTES;
 
 			mark = nblks / block;
-			if (nblks % block)
+			if(nblks % block)
 				mark++;
-			for (j = 0; j < mark; j++)
+			for(j = 0; j < mark; j++)
 				printf("-");
-			for (j = 0; j < mark; j++)
+			for(j = 0; j < mark; j++)
 				printf("%c", '\x08');
 
-			while (nblks > 0) {
-				if (nblks < block) {
+			while(nblks > 0) {
+				if(nblks < block) {
 					block = nblks;
 					bytes = nblks << DEV_BSHIFT;
 				}
 
-				if (!scsi_read_raw(scsi_id, blk, block, dump_buf, bytes)) {
+				if(!scsi_read_raw(scsi_id, blk, block, dump_buf, bytes)) {
 					printf("disk read failed !!!\n");
-					return(ST_ERROR);
+					return (ST_ERROR);
 				}
 
-				if (stwrite(rst0, dump_buf, bytes) < bytes) {
+				if(stwrite(rst0, dump_buf, bytes) < bytes) {
 					printf("tape write failed !!!\n");
-					return(ST_ERROR);
+					return (ST_ERROR);
 				}
 
-				blk   += block;
+				blk += block;
 				nblks -= block;
-				size  -= bytes;
+				size -= bytes;
 
 				printf("#");
 			}
@@ -192,21 +191,20 @@ fsdump(argc, argv)
 	}
 }
 
-int
-fsrestore(argc, argv)
-	int   argc;
-	char *argv[];
+int fsrestore(argc, argv)
+int argc;
+char *argv[];
 {
 	register int i, j, status;
 	register int block, bytes;
 	int blk, nblks, size, mark;
-	struct	partition *pp;
+	struct partition *pp;
 
 	printf("Current SCSI device = ID %d\n", scsi_device);
 	getline("Is it sure ? (y/n) ", cons_buf);
 
-	if ((cons_buf[0] != 'y') && (cons_buf[0] != 'Y'))
-		return(ST_ERROR);
+	if((cons_buf[0] != 'y') && (cons_buf[0] != 'Y'))
+		return (ST_ERROR);
 
 	st_rewind(rst0);
 
@@ -216,13 +214,13 @@ fsrestore(argc, argv)
 
 	st_skip(rst0);
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for(i = 0; i < MAXPARTITIONS; i++) {
 		pp = &(lp->d_partitions[i]);
-		if (pp->p_size > 0) {
+		if(pp->p_size > 0) {
 			printf("%c: ", i + 'A');
 			printf("size = %d(0x%s), ", pp->p_size, hexstr(pp->p_size, 8));
 			printf("offset = %d(0x%s)\n", pp->p_offset, hexstr(pp->p_offset, 8));
-			
+
 			blk   = pp->p_offset;
 			nblks = pp->p_size;
 			size  = nblks << DEV_BSHIFT;
@@ -231,32 +229,32 @@ fsrestore(argc, argv)
 			bytes = BUF_BYTES;
 
 			mark = nblks / block;
-			if (nblks % block)
+			if(nblks % block)
 				mark++;
-			for (j = 0; j < mark; j++)
+			for(j = 0; j < mark; j++)
 				printf("-");
-			for (j = 0; j < mark; j++)
+			for(j = 0; j < mark; j++)
 				printf("%c", '\x08');
 
-			while (nblks > 0) {
-				if (nblks < block) {
+			while(nblks > 0) {
+				if(nblks < block) {
 					block = nblks;
 					bytes = nblks << DEV_BSHIFT;
 				}
 
-				if (stread(rst0, dump_buf, bytes) != bytes) {
+				if(stread(rst0, dump_buf, bytes) != bytes) {
 					printf("tape read failed !!!\n");
-					return(ST_ERROR);
+					return (ST_ERROR);
 				}
 
-				if (!scsi_write(blk, dump_buf, bytes)) {
+				if(!scsi_write(blk, dump_buf, bytes)) {
 					printf("disk write failed !!!\n");
-					return(ST_ERROR);
+					return (ST_ERROR);
 				}
 
-				blk   += block;
+				blk += block;
 				nblks -= block;
-				size  -= bytes;
+				size -= bytes;
 
 				printf("#");
 			}

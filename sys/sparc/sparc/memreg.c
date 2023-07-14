@@ -52,34 +52,33 @@
 
 #include <sparc/sparc/memreg.h>
 
-static int memregmatch __P((struct device *, struct cfdata *, void *));
-static void memregattach __P((struct device *, struct device *, void *));
+static int memregmatch __P((struct device *, struct cfdata *, void *) );
+static void memregattach __P((struct device *, struct device *, void *) );
 struct cfdriver memregcd =
-    { 0, "memreg", memregmatch, memregattach, DV_DULL, sizeof(struct device) };
+        {0, "memreg", memregmatch, memregattach, DV_DULL, sizeof(struct device)};
 
 /*
  * The OPENPROM calls this "memory-error".
  */
 static int
 memregmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+struct device *parent;
+struct cfdata *cf;
+void *aux;
 {
 
-	return (strcmp("memory-error", ((struct romaux *)aux)->ra_name) == 0);
+	return (strcmp("memory-error", ((struct romaux *) aux)->ra_name) == 0);
 }
 
 /* ARGSUSED */
 static void
-memregattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+        memregattach(parent, self, aux) struct device *parent,
+        *self;
+void *aux;
 {
 	struct romaux *ra = aux;
 
-	par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
-	    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int));
+	par_err_reg = ra->ra_vaddr ? (volatile int *) ra->ra_vaddr : (volatile int *) mapiodev(ra->ra_paddr, sizeof(int));
 	printf("\n");
 }
 
@@ -90,17 +89,17 @@ memregattach(parent, self, aux)
  * and take the page out of the page pool, but for now...
  */
 void
-memerr(issync, ser, sva, aer, ava)
-	int issync, ser, sva, aer, ava;
+        memerr(issync, ser, sva, aer, ava) int issync,
+        ser, sva, aer, ava;
 {
 
 	printf("%ssync mem err: ser=%b sva=%x aer=%b ava=%x\n",
-	    issync ? "" : "a", ser, SER_BITS, sva, aer & 0xff, AER_BITS, ava);
-	if (par_err_reg)
+	       issync ? "" : "a", ser, SER_BITS, sva, aer & 0xff, AER_BITS, ava);
+	if(par_err_reg)
 		printf("parity error register = %b\n", *par_err_reg, PER_BITS);
 #ifdef DEBUG
 	callrom();
 #else
-	panic("memory error");		/* XXX */
+	panic("memory error"); /* XXX */
 #endif
 }

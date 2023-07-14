@@ -22,7 +22,6 @@
 #include "server.h"
 
 
-
 /*************************************************************************
 **									**
 **  bb_grid_1() - Return a list of all of the test results.  This is	**
@@ -31,14 +30,13 @@
 **									**
 *************************************************************************/
 BB_grid *
-bb_grid_1()
-{
-    static BB_grid	grid;		/* The output grid structure.	*/
+bb_grid_1() {
+	static BB_grid grid; /* The output grid structure.	*/
 
-    /*
+	/*
     **  XXXX-This will be filled in later.
     */
-    grid.status == BB_SUCCESS;
+	grid.status == BB_SUCCESS;
 
-    return &grid;
+	return &grid;
 }

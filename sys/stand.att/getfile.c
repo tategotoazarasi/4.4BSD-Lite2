@@ -37,9 +37,8 @@
 #include <sys/time.h>
 #include <stand.att/saio.h>
 
-getfile(prompt, mode)
-	char *prompt;
-	int mode;
+getfile(prompt, mode) char *prompt;
+int mode;
 {
 	int fd;
 	char buf[100];
@@ -47,6 +46,6 @@ getfile(prompt, mode)
 	do {
 		printf("%s: ", prompt);
 		gets(buf);
-	} while ((fd = open(buf, mode)) <= 0);
-	return(fd);
+	} while((fd = open(buf, mode)) <= 0);
+	return (fd);
 }

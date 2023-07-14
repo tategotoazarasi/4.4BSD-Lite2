@@ -60,8 +60,7 @@
 #include <sparc/rcons/gallant19.h>
 
 void
-rcons_font(fb)
-	register struct fbdevice *fb;
+        rcons_font(fb) register struct fbdevice *fb;
 {
 
 	/* XXX really rather get this from the prom */

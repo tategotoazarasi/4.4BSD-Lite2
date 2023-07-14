@@ -42,5 +42,4 @@ static char sccsid[] = "@(#)libcpats.c	1.4 (Berkeley) 5/8/91";
  */
 struct pats libc_ptab[] = {
 
-	{ 0, "", "" }
-};
+        {0, "", ""}};

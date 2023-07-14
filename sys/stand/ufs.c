@@ -77,20 +77,20 @@
  * In-core open file.
  */
 struct file {
-	off_t		f_seekp;	/* seek pointer */
-	struct fs	*f_fs;		/* pointer to super-block */
-	struct dinode	f_di;		/* copy of on-disk inode */
-	int		f_nindir[NIADDR];
-					/* number of blocks mapped by
+	off_t f_seekp;      /* seek pointer */
+	struct fs *f_fs;    /* pointer to super-block */
+	struct dinode f_di; /* copy of on-disk inode */
+	int f_nindir[NIADDR];
+	/* number of blocks mapped by
 					   indirect block at level i */
-	char		*f_blk[NIADDR];	/* buffer for indirect block at
+	char *f_blk[NIADDR]; /* buffer for indirect block at
 					   level i */
-	u_int		f_blksize[NIADDR];
-					/* size of buffer */
-	daddr_t		f_blkno[NIADDR];/* disk address of block in buffer */
-	char		*f_buf;		/* buffer for data block */
-	u_int		f_buf_size;	/* size of data block */
-	daddr_t		f_buf_blkno;	/* block number of data block */
+	u_int f_blksize[NIADDR];
+	/* size of buffer */
+	daddr_t f_blkno[NIADDR]; /* disk address of block in buffer */
+	char *f_buf;             /* buffer for data block */
+	u_int f_buf_size;        /* size of data block */
+	daddr_t f_buf_blkno;     /* block number of data block */
 };
 
 /*
@@ -98,11 +98,11 @@ struct file {
  */
 static int
 read_inode(inumber, f)
-	ino_t inumber;
-	struct open_file *f;
+ino_t inumber;
+struct open_file *f;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	register struct file *fp = (struct file *) f->f_fsdata;
+	register struct fs *fs   = fp->f_fs;
 	char *buf;
 	u_int rsize;
 	int rc;
@@ -111,12 +111,12 @@ read_inode(inumber, f)
 	 * Read inode and save it.
 	 */
 	buf = alloc(fs->fs_bsize);
-	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
-		buf, &rsize);
-	if (rc)
+	rc  = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+                                 fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
+                                 buf, &rsize);
+	if(rc)
 		goto out;
-	if (rsize != fs->fs_bsize) {
+	if(rsize != fs->fs_bsize) {
 		rc = EIO;
 		goto out;
 	}
@@ -124,7 +124,7 @@ read_inode(inumber, f)
 	{
 		register struct dinode *dp;
 
-		dp = (struct dinode *)buf;
+		dp       = (struct dinode *) buf;
 		fp->f_di = dp[ino_to_fsbo(fs, inumber)];
 	}
 
@@ -134,13 +134,13 @@ read_inode(inumber, f)
 	{
 		register int level;
 
-		for (level = 0; level < NIADDR; level++)
+		for(level = 0; level < NIADDR; level++)
 			fp->f_blkno[level] = -1;
 		fp->f_buf_blkno = -1;
 	}
 out:
 	free(buf, fs->fs_bsize);
-	return (0);	 
+	return (0);
 }
 
 /*
@@ -149,12 +149,12 @@ out:
  */
 static int
 block_map(f, file_block, disk_block_p)
-	struct open_file *f;
-	daddr_t file_block;
-	daddr_t *disk_block_p;	/* out */
+struct open_file *f;
+daddr_t file_block;
+daddr_t *disk_block_p; /* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	register struct file *fp = (struct file *) f->f_fsdata;
+	register struct fs *fs   = fp->f_fs;
 	int level;
 	int idx;
 	daddr_t ind_block_num;
@@ -184,7 +184,7 @@ block_map(f, file_block, disk_block_p)
 	 *				+ NINDIR(fs)**3 - 1
 	 */
 
-	if (file_block < NDADDR) {
+	if(file_block < NDADDR) {
 		/* Direct block. */
 		*disk_block_p = fp->f_di.di_db[file_block];
 		return (0);
@@ -198,43 +198,43 @@ block_map(f, file_block, disk_block_p)
 	 * nindir[2] = NINDIR**3
 	 *	etc
 	 */
-	for (level = 0; level < NIADDR; level++) {
-		if (file_block < fp->f_nindir[level])
+	for(level = 0; level < NIADDR; level++) {
+		if(file_block < fp->f_nindir[level])
 			break;
 		file_block -= fp->f_nindir[level];
 	}
-	if (level == NIADDR) {
+	if(level == NIADDR) {
 		/* Block number too high */
 		return (EFBIG);
 	}
 
 	ind_block_num = fp->f_di.di_ib[level];
 
-	for (; level >= 0; level--) {
-		if (ind_block_num == 0) {
-			*disk_block_p = 0;	/* missing */
+	for(; level >= 0; level--) {
+		if(ind_block_num == 0) {
+			*disk_block_p = 0; /* missing */
 			return (0);
 		}
 
-		if (fp->f_blkno[level] != ind_block_num) {
-			if (fp->f_blk[level] == (char *)0)
+		if(fp->f_blkno[level] != ind_block_num) {
+			if(fp->f_blk[level] == (char *) 0)
 				fp->f_blk[level] =
-					alloc(fs->fs_bsize);
+				        alloc(fs->fs_bsize);
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-				fsbtodb(fp->f_fs, ind_block_num),
-				fs->fs_bsize,
-				fp->f_blk[level],
-				&fp->f_blksize[level]);
-			if (rc)
+			                             fsbtodb(fp->f_fs, ind_block_num),
+			                             fs->fs_bsize,
+			                             fp->f_blk[level],
+			                             &fp->f_blksize[level]);
+			if(rc)
 				return (rc);
-			if (fp->f_blksize[level] != fs->fs_bsize)
+			if(fp->f_blksize[level] != fs->fs_bsize)
 				return (EIO);
 			fp->f_blkno[level] = ind_block_num;
 		}
 
-		ind_p = (daddr_t *)fp->f_blk[level];
+		ind_p = (daddr_t *) fp->f_blk[level];
 
-		if (level > 0) {
+		if(level > 0) {
 			idx = file_block / fp->f_nindir[level - 1];
 			file_block %= fp->f_nindir[level - 1];
 		} else
@@ -254,38 +254,38 @@ block_map(f, file_block, disk_block_p)
  */
 static int
 buf_read_file(f, buf_p, size_p)
-	struct open_file *f;
-	char **buf_p;		/* out */
-	u_int *size_p;		/* out */
+struct open_file *f;
+char **buf_p;  /* out */
+u_int *size_p; /* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register struct fs *fs = fp->f_fs;
+	register struct file *fp = (struct file *) f->f_fsdata;
+	register struct fs *fs   = fp->f_fs;
 	long off;
 	register daddr_t file_block;
-	daddr_t	disk_block;
+	daddr_t disk_block;
 	long block_size;
 	int rc;
 
-	off = blkoff(fs, fp->f_seekp);
+	off        = blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
 	block_size = dblksize(fs, &fp->f_di, file_block);
 
-	if (file_block != fp->f_buf_blkno) {
+	if(file_block != fp->f_buf_blkno) {
 		rc = block_map(f, file_block, &disk_block);
-		if (rc)
+		if(rc)
 			return (rc);
 
-		if (fp->f_buf == (char *)0)
+		if(fp->f_buf == (char *) 0)
 			fp->f_buf = alloc(fs->fs_bsize);
 
-		if (disk_block == 0) {
+		if(disk_block == 0) {
 			bzero(fp->f_buf, block_size);
 			fp->f_buf_size = block_size;
 		} else {
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-				fsbtodb(fs, disk_block),
-				block_size, fp->f_buf, &fp->f_buf_size);
-			if (rc)
+			                             fsbtodb(fs, disk_block),
+			                             block_size, fp->f_buf, &fp->f_buf_size);
+			if(rc)
 				return (rc);
 		}
 
@@ -297,13 +297,13 @@ buf_read_file(f, buf_p, size_p)
 	 * offset, and size of remainder of buffer after that
 	 * byte.
 	 */
-	*buf_p = fp->f_buf + off;
+	*buf_p  = fp->f_buf + off;
 	*size_p = block_size - off;
 
 	/*
 	 * But truncate buffer at end of file.
 	 */
-	if (*size_p > fp->f_di.di_size - fp->f_seekp)
+	if(*size_p > fp->f_di.di_size - fp->f_seekp)
 		*size_p = fp->f_di.di_size - fp->f_seekp;
 
 	return (0);
@@ -315,11 +315,11 @@ buf_read_file(f, buf_p, size_p)
  */
 static int
 search_directory(name, f, inumber_p)
-	char *name;
-	struct open_file *f;
-	ino_t *inumber_p;		/* out */
+char *name;
+struct open_file *f;
+ino_t *inumber_p; /* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	register struct file *fp = (struct file *) f->f_fsdata;
 	register struct direct *dp;
 	struct direct *edp;
 	char *buf;
@@ -330,30 +330,30 @@ search_directory(name, f, inumber_p)
 	length = strlen(name);
 
 	fp->f_seekp = 0;
-	while (fp->f_seekp < fp->f_di.di_size) {
+	while(fp->f_seekp < fp->f_di.di_size) {
 		rc = buf_read_file(f, &buf, &buf_size);
-		if (rc)
+		if(rc)
 			return (rc);
 
-		dp = (struct direct *)buf;
-		edp = (struct direct *)(buf + buf_size);
-		while (dp < edp) {
-			if (dp->d_ino == (ino_t)0)
+		dp  = (struct direct *) buf;
+		edp = (struct direct *) (buf + buf_size);
+		while(dp < edp) {
+			if(dp->d_ino == (ino_t) 0)
 				goto next;
 #if BYTE_ORDER == LITTLE_ENDIAN
-			if (fp->f_fs->fs_maxsymlinklen <= 0)
+			if(fp->f_fs->fs_maxsymlinklen <= 0)
 				namlen = dp->d_type;
 			else
 #endif
 				namlen = dp->d_namlen;
-			if (namlen == length &&
-			    !strcmp(name, dp->d_name)) {
+			if(namlen == length &&
+			   !strcmp(name, dp->d_name)) {
 				/* found entry */
 				*inumber_p = dp->d_ino;
 				return (0);
 			}
 		next:
-			dp = (struct direct *)((char *)dp + dp->d_reclen);
+			dp = (struct direct *) ((char *) dp + dp->d_reclen);
 		}
 		fp->f_seekp += buf_size;
 	}
@@ -363,10 +363,9 @@ search_directory(name, f, inumber_p)
 /*
  * Open a file.
  */
-int
-ufs_open(path, f)
-	char *path;
-	struct open_file *f;
+int ufs_open(path, f)
+char *path;
+struct open_file *f;
 {
 	register char *cp, *ncp;
 	register int c;
@@ -383,18 +382,18 @@ ufs_open(path, f)
 	/* allocate file system specific data structure */
 	fp = alloc(sizeof(struct file));
 	bzero(fp, sizeof(struct file));
-	f->f_fsdata = (void *)fp;
+	f->f_fsdata = (void *) fp;
 
 	/* allocate space and read super block */
-	fs = alloc(SBSIZE);
+	fs       = alloc(SBSIZE);
 	fp->f_fs = fs;
-	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-		SBLOCK, SBSIZE, (char *)fs, &buf_size);
-	if (rc)
+	rc       = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
+                                 SBLOCK, SBSIZE, (char *) fs, &buf_size);
+	if(rc)
 		goto out;
 
-	if (buf_size != SBSIZE || fs->fs_magic != FS_MAGIC ||
-	    fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+	if(buf_size != SBSIZE || fs->fs_magic != FS_MAGIC ||
+	   fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
 		rc = EINVAL;
 		goto out;
 	}
@@ -407,31 +406,31 @@ ufs_open(path, f)
 		register int level;
 
 		mult = 1;
-		for (level = 0; level < NIADDR; level++) {
+		for(level = 0; level < NIADDR; level++) {
 			mult *= NINDIR(fs);
 			fp->f_nindir[level] = mult;
 		}
 	}
 
 	inumber = ROOTINO;
-	if ((rc = read_inode(inumber, f)) != 0)
+	if((rc = read_inode(inumber, f)) != 0)
 		goto out;
 
 	cp = path;
-	while (*cp) {
+	while(*cp) {
 
 		/*
 		 * Remove extra separators
 		 */
-		while (*cp == '/')
+		while(*cp == '/')
 			cp++;
-		if (*cp == '\0')
+		if(*cp == '\0')
 			break;
 
 		/*
 		 * Check that current node is a directory.
 		 */
-		if ((fp->f_di.di_mode & IFMT) != IFDIR) {
+		if((fp->f_di.di_mode & IFMT) != IFDIR) {
 			rc = ENOTDIR;
 			goto out;
 		}
@@ -443,8 +442,8 @@ ufs_open(path, f)
 			register int len = 0;
 
 			ncp = cp;
-			while ((c = *cp) != '\0' && c != '/') {
-				if (++len > MAXNAMLEN) {
+			while((c = *cp) != '\0' && c != '/') {
+				if(++len > MAXNAMLEN) {
 					rc = ENOENT;
 					goto out;
 				}
@@ -459,15 +458,15 @@ ufs_open(path, f)
 		 * symbolic link.
 		 */
 		parent_inumber = inumber;
-		rc = search_directory(ncp, f, &inumber);
-		*cp = c;
-		if (rc)
+		rc             = search_directory(ncp, f, &inumber);
+		*cp            = c;
+		if(rc)
 			goto out;
 
 		/*
 		 * Open next component.
 		 */
-		if ((rc = read_inode(inumber, f)) != 0)
+		if((rc = read_inode(inumber, f)) != 0)
 			goto out;
 
 #if 0
@@ -532,27 +531,26 @@ ufs_open(path, f)
 	 */
 	rc = 0;
 out:
-	if (rc)
+	if(rc)
 		free(fp, sizeof(struct file));
 	return (rc);
 }
 
-int
-ufs_close(f)
-	struct open_file *f;
+int ufs_close(f)
+struct open_file *f;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	register struct file *fp = (struct file *) f->f_fsdata;
 	int level;
 
-	f->f_fsdata = (void *)0;
-	if (fp == (struct file *)0)
+	f->f_fsdata = (void *) 0;
+	if(fp == (struct file *) 0)
 		return (0);
 
-	for (level = 0; level < NIADDR; level++) {
-		if (fp->f_blk[level])
+	for(level = 0; level < NIADDR; level++) {
+		if(fp->f_blk[level])
 			free(fp->f_blk[level], fp->f_fs->fs_bsize);
 	}
-	if (fp->f_buf)
+	if(fp->f_buf)
 		free(fp->f_buf, fp->f_fs->fs_bsize);
 	free(fp->f_fs, SBSIZE);
 	free(fp, sizeof(struct file));
@@ -563,29 +561,28 @@ ufs_close(f)
  * Copy a portion of a file into kernel memory.
  * Cross block boundaries when necessary.
  */
-int
-ufs_read(f, start, size, resid)
-	struct open_file *f;
-	char *start;
-	u_int size;
-	u_int *resid;	/* out */
+int ufs_read(f, start, size, resid)
+struct open_file *f;
+char *start;
+u_int size;
+u_int *resid; /* out */
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	register struct file *fp = (struct file *) f->f_fsdata;
 	register u_int csize;
 	char *buf;
 	u_int buf_size;
 	int rc = 0;
 
-	while (size != 0) {
-		if (fp->f_seekp >= fp->f_di.di_size)
+	while(size != 0) {
+		if(fp->f_seekp >= fp->f_di.di_size)
 			break;
 
 		rc = buf_read_file(f, &buf, &buf_size);
-		if (rc)
+		if(rc)
 			break;
 
 		csize = size;
-		if (csize > buf_size)
+		if(csize > buf_size)
 			csize = buf_size;
 
 		bcopy(buf, start, csize);
@@ -594,7 +591,7 @@ ufs_read(f, start, size, resid)
 		start += csize;
 		size -= csize;
 	}
-	if (resid)
+	if(resid)
 		*resid = size;
 	return (rc);
 }
@@ -602,52 +599,49 @@ ufs_read(f, start, size, resid)
 /*
  * Not implemented.
  */
-int
-ufs_write(f, start, size, resid)
-	struct open_file *f;
-	char *start;
-	u_int size;
-	u_int *resid;	/* out */
+int ufs_write(f, start, size, resid)
+struct open_file *f;
+char *start;
+u_int size;
+u_int *resid; /* out */
 {
 
 	return (EROFS);
 }
 
-off_t
-ufs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+off_t ufs_seek(f, offset, where)
+struct open_file *f;
+off_t offset;
+int where;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	register struct file *fp = (struct file *) f->f_fsdata;
 
-	switch (where) {
-	case SEEK_SET:
-		fp->f_seekp = offset;
-		break;
-	case SEEK_CUR:
-		fp->f_seekp += offset;
-		break;
-	case SEEK_END:
-		fp->f_seekp = fp->f_di.di_size - offset;
-		break;
-	default:
-		return (-1);
+	switch(where) {
+		case SEEK_SET:
+			fp->f_seekp = offset;
+			break;
+		case SEEK_CUR:
+			fp->f_seekp += offset;
+			break;
+		case SEEK_END:
+			fp->f_seekp = fp->f_di.di_size - offset;
+			break;
+		default:
+			return (-1);
 	}
 	return (fp->f_seekp);
 }
 
-int
-ufs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+int ufs_stat(f, sb)
+struct open_file *f;
+struct stat *sb;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	register struct file *fp = (struct file *) f->f_fsdata;
 
 	/* only important stuff */
 	sb->st_mode = fp->f_di.di_mode;
-	sb->st_uid = fp->f_di.di_uid;
-	sb->st_gid = fp->f_di.di_gid;
+	sb->st_uid  = fp->f_di.di_uid;
+	sb->st_gid  = fp->f_di.di_gid;
 	sb->st_size = fp->f_di.di_size;
 	return (0);
 }

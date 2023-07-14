@@ -64,9 +64,9 @@ caddr_t zeropage;
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+        dev_t dev;
+struct uio *uio;
+int flags;
 {
 	register int o;
 	register u_int c, v;
@@ -74,84 +74,83 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	int kernloc;
 
-	while (uio->uio_resid > 0 && error == 0) {
+	while(uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
-		if (iov->iov_len == 0) {
+		if(iov->iov_len == 0) {
 			uio->uio_iov++;
 			uio->uio_iovcnt--;
-			if (uio->uio_iovcnt < 0)
+			if(uio->uio_iovcnt < 0)
 				panic("mmrw");
 			continue;
 		}
-		switch (minor(dev)) {
+		switch(minor(dev)) {
 
-/* minor device 0 is physical memory */
-		case 0:
-			v = uio->uio_offset;
+				/* minor device 0 is physical memory */
+			case 0:
+				v = uio->uio_offset;
 #ifndef DEBUG
-			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram)
-				return (EFAULT);
+				/* allow reads only in RAM (except for DEBUG) */
+				if(v >= 0xFFFFFFFC || v < lowram)
+					return (EFAULT);
 #endif
-			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
-			    (vm_offset_t)&vmmap[NBPG]);
-			continue;
+				pmap_enter(kernel_pmap, (vm_offset_t) vmmap,
+				           trunc_page(v), uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE, TRUE);
+				o     = (int) uio->uio_offset & PGOFSET;
+				c     = (u_int) (NBPG - ((int) iov->iov_base & PGOFSET));
+				c     = min(c, (u_int) (NBPG - o));
+				c     = min(c, (u_int) iov->iov_len);
+				error = uiomove((caddr_t) &vmmap[o], (int) c, uio);
+				pmap_remove(kernel_pmap, (vm_offset_t) vmmap,
+				            (vm_offset_t) &vmmap[NBPG]);
+				continue;
 
-/* minor device 1 is kernel memory */
-		case 1:
-			kernloc = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)kernloc, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-			error = uiomove((caddr_t)kernloc, (int)c, uio);
-			continue;
+				/* minor device 1 is kernel memory */
+			case 1:
+				kernloc = uio->uio_offset;
+				c       = min(iov->iov_len, MAXPHYS);
+				if(!kernacc((caddr_t) kernloc, c,
+				            uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+					return (EFAULT);
+				error = uiomove((caddr_t) kernloc, (int) c, uio);
+				continue;
 
-/* minor device 2 is EOF/RATHOLE */
-		case 2:
-			if (uio->uio_rw == UIO_WRITE)
-				uio->uio_resid = 0;
-			return (0);
+				/* minor device 2 is EOF/RATHOLE */
+			case 2:
+				if(uio->uio_rw == UIO_WRITE)
+					uio->uio_resid = 0;
+				return (0);
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
-		case 12:
-			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
-			}
-			/*
+				/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+			case 12:
+				if(uio->uio_rw == UIO_WRITE) {
+					c = iov->iov_len;
+					break;
+				}
+				/*
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 *
 			 * XXX on the hp300 we already know where there
 			 * is a global zeroed page, the null segment table.
 			 */
-			if (zeropage == NULL) {
+				if(zeropage == NULL) {
 #if CLBYTES == NBPG
-				extern caddr_t Segtabzero;
-				zeropage = Segtabzero;
+					extern caddr_t Segtabzero;
+					zeropage = Segtabzero;
 #else
-				zeropage = (caddr_t)
-					malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+					zeropage = (caddr_t)
+					        malloc(CLBYTES, M_TEMP, M_WAITOK);
+					bzero(zeropage, CLBYTES);
 #endif
-			}
-			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, (int)c, uio);
-			continue;
+				}
+				c     = min(iov->iov_len, CLBYTES);
+				error = uiomove(zeropage, (int) c, uio);
+				continue;
 
-		default:
-			return (ENXIO);
+			default:
+				return (ENXIO);
 		}
-		if (error)
+		if(error)
 			break;
 		iov->iov_base += c;
 		iov->iov_len -= c;
@@ -162,7 +161,7 @@ mmrw(dev, uio, flags)
 }
 
 mmmap(dev, off, prot)
-	dev_t dev;
+        dev_t dev;
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this
@@ -172,7 +171,7 @@ mmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
+	if(minor(dev) != 0)
 		return (-1);
 	/*
 	 * Allow access only in RAM.
@@ -180,8 +179,8 @@ mmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if ((unsigned)off < lowram ||
-	    (unsigned)off >= (unsigned) KernInter.maxaddr)
+	if((unsigned) off < lowram ||
+	   (unsigned) off >= (unsigned) KernInter.maxaddr)
 		return (-1);
 	return (luna_btop(off));
 }

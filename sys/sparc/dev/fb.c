@@ -59,65 +59,59 @@
 
 static struct fbdevice *devfb;
 
-void
-fb_unblank()
-{
+void fb_unblank() {
 
-	if (devfb)
+	if(devfb)
 		(*devfb->fb_driver->fbd_unblank)(devfb->fb_device);
 }
 
 void
-fb_attach(fb)
-	struct fbdevice *fb;
+        fb_attach(fb) struct fbdevice *fb;
 {
 
-if (devfb) panic("multiple /dev/fb declarers");
+	if(devfb)
+		panic("multiple /dev/fb declarers");
 	devfb = fb;
 }
 
-int
-fbopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int fbopen(dev, flags, mode, p)
+dev_t dev;
+int flags, mode;
+struct proc *p;
 {
 
-	if (devfb == NULL)
+	if(devfb == NULL)
 		return (ENXIO);
 	return (cdevsw[devfb->fb_major].d_open(dev, flags, mode, p));
 }
 
-int
-fbclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int fbclose(dev, flags, mode, p)
+dev_t dev;
+int flags, mode;
+struct proc *p;
 {
 
 	return (cdevsw[devfb->fb_major].d_close(dev, flags, mode, p));
 }
 
-int
-fbioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+int fbioctl(dev, cmd, data, flags, p)
+dev_t dev;
+int cmd;
+caddr_t data;
+int flags;
+struct proc *p;
 {
 
 	return (cdevsw[devfb->fb_major].d_ioctl(dev, cmd, data, flags, p));
 }
 
-int
-fbmap(dev, off, prot)
-	dev_t dev;
-	int off, prot;
+int fbmap(dev, off, prot)
+dev_t dev;
+int off, prot;
 {
 	int (*map)() = cdevsw[devfb->fb_major].d_mmap;
 
-	if (map == NULL)
+	if(map == NULL)
 		return (-1);
 	return (map(dev, off, prot));
 }

@@ -44,7 +44,7 @@
  * Startup code for standalone system
  */
 
-	.globl	begin
+    .globl	begin
 	.globl	_end
 	.globl	_edata
 	.globl	_main

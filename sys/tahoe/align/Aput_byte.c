@@ -36,12 +36,12 @@
  *	@(#)Aput_byte.c	7.1 (Berkeley) 12/6/90
  */
 
-#include	"align.h"
+#include "align.h"
 
-put_byte (infop, byte, where)
-process_info	*infop;
-char		*where;
-long		byte;
+put_byte(infop, byte, where)
+        process_info *infop;
+char *where;
+long byte;
 /*
 /*	Put the byte at the given address in memory.
 /*	Caveat: It's quite difficult to find a pte reference
@@ -53,7 +53,8 @@ long		byte;
 	register long code;
 
 	code = writeable(infop, where, 1);
-	if ( code == TRUE ) {
+	if(code == TRUE) {
 		*where = byte;
-	} else exception (infop, ILL_ACCESS, where, code);
+	} else
+		exception(infop, ILL_ACCESS, where, code);
 }

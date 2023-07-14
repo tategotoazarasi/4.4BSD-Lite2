@@ -90,7 +90,7 @@ SOFTWARE.
 #endif /* ISO */
 
 #ifndef MNULL
-#define MNULL (struct mbuf *)0
+#define MNULL (struct mbuf *) 0
 #endif /* MNULL */
 
 /*
@@ -110,28 +110,27 @@ SOFTWARE.
  *				 a horrible thing to fiddle with anyway, it probably
  *				 isn't worth it.
  */
-int 
-iso_check_csum(m, len)
-	struct mbuf *m;
-	int len;
+int iso_check_csum(m, len)
+struct mbuf *m;
+int len;
 {
 	register u_char *p = mtod(m, u_char *);
-	register u_long c0=0, c1=0;
-	register int i=0;
-	int cum = 0; /* cumulative length */
+	register u_long c0 = 0, c1 = 0;
+	register int i = 0;
+	int cum        = 0; /* cumulative length */
 	int l;
 
-	l = len;
+	l   = len;
 	len = min(m->m_len, len);
-	i = 0;
+	i   = 0;
 
 	IFDEBUG(D_CHKSUM)
-		printf("iso_check_csum: m x%x, l x%x, m->m_len x%x\n", m, l, m->m_len);
+	printf("iso_check_csum: m x%x, l x%x, m->m_len x%x\n", m, l, m->m_len);
 	ENDDEBUG
 
-	while( i<l ) {
+	while(i < l) {
 		cum += len;
-		while (i<cum) {
+		while(i < cum) {
 			c0 = c0 + *(p++);
 			c1 += c0;
 			i++;
@@ -139,23 +138,23 @@ iso_check_csum(m, len)
 		if(i < l) {
 			m = m->m_next;
 			IFDEBUG(D_CHKSUM)
-				printf("iso_check_csum: new mbuf\n");
-				if(l-i < m->m_len)
-					printf(
-					"bad mbuf chain in check csum l 0x%x i 0x%x m_data 0x%x",
-						l,i,m->m_data);
+			printf("iso_check_csum: new mbuf\n");
+			if(l - i < m->m_len)
+				printf(
+				        "bad mbuf chain in check csum l 0x%x i 0x%x m_data 0x%x",
+				        l, i, m->m_data);
 			ENDDEBUG
-			ASSERT( m != MNULL);
-			len = min( m->m_len, l-i);
-			p = mtod(m, u_char *);
+			ASSERT(m != MNULL);
+			len = min(m->m_len, l - i);
+			p   = mtod(m, u_char *);
 		}
 	}
-	if ( ((int)c0 % 255) || ((int)c1 % 255) ) {
+	if(((int) c0 % 255) || ((int) c1 % 255)) {
 		IFDEBUG(D_CHKSUM)
-			printf("BAD iso_check_csum l 0x%x cum 0x%x len 0x%x, i 0x%x", 
-				l, cum, len, i);
+		printf("BAD iso_check_csum l 0x%x cum 0x%x len 0x%x, i 0x%x",
+		       l, cum, len, i);
 		ENDDEBUG
-		return ((int)c0 % 255)<<8 | ((int)c1 % 255);
+		return ((int) c0 % 255) << 8 | ((int) c1 % 255);
 	}
 	return 0;
 }
@@ -180,21 +179,20 @@ iso_check_csum(m, len)
  */
 
 void
-iso_gen_csum(m,n,l)
-	struct mbuf *m;
-	int n; /* offset of 2 checksum bytes */
-	int l;
+        iso_gen_csum(m, n, l) struct mbuf *m;
+int n; /* offset of 2 checksum bytes */
+int l;
 {
 	register u_char *p = mtod(m, u_char *);
-	register int c0=0, c1=0;
-	register int i=0;
-	int loc = n++, len=0; /* n is position, loc is offset */
+	register int c0 = 0, c1 = 0;
+	register int i = 0;
+	int loc = n++, len = 0; /* n is position, loc is offset */
 	u_char *xloc;
 	u_char *yloc;
-	int cum=0;	/* cum == cumulative length */
+	int cum = 0; /* cum == cumulative length */
 
 	IFDEBUG(D_CHKSUM)
-		printf("enter gen csum m 0x%x n 0x%x l 0x%x\n",m, n-1 ,l );
+	printf("enter gen csum m 0x%x n 0x%x l 0x%x\n", m, n - 1, l);
 	ENDDEBUG
 
 	while(i < l) {
@@ -202,30 +200,30 @@ iso_gen_csum(m,n,l)
 		/* RAH: don't cksum more than l bytes */
 		len = min(len, l - i);
 
-		cum +=len;
+		cum += len;
 		p = mtod(m, u_char *);
 
-		if(loc>=0) {
-			if (loc < len) {
+		if(loc >= 0) {
+			if(loc < len) {
 				xloc = loc + mtod(m, u_char *);
 				IFDEBUG(D_CHKSUM)
-					printf("1: zeroing xloc 0x%x loc 0x%x\n",xloc, loc );
+				printf("1: zeroing xloc 0x%x loc 0x%x\n", xloc, loc);
 				ENDDEBUG
-				*xloc = (u_char)0;
-				if (loc+1 < len) {
+				*xloc = (u_char) 0;
+				if(loc + 1 < len) {
 					/* both xloc and yloc are in same mbuf */
-					yloc = 1  + xloc;
+					yloc = 1 + xloc;
 					IFDEBUG(D_CHKSUM)
-						printf("2: zeroing yloc 0x%x loc 0x%x\n",yloc, loc );
+					printf("2: zeroing yloc 0x%x loc 0x%x\n", yloc, loc);
 					ENDDEBUG
-					*yloc = (u_char)0;
+					*yloc = (u_char) 0;
 				} else {
 					/* crosses boundary of mbufs */
 					yloc = mtod(m->m_next, u_char *);
 					IFDEBUG(D_CHKSUM)
-						printf("3: zeroing yloc 0x%x \n",yloc );
+					printf("3: zeroing yloc 0x%x \n", yloc);
 					ENDDEBUG
-					*yloc = (u_char)0;
+					*yloc = (u_char) 0;
 				}
 			}
 			loc -= len;
@@ -233,24 +231,24 @@ iso_gen_csum(m,n,l)
 
 		while(i < cum) {
 			c0 = (c0 + *p);
-			c1 += c0 ;
-			i++; 
+			c1 += c0;
+			i++;
 			p++;
 		}
 		m = m->m_next;
 	}
 	IFDEBUG(D_CHKSUM)
-		printf("gen csum final xloc 0x%x yloc 0x%x\n",xloc, yloc );
+	printf("gen csum final xloc 0x%x yloc 0x%x\n", xloc, yloc);
 	ENDDEBUG
 
-	c1 = (((c0 * (l-n))-c1)%255) ;
-	*xloc = (u_char) ((c1 < 0)? c1+255 : c1);
+	c1    = (((c0 * (l - n)) - c1) % 255);
+	*xloc = (u_char) ((c1 < 0) ? c1 + 255 : c1);
 
-	c1 = (-(int)(c1+c0))%255;
-	*yloc = (u_char) (c1 < 0? c1 + 255 : c1);
+	c1    = (-(int) (c1 + c0)) % 255;
+	*yloc = (u_char) (c1 < 0 ? c1 + 255 : c1);
 
 	IFDEBUG(D_CHKSUM)
-		printf("gen csum end \n");
+	printf("gen csum end \n");
 	ENDDEBUG
 }
 
@@ -267,28 +265,26 @@ iso_gen_csum(m,n,l)
  * NOTES:		
  */
 
-int
-m_datalen (m)
-	register struct mbuf *m;
-{ 	
+int m_datalen(m)
+register struct mbuf *m;
+{
 	register int datalen;
 
-	for (datalen = 0; m; m = m->m_next)
+	for(datalen = 0; m; m = m->m_next)
 		datalen += m->m_len;
 	return datalen;
 }
 
-int
-m_compress(in, out)
-	register struct mbuf *in, **out;
+int m_compress(in, out)
+register struct mbuf *in, **out;
 {
-	register 	int datalen = 0;
-	int	s = splimp();
+	register int datalen = 0;
+	int s                = splimp();
 
-	if( in->m_next == MNULL ) {
+	if(in->m_next == MNULL) {
 		*out = in;
 		IFDEBUG(D_REQUEST)
-			printf("m_compress returning 0x%x: A\n", in->m_len);
+		printf("m_compress returning 0x%x: A\n", in->m_len);
 		ENDDEBUG
 		splx(s);
 		return in->m_len;
@@ -297,29 +293,29 @@ m_compress(in, out)
 	if((*out) == MNULL) {
 		*out = in;
 		IFDEBUG(D_REQUEST)
-			printf("m_compress returning -1: B\n");
+		printf("m_compress returning -1: B\n");
 		ENDDEBUG
 		splx(s);
-		return -1; 
+		return -1;
 	}
 	(*out)->m_len = 0;
 	(*out)->m_act = MNULL;
 
-	while (in) {
+	while(in) {
 		IFDEBUG(D_REQUEST)
-			printf("m_compress in 0x%x *out 0x%x\n", in, *out);
-			printf("m_compress in: len 0x%x, off 0x%x\n", in->m_len, in->m_data);
-			printf("m_compress *out: len 0x%x, off 0x%x\n", (*out)->m_len, 
-				(*out)->m_data);
+		printf("m_compress in 0x%x *out 0x%x\n", in, *out);
+		printf("m_compress in: len 0x%x, off 0x%x\n", in->m_len, in->m_data);
+		printf("m_compress *out: len 0x%x, off 0x%x\n", (*out)->m_len,
+		       (*out)->m_data);
 		ENDDEBUG
-		if (in->m_flags & M_EXT) {
+		if(in->m_flags & M_EXT) {
 			ASSERT(in->m_len == 0);
 		}
-		if ( in->m_len == 0) {
+		if(in->m_len == 0) {
 			in = in->m_next;
 			continue;
 		}
-		if (((*out)->m_flags & M_EXT) == 0) {
+		if(((*out)->m_flags & M_EXT) == 0) {
 			int len;
 
 			len = M_TRAILINGSPACE(*out);
@@ -327,33 +323,33 @@ m_compress(in, out)
 			datalen += len;
 
 			IFDEBUG(D_REQUEST)
-				printf("m_compress copying len %d\n", len);
+			printf("m_compress copying len %d\n", len);
 			ENDDEBUG
 			bcopy(mtod(in, caddr_t), mtod((*out), caddr_t) + (*out)->m_len,
-						(unsigned)len);
+			      (unsigned) len);
 
 			(*out)->m_len += len;
 			in->m_len -= len;
 			continue;
 		} else {
 			/* (*out) is full */
-			if(( (*out)->m_next = m_get(M_DONTWAIT, MT_DATA) ) == MNULL) {
+			if(((*out)->m_next = m_get(M_DONTWAIT, MT_DATA)) == MNULL) {
 				m_freem(*out);
 				*out = in;
 				IFDEBUG(D_REQUEST)
-					printf("m_compress returning -1: B\n");
+				printf("m_compress returning -1: B\n");
 				ENDDEBUG
 				splx(s);
 				return -1;
 			}
 			(*out)->m_len = 0;
 			(*out)->m_act = MNULL;
-			*out = (*out)->m_next;
+			*out          = (*out)->m_next;
 		}
 	}
 	m_freem(in);
 	IFDEBUG(D_REQUEST)
-		printf("m_compress returning 0x%x: A\n", datalen);
+	printf("m_compress returning 0x%x: A\n", datalen);
 	ENDDEBUG
 	splx(s);
 	return datalen;

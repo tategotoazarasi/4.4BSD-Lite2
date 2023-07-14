@@ -42,10 +42,9 @@
  * Decode the string 'fname', open the device and return the remaining
  * file name if any.
  */
-devopen(f, fname, file)
-	struct open_file *f;
-	char *fname;
-	char **file;	/* out */
+devopen(f, fname, file) struct open_file *f;
+char *fname;
+char **file; /* out */
 {
 	register char *cp;
 	register char *ncp;
@@ -55,92 +54,92 @@ devopen(f, fname, file)
 	char namebuf[20];
 	int rc;
 
-	cp = fname;
+	cp  = fname;
 	ncp = namebuf;
 
 	/* look for a string like '5/rz0/vmunix' or '5/rz3f/vmunix */
-	if ((c = *cp) >= '0' && c <= '9') {
+	if((c = *cp) >= '0' && c <= '9') {
 		ctlr = c - '0';
 		/* skip the '/' */
-		if (*++cp != '/')
+		if(*++cp != '/')
 			return (ENXIO);
 		cp++;
-		while ((c = *cp) != '\0') {
-			if (c == '/')
+		while((c = *cp) != '\0') {
+			if(c == '/')
 				break;
-			if (c >= '0' && c <= '9') {
+			if(c >= '0' && c <= '9') {
 				/* read unit number */
 				unit = c - '0';
 
 				/* look for a partition */
-				if ((c = *++cp) >= 'a' && c <= 'h') {
+				if((c = *++cp) >= 'a' && c <= 'h') {
 					part = c - 'a';
-					c = *++cp;
+					c    = *++cp;
 				}
-				if (c != '/')
+				if(c != '/')
 					return (ENXIO);
 				break;
 			}
-			if (ncp < namebuf + sizeof(namebuf) - 1)
+			if(ncp < namebuf + sizeof(namebuf) - 1)
 				*ncp++ = c;
 			cp++;
 		}
 	} else {
 		/* expect a string like 'rz(0,0,0)vmunix' */
-		while ((c = *cp) != '\0') {
-			if (c == '(') {
+		while((c = *cp) != '\0') {
+			if(c == '(') {
 				cp++;
 				break;
 			}
-			if (ncp < namebuf + sizeof(namebuf) - 1)
+			if(ncp < namebuf + sizeof(namebuf) - 1)
 				*ncp++ = c;
 			cp++;
 		}
 
 		/* get controller number */
-		if ((c = *cp) >= '0' && c <= '9') {
+		if((c = *cp) >= '0' && c <= '9') {
 			ctlr = c - '0';
-			c = *++cp;
+			c    = *++cp;
 		}
 
-		if (c == ',') {
+		if(c == ',') {
 			/* get SCSI device number */
-			if ((c = *++cp) >= '0' && c <= '9') {
+			if((c = *++cp) >= '0' && c <= '9') {
 				unit = c - '0';
-				c = *++cp;
+				c    = *++cp;
 			}
 
-			if (c == ',') {
+			if(c == ',') {
 				/* get partition number */
-				if ((c = *++cp) >= '0' && c <= '9') {
+				if((c = *++cp) >= '0' && c <= '9') {
 					part = c - '0';
-					c = *++cp;
+					c    = *++cp;
 				}
 			}
 		}
-		if (c != ')')
+		if(c != ')')
 			return (ENXIO);
 		cp++;
 	}
 	*ncp = '\0';
 
-	for (dp = devsw, i = 0; i < ndevs; dp++, i++)
-		if (dp->dv_name && strcmp(namebuf, dp->dv_name) == 0)
+	for(dp = devsw, i = 0; i < ndevs; dp++, i++)
+		if(dp->dv_name && strcmp(namebuf, dp->dv_name) == 0)
 			goto fnd;
 	printf("Unknown device '%s'\nKnown devices are:", namebuf);
-	for (dp = devsw, i = 0; i < ndevs; dp++, i++)
-		if (dp->dv_name)
+	for(dp = devsw, i = 0; i < ndevs; dp++, i++)
+		if(dp->dv_name)
 			printf(" %s", dp->dv_name);
 	printf("\n");
 	return (ENXIO);
 
 fnd:
 	rc = (dp->dv_open)(f, ctlr, unit, part);
-	if (rc)
+	if(rc)
 		return (rc);
 
 	f->f_dev = dp;
-	if (file && *cp != '\0')
+	if(file && *cp != '\0')
 		*file = cp;
 	return (0);
 }

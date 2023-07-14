@@ -59,11 +59,11 @@
 /*
  * NS initialization.
  */
-union ns_host	ns_thishost;
-union ns_host	ns_zerohost;
-union ns_host	ns_broadhost;
-union ns_net	ns_zeronet;
-union ns_net	ns_broadnet;
+union ns_host ns_thishost;
+union ns_host ns_zerohost;
+union ns_host ns_broadhost;
+union ns_net ns_zeronet;
+union ns_net ns_broadnet;
 struct sockaddr_ns ns_netmask, ns_hostmask;
 
 static u_short allones[] = {-1, -1, -1};
@@ -71,34 +71,32 @@ static u_short allones[] = {-1, -1, -1};
 struct nspcb nspcb;
 struct nspcb nsrawpcb;
 
-struct ifqueue	nsintrq;
-int	nsqmaxlen = IFQ_MAXLEN;
+struct ifqueue nsintrq;
+int nsqmaxlen = IFQ_MAXLEN;
 
-int	idpcksum = 1;
-long	ns_pexseq;
+int idpcksum = 1;
+long ns_pexseq;
 
-ns_init()
-{
-	ns_broadhost = * (union ns_host *) allones;
-	ns_broadnet = * (union ns_net *) allones;
+ns_init() {
+	ns_broadhost   = *(union ns_host *) allones;
+	ns_broadnet    = *(union ns_net *) allones;
 	nspcb.nsp_next = nspcb.nsp_prev = &nspcb;
 	nsrawpcb.nsp_next = nsrawpcb.nsp_prev = &nsrawpcb;
-	nsintrq.ifq_maxlen = nsqmaxlen;
-	ns_pexseq = time.tv_usec;
-	ns_netmask.sns_len = 6;
-	ns_netmask.sns_addr.x_net = ns_broadnet;
-	ns_hostmask.sns_len = 12;
-	ns_hostmask.sns_addr.x_net = ns_broadnet;
-	ns_hostmask.sns_addr.x_host = ns_broadhost;
+	nsintrq.ifq_maxlen                    = nsqmaxlen;
+	ns_pexseq                             = time.tv_usec;
+	ns_netmask.sns_len                    = 6;
+	ns_netmask.sns_addr.x_net             = ns_broadnet;
+	ns_hostmask.sns_len                   = 12;
+	ns_hostmask.sns_addr.x_net            = ns_broadnet;
+	ns_hostmask.sns_addr.x_host           = ns_broadhost;
 }
 
 /*
  * Idp input routine.  Pass to next level.
  */
 int nsintr_getpck = 0;
-int nsintr_swtch = 0;
-nsintr()
-{
+int nsintr_swtch  = 0;
+nsintr() {
 	register struct idp *idp;
 	register struct mbuf *m;
 	register struct nspcb *nsp;
@@ -115,10 +113,10 @@ next:
 	IF_DEQUEUE(&nsintrq, m);
 	splx(s);
 	nsintr_getpck++;
-	if (m == 0)
+	if(m == 0)
 		return;
-	if ((m->m_flags & M_EXT || m->m_len < sizeof (struct idp)) &&
-	    (m = m_pullup(m, sizeof (struct idp))) == 0) {
+	if((m->m_flags & M_EXT || m->m_len < sizeof(struct idp)) &&
+	   (m = m_pullup(m, sizeof(struct idp))) == 0) {
 		idpstat.idps_toosmall++;
 		goto next;
 	}
@@ -126,15 +124,16 @@ next:
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
-	for (nsp = nsrawpcb.nsp_next; nsp != &nsrawpcb; nsp = nsp->nsp_next) {
-		struct mbuf *m1 = m_copy(m, 0, (int)M_COPYALL);
-		if (m1) idp_input(m1, nsp);
+	for(nsp = nsrawpcb.nsp_next; nsp != &nsrawpcb; nsp = nsp->nsp_next) {
+		struct mbuf *m1 = m_copy(m, 0, (int) M_COPYALL);
+		if(m1)
+			idp_input(m1, nsp);
 	}
 
 	idp = mtod(m, struct idp *);
 	len = ntohs(idp->idp_len);
-	if (oddpacketp = len & 1) {
-		len++;		/* If this packet is of odd length,
+	if(oddpacketp = len & 1) {
+		len++; /* If this packet is of odd length,
 				   preserve garbage byte for checksum */
 	}
 
@@ -144,23 +143,23 @@ next:
 	 * Trim mbufs if longer than we expect.
 	 * Drop packet if shorter than we expect.
 	 */
-	if (m->m_pkthdr.len < len) {
+	if(m->m_pkthdr.len < len) {
 		idpstat.idps_tooshort++;
 		goto bad;
 	}
-	if (m->m_pkthdr.len > len) {
-		if (m->m_len == m->m_pkthdr.len) {
-			m->m_len = len;
+	if(m->m_pkthdr.len > len) {
+		if(m->m_len == m->m_pkthdr.len) {
+			m->m_len        = len;
 			m->m_pkthdr.len = len;
 		} else
 			m_adj(m, len - m->m_pkthdr.len);
 	}
-	if (idpcksum && ((i = idp->idp_sum)!=0xffff)) {
+	if(idpcksum && ((i = idp->idp_sum) != 0xffff)) {
 		idp->idp_sum = 0;
-		if (i != (idp->idp_sum = ns_cksum(m, len))) {
+		if(i != (idp->idp_sum = ns_cksum(m, len))) {
 			idpstat.idps_badsum++;
 			idp->idp_sum = i;
-			if (ns_hosteqnh(ns_thishost, idp->idp_dna.x_host))
+			if(ns_hosteqnh(ns_thishost, idp->idp_dna.x_host))
 				error = NS_ERR_BADSUM;
 			else
 				error = NS_ERR_BADSUM_T;
@@ -171,11 +170,11 @@ next:
 	/*
 	 * Is this a directed broadcast?
 	 */
-	if (ns_hosteqnh(ns_broadhost,idp->idp_dna.x_host)) {
-		if ((!ns_neteq(idp->idp_dna, idp->idp_sna)) &&
-		    (!ns_neteqnn(idp->idp_dna.x_net, ns_broadnet)) &&
-		    (!ns_neteqnn(idp->idp_sna.x_net, ns_zeronet)) &&
-		    (!ns_neteqnn(idp->idp_dna.x_net, ns_zeronet)) ) {
+	if(ns_hosteqnh(ns_broadhost, idp->idp_dna.x_host)) {
+		if((!ns_neteq(idp->idp_dna, idp->idp_sna)) &&
+		   (!ns_neteqnn(idp->idp_dna.x_net, ns_broadnet)) &&
+		   (!ns_neteqnn(idp->idp_sna.x_net, ns_zeronet)) &&
+		   (!ns_neteqnn(idp->idp_dna.x_net, ns_zeronet))) {
 			/*
 			 * Look to see if I need to eat this packet.
 			 * Algorithm is to forward all young packets
@@ -186,15 +185,15 @@ next:
 			 *
 			 * Suggestion of Bill Nesheim, Cornell U.
 			 */
-			if (idp->idp_tc < NS_MAXHOPS) {
+			if(idp->idp_tc < NS_MAXHOPS) {
 				idp_forward(m);
 				goto next;
 			}
 		}
-	/*
+		/*
 	 * Is this our packet? If not, forward.
 	 */
-	} else if (!ns_hosteqnh(ns_thishost,idp->idp_dna.x_host)) {
+	} else if(!ns_hosteqnh(ns_thishost, idp->idp_dna.x_host)) {
 		idp_forward(m);
 		goto next;
 	}
@@ -206,20 +205,20 @@ next:
 	 * Switch out to protocol's input routine.
 	 */
 	nsintr_swtch++;
-	if (nsp) {
-		if (oddpacketp) {
+	if(nsp) {
+		if(oddpacketp) {
 			m_adj(m, -1);
 		}
-		if ((nsp->nsp_flags & NSP_ALL_PACKETS)==0)
-			switch (idp->idp_pt) {
+		if((nsp->nsp_flags & NSP_ALL_PACKETS) == 0)
+			switch(idp->idp_pt) {
 
-			    case NSPROTO_SPP:
-				    spp_input(m, nsp);
-				    goto next;
+				case NSPROTO_SPP:
+					spp_input(m, nsp);
+					goto next;
 
-			    case NSPROTO_ERROR:
-				    ns_err_input(m);
-				    goto next;
+				case NSPROTO_ERROR:
+					ns_err_input(m);
+					goto next;
 			}
 		idp_input(m, nsp);
 	} else {
@@ -233,18 +232,16 @@ bad:
 }
 
 u_char nsctlerrmap[PRC_NCMDS] = {
-	ECONNABORTED,	ECONNABORTED,	0,		0,
-	0,		0,		EHOSTDOWN,	EHOSTUNREACH,
-	ENETUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
-	EMSGSIZE,	0,		0,		0,
-	0,		0,		0,		0
-};
+        ECONNABORTED, ECONNABORTED, 0, 0,
+        0, 0, EHOSTDOWN, EHOSTUNREACH,
+        ENETUNREACH, EHOSTUNREACH, ECONNREFUSED, ECONNREFUSED,
+        EMSGSIZE, 0, 0, 0,
+        0, 0, 0, 0};
 
 int idp_donosocks = 1;
 
-idp_ctlinput(cmd, arg)
-	int cmd;
-	caddr_t arg;
+idp_ctlinput(cmd, arg) int cmd;
+caddr_t arg;
 {
 	struct ns_addr *ns;
 	struct nspcb *nsp;
@@ -253,45 +250,45 @@ idp_ctlinput(cmd, arg)
 	extern struct nspcb *idp_drop();
 	int type;
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if(cmd < 0 || cmd > PRC_NCMDS)
 		return;
-	if (nsctlerrmap[cmd] == 0)
-		return;		/* XXX */
+	if(nsctlerrmap[cmd] == 0)
+		return; /* XXX */
 	type = NS_ERR_UNREACH_HOST;
-	switch (cmd) {
+	switch(cmd) {
 		struct sockaddr_ns *sns;
 
-	case PRC_IFDOWN:
-	case PRC_HOSTDEAD:
-	case PRC_HOSTUNREACH:
-		sns = (struct sockaddr_ns *)arg;
-		if (sns->sns_family != AF_NS)
-			return;
-		ns = &sns->sns_addr;
-		break;
+		case PRC_IFDOWN:
+		case PRC_HOSTDEAD:
+		case PRC_HOSTUNREACH:
+			sns = (struct sockaddr_ns *) arg;
+			if(sns->sns_family != AF_NS)
+				return;
+			ns = &sns->sns_addr;
+			break;
 
-	default:
-		errp = (struct ns_errp *)arg;
-		ns = &errp->ns_err_idp.idp_dna;
-		type = errp->ns_err_num;
-		type = ntohs((u_short)type);
+		default:
+			errp = (struct ns_errp *) arg;
+			ns   = &errp->ns_err_idp.idp_dna;
+			type = errp->ns_err_num;
+			type = ntohs((u_short) type);
 	}
-	switch (type) {
+	switch(type) {
 
-	case NS_ERR_UNREACH_HOST:
-		ns_pcbnotify(ns, (int)nsctlerrmap[cmd], idp_abort, (long)0);
-		break;
+		case NS_ERR_UNREACH_HOST:
+			ns_pcbnotify(ns, (int) nsctlerrmap[cmd], idp_abort, (long) 0);
+			break;
 
-	case NS_ERR_NOSOCK:
-		nsp = ns_pcblookup(ns, errp->ns_err_idp.idp_sna.x_port,
-			NS_WILDCARD);
-		if(nsp && idp_donosocks && ! ns_nullhost(nsp->nsp_faddr))
-			(void) idp_drop(nsp, (int)nsctlerrmap[cmd]);
+		case NS_ERR_NOSOCK:
+			nsp = ns_pcblookup(ns, errp->ns_err_idp.idp_sna.x_port,
+			                   NS_WILDCARD);
+			if(nsp && idp_donosocks && !ns_nullhost(nsp->nsp_faddr))
+				(void) idp_drop(nsp, (int) nsctlerrmap[cmd]);
 	}
 }
 
-int	idpprintfs = 0;
-int	idpforwarding = 1;
+int idpprintfs    = 0;
+int idpforwarding = 1;
 /*
  * Forward a packet.  If some error occurs return the sender
  * an error packet.  Note we can't always generate a meaningful
@@ -301,31 +298,30 @@ int	idpforwarding = 1;
 struct route idp_droute;
 struct route idp_sroute;
 
-idp_forward(m)
-struct mbuf *m;
+idp_forward(m) struct mbuf *m;
 {
 	register struct idp *idp = mtod(m, struct idp *);
 	register int error, type, code;
 	struct mbuf *mcopy = NULL;
-	int agedelta = 1;
-	int flags = NS_FORWARDING;
-	int ok_there = 0;
-	int ok_back = 0;
+	int agedelta       = 1;
+	int flags          = NS_FORWARDING;
+	int ok_there       = 0;
+	int ok_back        = 0;
 
-	if (idpprintfs) {
+	if(idpprintfs) {
 		printf("forward: src ");
 		ns_printhost(&idp->idp_sna);
 		printf(", dst ");
 		ns_printhost(&idp->idp_dna);
 		printf("hop count %d\n", idp->idp_tc);
 	}
-	if (idpforwarding == 0) {
+	if(idpforwarding == 0) {
 		/* can't tell difference between net and host */
 		type = NS_ERR_UNREACH_HOST, code = 0;
 		goto senderror;
 	}
 	idp->idp_tc++;
-	if (idp->idp_tc > NS_MAXHOPS) {
+	if(idp->idp_tc > NS_MAXHOPS) {
 		type = NS_ERR_TOO_OLD, code = 0;
 		goto senderror;
 	}
@@ -333,9 +329,9 @@ struct mbuf *m;
 	 * Save at most 42 bytes of the packet in case
 	 * we need to generate an NS error message to the src.
 	 */
-	mcopy = m_copy(m, 0, imin((int)ntohs(idp->idp_len), 42));
+	mcopy = m_copy(m, 0, imin((int) ntohs(idp->idp_len), 42));
 
-	if ((ok_there = idp_do_route(&idp->idp_dna,&idp_droute))==0) {
+	if((ok_there = idp_do_route(&idp->idp_dna, &idp_droute)) == 0) {
 		type = NS_ERR_UNREACH_HOST, code = 0;
 		goto senderror;
 	}
@@ -346,23 +342,23 @@ struct mbuf *m;
 	 * are going to physically broadcast this, let us
 	 * age the packet so we can eat it safely the second time around.
 	 */
-	if (idp->idp_dna.x_host.c_host[0] & 0x1) {
+	if(idp->idp_dna.x_host.c_host[0] & 0x1) {
 		struct ns_ifaddr *ia = ns_iaonnetof(&idp->idp_dna);
 		struct ifnet *ifp;
-		if (ia) {
+		if(ia) {
 			/* I'm gonna hafta eat this packet */
 			agedelta += NS_MAXHOPS - idp->idp_tc;
 			idp->idp_tc = NS_MAXHOPS;
 		}
-		if ((ok_back = idp_do_route(&idp->idp_sna,&idp_sroute))==0) {
+		if((ok_back = idp_do_route(&idp->idp_sna, &idp_sroute)) == 0) {
 			/* error = ENETUNREACH; He'll never get it! */
 			m_freem(m);
 			goto cleanup;
 		}
-		if (idp_droute.ro_rt &&
-		    (ifp=idp_droute.ro_rt->rt_ifp) &&
-		    idp_sroute.ro_rt &&
-		    (ifp!=idp_sroute.ro_rt->rt_ifp)) {
+		if(idp_droute.ro_rt &&
+		   (ifp = idp_droute.ro_rt->rt_ifp) &&
+		   idp_sroute.ro_rt &&
+		   (ifp != idp_sroute.ro_rt->rt_ifp)) {
 			flags |= NS_ALLOWBROADCAST;
 		} else {
 			type = NS_ERR_UNREACH_HOST, code = 0;
@@ -370,86 +366,89 @@ struct mbuf *m;
 		}
 	}
 	/* need to adjust checksum */
-	if (idp->idp_sum!=0xffff) {
+	if(idp->idp_sum != 0xffff) {
 		union bytes {
 			u_char c[4];
 			u_short s[2];
 			long l;
 		} x;
 		register int shift;
-		x.l = 0; x.c[0] = agedelta;
-		shift = (((((int)ntohs(idp->idp_len))+1)>>1)-2) & 0xf;
-		x.l = idp->idp_sum + (x.s[0] << shift);
-		x.l = x.s[0] + x.s[1];
-		x.l = x.s[0] + x.s[1];
-		if (x.l==0xffff) idp->idp_sum = 0; else idp->idp_sum = x.l;
+		x.l    = 0;
+		x.c[0] = agedelta;
+		shift  = (((((int) ntohs(idp->idp_len)) + 1) >> 1) - 2) & 0xf;
+		x.l    = idp->idp_sum + (x.s[0] << shift);
+		x.l    = x.s[0] + x.s[1];
+		x.l    = x.s[0] + x.s[1];
+		if(x.l == 0xffff)
+			idp->idp_sum = 0;
+		else
+			idp->idp_sum = x.l;
 	}
-	if ((error = ns_output(m, &idp_droute, flags)) && 
-	    (mcopy!=NULL)) {
-		idp = mtod(mcopy, struct idp *);
+	if((error = ns_output(m, &idp_droute, flags)) &&
+	   (mcopy != NULL)) {
+		idp  = mtod(mcopy, struct idp *);
 		type = NS_ERR_UNSPEC_T, code = 0;
-		switch (error) {
+		switch(error) {
 
-		case ENETUNREACH:
-		case EHOSTDOWN:
-		case EHOSTUNREACH:
-		case ENETDOWN:
-		case EPERM:
-			type = NS_ERR_UNREACH_HOST;
-			break;
+			case ENETUNREACH:
+			case EHOSTDOWN:
+			case EHOSTUNREACH:
+			case ENETDOWN:
+			case EPERM:
+				type = NS_ERR_UNREACH_HOST;
+				break;
 
-		case EMSGSIZE:
-			type = NS_ERR_TOO_BIG;
-			code = 576; /* too hard to figure out mtu here */
-			break;
+			case EMSGSIZE:
+				type = NS_ERR_TOO_BIG;
+				code = 576; /* too hard to figure out mtu here */
+				break;
 
-		case ENOBUFS:
-			type = NS_ERR_UNSPEC_T;
-			break;
+			case ENOBUFS:
+				type = NS_ERR_UNSPEC_T;
+				break;
 		}
 		mcopy = NULL;
 	senderror:
 		ns_error(m, type, code);
 	}
 cleanup:
-	if (ok_there)
+	if(ok_there)
 		idp_undo_route(&idp_droute);
-	if (ok_back)
+	if(ok_back)
 		idp_undo_route(&idp_sroute);
-	if (mcopy != NULL)
+	if(mcopy != NULL)
 		m_freem(mcopy);
 }
 
-idp_do_route(src, ro)
-struct ns_addr *src;
+idp_do_route(src, ro) struct ns_addr *src;
 struct route *ro;
 {
-	
+
 	struct sockaddr_ns *dst;
 
-	bzero((caddr_t)ro, sizeof (*ro));
-	dst = (struct sockaddr_ns *)&ro->ro_dst;
+	bzero((caddr_t) ro, sizeof(*ro));
+	dst = (struct sockaddr_ns *) &ro->ro_dst;
 
-	dst->sns_len = sizeof(*dst);
-	dst->sns_family = AF_NS;
-	dst->sns_addr = *src;
+	dst->sns_len         = sizeof(*dst);
+	dst->sns_family      = AF_NS;
+	dst->sns_addr        = *src;
 	dst->sns_addr.x_port = 0;
 	rtalloc(ro);
-	if (ro->ro_rt == 0 || ro->ro_rt->rt_ifp == 0) {
+	if(ro->ro_rt == 0 || ro->ro_rt->rt_ifp == 0) {
 		return (0);
 	}
 	ro->ro_rt->rt_use++;
 	return (1);
 }
 
-idp_undo_route(ro)
-register struct route *ro;
+idp_undo_route(ro) register struct route *ro;
 {
-	if (ro->ro_rt) {RTFREE(ro->ro_rt);}
+	if(ro->ro_rt) {
+		RTFREE(ro->ro_rt);
+	}
 }
 
-ns_watch_output(m, ifp)
-struct mbuf *m;
+ns_watch_output(m, ifp) struct mbuf *m;
 struct ifnet *ifp;
 {
 	register struct nspcb *nsp;
@@ -457,25 +456,25 @@ struct ifnet *ifp;
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
-	for (nsp = nsrawpcb.nsp_next; nsp != &nsrawpcb; nsp = nsp->nsp_next) {
-		struct mbuf *m0 = m_copy(m, 0, (int)M_COPYALL);
-		if (m0) {
+	for(nsp = nsrawpcb.nsp_next; nsp != &nsrawpcb; nsp = nsp->nsp_next) {
+		struct mbuf *m0 = m_copy(m, 0, (int) M_COPYALL);
+		if(m0) {
 			register struct idp *idp;
 
-			M_PREPEND(m0, sizeof (*idp), M_DONTWAIT);
-			if (m0 == NULL)
+			M_PREPEND(m0, sizeof(*idp), M_DONTWAIT);
+			if(m0 == NULL)
 				continue;
-			idp = mtod(m0, struct idp *);
-			idp->idp_sna.x_net = ns_zeronet;
+			idp                 = mtod(m0, struct idp *);
+			idp->idp_sna.x_net  = ns_zeronet;
 			idp->idp_sna.x_host = ns_thishost;
-			if (ifp && (ifp->if_flags & IFF_POINTOPOINT))
-			    for(ifa = ifp->if_addrlist; ifa;
-						ifa = ifa->ifa_next) {
-				if (ifa->ifa_addr->sa_family==AF_NS) {
-				    idp->idp_sna = IA_SNS(ifa)->sns_addr;
-				    break;
+			if(ifp && (ifp->if_flags & IFF_POINTOPOINT))
+				for(ifa = ifp->if_addrlist; ifa;
+				    ifa = ifa->ifa_next) {
+					if(ifa->ifa_addr->sa_family == AF_NS) {
+						idp->idp_sna = IA_SNS(ifa)->sns_addr;
+						break;
+					}
 				}
-			    }
 			idp->idp_len = ntohl(m0->m_pkthdr.len);
 			idp_input(m0, nsp);
 		}

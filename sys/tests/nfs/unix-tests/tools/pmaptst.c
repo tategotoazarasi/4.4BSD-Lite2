@@ -7,20 +7,19 @@
 #define RPCINFO "rpcinfo -p"
 
 #ifdef SVR3
-#define PROG    ((u_long)432123)
-#define VERS	((u_long)4)
+#define PROG ((u_long) 432123)
+#define VERS ((u_long) 4)
 #else
-#define PROG    ((ulong)432123)
-#define VERS	((ulong)4)
+#define PROG ((ulong) 432123)
+#define VERS ((ulong) 4)
 #endif
-#define UPORT    2345
-#define TPORT    2346
+#define UPORT 2345
+#define TPORT 2346
 
 extern int pmap_set();
 extern int pmap_unset();
 
-main(argc, argv)
-char *argv[];
+main(argc, argv) char *argv[];
 {
 	int ret, errs = 0;
 
@@ -29,8 +28,8 @@ char *argv[];
 	system(RPCINFO);
 
 	printf("\n--- Registering udp program %d version %d port %d...  ",
-		PROG, VERS, UPORT);
-	if (pmap_set(PROG, VERS, IPPROTO_UDP, UPORT))
+	       PROG, VERS, UPORT);
+	if(pmap_set(PROG, VERS, IPPROTO_UDP, UPORT))
 		printf("done.\n");
 	else {
 		printf("failed.\n");
@@ -40,8 +39,8 @@ char *argv[];
 	system(RPCINFO);
 
 	printf("\n--- Registering tcp program %d version %d port %d...  ",
-		PROG, VERS, TPORT);
-	if (pmap_set(PROG, VERS, IPPROTO_TCP, TPORT))
+	       PROG, VERS, TPORT);
+	if(pmap_set(PROG, VERS, IPPROTO_TCP, TPORT))
 		printf("done.\n");
 	else {
 		printf("failed.\n");
@@ -51,7 +50,7 @@ char *argv[];
 	system(RPCINFO);
 
 	printf("\n--- Unregistering program %d version %d... ", PROG, VERS);
-	if (pmap_unset(PROG, VERS))
+	if(pmap_unset(PROG, VERS))
 		printf("done.\n");
 	else {
 		printf("failed.\n");
@@ -59,7 +58,7 @@ char *argv[];
 	}
 	printf("rpcinfo after pmap_unset:\n");
 	system(RPCINFO);
-	if (!errs)
+	if(!errs)
 		printf("Test complete ok\n");
 	exit(errs);
 }

@@ -58,13 +58,12 @@
 /*
  * Mount the per-process file descriptors (/dev/fd)
  */
-int
-fdesc_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	char *path;
-	caddr_t data;
-	struct nameidata *ndp;
-	struct proc *p;
+int fdesc_mount(mp, path, data, ndp, p)
+struct mount *mp;
+char *path;
+caddr_t data;
+struct nameidata *ndp;
+struct proc *p;
 {
 	int error = 0;
 	u_int size;
@@ -74,15 +73,15 @@ fdesc_mount(mp, path, data, ndp, p)
 	/*
 	 * Update is a no-op
 	 */
-	if (mp->mnt_flag & MNT_UPDATE)
+	if(mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
 	error = fdesc_allocvp(Froot, FD_ROOT, mp, &rvp);
-	if (error)
+	if(error)
 		return (error);
 
 	MALLOC(fmp, struct fdescmount *, sizeof(struct fdescmount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
+	       M_UFSMNT, M_WAITOK); /* XXX */
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 	fmp->f_root = rvp;
@@ -98,26 +97,24 @@ fdesc_mount(mp, path, data, ndp, p)
 	return (0);
 }
 
-int
-fdesc_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+int fdesc_start(mp, flags, p)
+struct mount *mp;
+int flags;
+struct proc *p;
 {
 	return (0);
 }
 
-int
-fdesc_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+int fdesc_unmount(mp, mntflags, p)
+struct mount *mp;
+int mntflags;
+struct proc *p;
 {
 	int error;
-	int flags = 0;
+	int flags            = 0;
 	struct vnode *rootvp = VFSTOFDESC(mp)->f_root;
 
-	if (mntflags & MNT_FORCE)
+	if(mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
 	/*
@@ -125,9 +122,9 @@ fdesc_unmount(mp, mntflags, p)
 	 * ever get anything cached at this level at the
 	 * moment, but who knows...
 	 */
-	if (rootvp->v_usecount > 1)
+	if(rootvp->v_usecount > 1)
 		return (EBUSY);
-	if (error = vflush(mp, rootvp, flags))
+	if(error = vflush(mp, rootvp, flags))
 		return (error);
 
 	/*
@@ -141,18 +138,17 @@ fdesc_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the fdescmount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_UFSMNT); /* XXX */
 	mp->mnt_data = 0;
 
 	return (0);
 }
 
-int
-fdesc_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+int fdesc_root(mp, vpp)
+struct mount *mp;
+struct vnode **vpp;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc; /* XXX */
 	struct vnode *vp;
 
 	/*
@@ -165,11 +161,10 @@ fdesc_root(mp, vpp)
 	return (0);
 }
 
-int
-fdesc_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+int fdesc_statfs(mp, sbp, p)
+struct mount *mp;
+struct statfs *sbp;
+struct proc *p;
 {
 	struct filedesc *fdp;
 	int lim;
@@ -183,30 +178,30 @@ fdesc_statfs(mp, sbp, p)
 	 * limit is ever reduced below the current number
 	 * of open files... ]
 	 */
-	lim = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
-	fdp = p->p_fd;
-	last = min(fdp->fd_nfiles, lim);
+	lim    = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+	fdp    = p->p_fd;
+	last   = min(fdp->fd_nfiles, lim);
 	freefd = 0;
-	for (i = fdp->fd_freefile; i < last; i++)
-		if (fdp->fd_ofiles[i] == NULL)
+	for(i = fdp->fd_freefile; i < last; i++)
+		if(fdp->fd_ofiles[i] == NULL)
 			freefd++;
 
 	/*
 	 * Adjust for the fact that the fdesc array may not
 	 * have been fully allocated yet.
 	 */
-	if (fdp->fd_nfiles < lim)
+	if(fdp->fd_nfiles < lim)
 		freefd += (lim - fdp->fd_nfiles);
 
-	sbp->f_flags = 0;
-	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_flags  = 0;
+	sbp->f_bsize  = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
-	sbp->f_blocks = 2;		/* 1K to keep df happy */
-	sbp->f_bfree = 0;
+	sbp->f_blocks = 2; /* 1K to keep df happy */
+	sbp->f_bfree  = 0;
 	sbp->f_bavail = 0;
-	sbp->f_files = lim + 1;		/* Allow for "." */
-	sbp->f_ffree = freefd;		/* See comments above */
-	if (sbp != &mp->mnt_stat) {
+	sbp->f_files  = lim + 1; /* Allow for "." */
+	sbp->f_ffree  = freefd;  /* See comments above */
+	if(sbp != &mp->mnt_stat) {
 		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -215,36 +210,35 @@ fdesc_statfs(mp, sbp, p)
 	return (0);
 }
 
-int
-fdesc_sync(mp, waitfor)
-	struct mount *mp;
-	int waitfor;
+int fdesc_sync(mp, waitfor)
+struct mount *mp;
+int waitfor;
 {
 
 	return (0);
 }
 
-#define fdesc_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
-#define fdesc_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-	    struct proc *)))eopnotsupp)
-#define fdesc_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-	    size_t, struct proc *)))eopnotsupp)
-#define fdesc_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
-	    eopnotsupp)
-#define fdesc_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
+#define fdesc_fhtovp ((int(*) __P((struct mount *, struct fid *, \
+	                               struct mbuf *, struct vnode **, int *, struct ucred **) )) eopnotsupp)
+#define fdesc_quotactl ((int(*) __P((struct mount *, int, uid_t, caddr_t, \
+	                                 struct proc *) )) eopnotsupp)
+#define fdesc_sysctl ((int(*) __P((int *, u_int, void *, size_t *, void *, \
+	                               size_t, struct proc *) )) eopnotsupp)
+#define fdesc_vget ((int(*) __P((struct mount *, ino_t, struct vnode **) )) \
+	                        eopnotsupp)
+#define fdesc_vptofh ((int(*) __P((struct vnode *, struct fid *) )) eopnotsupp)
 
 struct vfsops fdesc_vfsops = {
-	fdesc_mount,
-	fdesc_start,
-	fdesc_unmount,
-	fdesc_root,
-	fdesc_quotactl,
-	fdesc_statfs,
-	fdesc_sync,
-	fdesc_vget,
-	fdesc_fhtovp,
-	fdesc_vptofh,
-	fdesc_init,
-	fdesc_sysctl,
+        fdesc_mount,
+        fdesc_start,
+        fdesc_unmount,
+        fdesc_root,
+        fdesc_quotactl,
+        fdesc_statfs,
+        fdesc_sync,
+        fdesc_vget,
+        fdesc_fhtovp,
+        fdesc_vptofh,
+        fdesc_init,
+        fdesc_sysctl,
 };

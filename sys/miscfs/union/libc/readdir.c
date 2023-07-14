@@ -43,32 +43,32 @@ static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
  */
 struct dirent *
 readdir(dirp)
-	register DIR *dirp;
+register DIR *dirp;
 {
 	register struct dirent *dp;
 
-	for (;;) {
-		if (dirp->dd_loc >= dirp->dd_size) {
-			if (dirp->dd_flags & __DTF_READALL)
+	for(;;) {
+		if(dirp->dd_loc >= dirp->dd_size) {
+			if(dirp->dd_flags & __DTF_READALL)
 				return (NULL);
 			dirp->dd_loc = 0;
 		}
-		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
+		if(dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
 			dirp->dd_size = getdirentries(dirp->dd_fd,
-			    dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
-			if (dirp->dd_size <= 0)
+			                              dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
+			if(dirp->dd_size <= 0)
 				return (NULL);
 		}
-		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
-		if ((int)dp & 03)	/* bogus pointer check */
+		dp = (struct dirent *) (dirp->dd_buf + dirp->dd_loc);
+		if((int) dp & 03) /* bogus pointer check */
 			return (NULL);
-		if (dp->d_reclen <= 0 ||
-		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
+		if(dp->d_reclen <= 0 ||
+		   dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
 			return (NULL);
 		dirp->dd_loc += dp->d_reclen;
-		if (dp->d_ino == 0)
+		if(dp->d_ino == 0)
 			continue;
-		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
+		if(dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
 			continue;
 		return (dp);
 	}

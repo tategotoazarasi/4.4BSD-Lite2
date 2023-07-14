@@ -36,13 +36,13 @@
  *	@(#)Ajmp.c	7.1 (Berkeley) 12/6/90
  */
 
-#include "align.h" 
+#include "align.h"
 jmp(infop)
-process_info *infop;
+        process_info *infop;
 /*
 /*	Jump to the given address.
 /*
 /********************************************/
 {
-	pc = operand(infop,0)->address ;
+	pc = operand(infop, 0)->address;
 }

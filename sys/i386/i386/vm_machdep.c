@@ -60,8 +60,7 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+cpu_fork(p1, p2) register struct proc *p1, *p2;
 {
 	register struct user *up = p2->p_addr;
 	int foo, offset, addr, i;
@@ -80,21 +79,21 @@ cpu_fork(p1, p2)
 	 * replacing the bcopy and savectx.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = mvesp() - (int)kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
+	offset            = mvesp() - (int) kstack;
+	bcopy((caddr_t) kstack + offset, (caddr_t) p2->p_addr + offset,
+	      (unsigned) ctob(UPAGES) - offset);
 	p2->p_md.md_regs = p1->p_md.md_regs;
 
 	/*
 	 * Wire top of address space of child to it's u.
 	 * First, fault in a page of pte's to map it.
 	 */
-        addr = trunc_page((u_int)vtopte(kstack));
-	(void)vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
-	for (i=0; i < UPAGES; i++)
-		pmap_enter(&p2->p_vmspace->vm_pmap, (vm_offset_t)kstack+i*NBPG,
-			pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG),
-			VM_PROT_READ, 1);
+	addr = trunc_page((u_int) vtopte(kstack));
+	(void) vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr + NBPG, FALSE);
+	for(i = 0; i < UPAGES; i++)
+		pmap_enter(&p2->p_vmspace->vm_pmap, (vm_offset_t) kstack + i * NBPG,
+		           pmap_extract(kernel_pmap, ((int) p2->p_addr) + i * NBPG),
+		           VM_PROT_READ, 1);
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
 	/*
@@ -102,7 +101,7 @@ cpu_fork(p1, p2)
 	 * Arrange for a non-local goto when the new process
 	 * is started, to resume here, returning nonzero from setjmp.
 	 */
-	if (savectx(up, 1)) {
+	if(savectx(up, 1)) {
 		/*
 		 * Return 1 in child.
 		 */
@@ -132,14 +131,14 @@ extern struct proc *npxproc;
  * a special case].
  */
 struct proc *switch_to_inactive();
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(p) register struct proc *p;
 {
-	static struct pcb nullpcb;	/* pcb to overwrite on last switch */
+	static struct pcb nullpcb; /* pcb to overwrite on last switch */
 
 #if NNPX > 0
 	/* free cporcessor (if we have it) */
-	if( p == npxproc) npxproc =0;
+	if(p == npxproc)
+		npxproc = 0;
 #endif
 
 	/* move to inactive space and stack, passing arg accross */
@@ -147,56 +146,56 @@ cpu_exit(p)
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	kmem_free(kernel_map, (vm_offset_t) p->p_addr, ctob(UPAGES));
 
 	p->p_addr = (struct user *) &nullpcb;
 	mi_switch();
 	/* NOTREACHED */
 }
 #else
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(p) register struct proc *p;
 {
-	
+
 	/* free coprocessor (if we have it) */
 #if NNPX > 0
-	if( p == npxproc) npxproc =0;
+	if(p == npxproc)
+		npxproc = 0;
 #endif
 
 	curproc = p;
 	mi_switch();
 }
 
-cpu_wait(p) struct proc *p; {
+cpu_wait(p) struct proc *p;
+{
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	kmem_free(kernel_map, (vm_offset_t) p->p_addr, ctob(UPAGES));
 }
 #endif
 
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
-cpu_coredump(p, vp, cred)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
+cpu_coredump(p, vp, cred) struct proc *p;
+struct vnode *vp;
+struct ucred *cred;
 {
 
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	                (off_t) 0, UIO_SYSSPACE, IO_NODELOCKED | IO_UNIT, cred, (int *) NULL,
+	                p));
 }
 
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
 setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
+        u_short *pte;
+caddr_t vaddr;
 {
-/* eventually do this by setting up an expand-down stack segment
+	/* eventually do this by setting up an expand-down stack segment
    for ss0: selector, allowing stack access down to top of u.
    this means though that protection violations need to be handled
    thru a double fault exception that must do an integral task
@@ -211,19 +210,18 @@ setredzone(pte, vaddr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
-pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
+pagemove(from, to, size) register caddr_t from, to;
+int size;
 {
 	register struct pte *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if(size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	while (size > 0) {
-		*tpte++ = *fpte;
-		*(int *)fpte++ = 0;
+	while(size > 0) {
+		*tpte++         = *fpte;
+		*(int *) fpte++ = 0;
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
@@ -234,15 +232,14 @@ pagemove(from, to, size)
 /*
  * Convert kernel VA to physical address
  */
-kvtop(addr)
-	register caddr_t addr;
+kvtop(addr) register caddr_t addr;
 {
 	vm_offset_t va;
 
-	va = pmap_extract(kernel_pmap, (vm_offset_t)addr);
-	if (va == 0)
+	va = pmap_extract(kernel_pmap, (vm_offset_t) addr);
+	if(va == 0)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return ((int) va);
 }
 
 #ifdef notdef
@@ -250,88 +247,84 @@ kvtop(addr)
  * The probe[rw] routines should probably be redone in assembler
  * for efficiency.
  */
-prober(addr)
-	register u_int addr;
+prober(addr) register u_int addr;
 {
 	register int page;
 	register struct proc *p;
 
-	if (addr >= USRSTACK)
-		return(0);
-	p = u.u_procp;
+	if(addr >= USRSTACK)
+		return (0);
+	p    = u.u_procp;
 	page = btop(addr);
-	if (page < dptov(p, p->p_dsize) || page > sptov(p, p->p_ssize))
-		return(1);
-	return(0);
+	if(page < dptov(p, p->p_dsize) || page > sptov(p, p->p_ssize))
+		return (1);
+	return (0);
 }
 
-probew(addr)
-	register u_int addr;
+probew(addr) register u_int addr;
 {
 	register int page;
 	register struct proc *p;
 
-	if (addr >= USRSTACK)
-		return(0);
-	p = u.u_procp;
+	if(addr >= USRSTACK)
+		return (0);
+	p    = u.u_procp;
 	page = btop(addr);
-	if (page < dptov(p, p->p_dsize) || page > sptov(p, p->p_ssize))
-		return((*(int *)vtopte(p, page) & PG_PROT) == PG_UW);
-	return(0);
+	if(page < dptov(p, p->p_dsize) || page > sptov(p, p->p_ssize))
+		return ((*(int *) vtopte(p, page) & PG_PROT) == PG_UW);
+	return (0);
 }
 
 /*
  * NB: assumes a physically contiguous kernel page table
  *     (makes life a LOT simpler).
  */
-kernacc(addr, count, rw)
-	register u_int addr;
-	int count, rw;
+kernacc(addr, count, rw) register u_int addr;
+int count, rw;
 {
 	register struct pde *pde;
 	register struct pte *pte;
 	register int ix, cnt;
 	extern long Syssize;
 
-	if (count <= 0)
-		return(0);
-	pde = (struct pde *)((u_int)u.u_procp->p_p0br + u.u_procp->p_szpt * NBPG);
-	ix = (addr & PD_MASK) >> PD_SHIFT;
+	if(count <= 0)
+		return (0);
+	pde = (struct pde *) ((u_int) u.u_procp->p_p0br + u.u_procp->p_szpt * NBPG);
+	ix  = (addr & PD_MASK) >> PD_SHIFT;
 	cnt = ((addr + count + (1 << PD_SHIFT) - 1) & PD_MASK) >> PD_SHIFT;
 	cnt -= ix;
-	for (pde += ix; cnt; cnt--, pde++)
-		if (pde->pd_v == 0)
-			return(0);
-	ix = btop(addr-0xfe000000);
-	cnt = btop(addr-0xfe000000+count+NBPG-1);
-	if (cnt > (int)&Syssize)
-		return(0);
+	for(pde += ix; cnt; cnt--, pde++)
+		if(pde->pd_v == 0)
+			return (0);
+	ix  = btop(addr - 0xfe000000);
+	cnt = btop(addr - 0xfe000000 + count + NBPG - 1);
+	if(cnt > (int) &Syssize)
+		return (0);
 	cnt -= ix;
-	for (pte = &Sysmap[ix]; cnt; cnt--, pte++)
-		if (pte->pg_v == 0 /*|| (rw == B_WRITE && pte->pg_prot == 1)*/) 
-			return(0);
-	return(1);
+	for(pte = &Sysmap[ix]; cnt; cnt--, pte++)
+		if(pte->pg_v == 0 /*|| (rw == B_WRITE && pte->pg_prot == 1)*/)
+			return (0);
+	return (1);
 }
 
-useracc(addr, count, rw)
-	register u_int addr;
-	int count, rw;
+useracc(addr, count, rw) register u_int addr;
+int count, rw;
 {
 	register int (*func)();
 	register u_int addr2;
 	extern int prober(), probew();
 
-	if (count <= 0)
-		return(0);
+	if(count <= 0)
+		return (0);
 	addr2 = addr;
 	addr += count;
 	func = (rw == B_READ) ? prober : probew;
 	do {
-		if ((*func)(addr2) == 0)
-			return(0);
+		if((*func)(addr2) == 0)
+			return (0);
 		addr2 = (addr2 + NBPG) & ~PGOFSET;
-	} while (addr2 < addr);
-	return(1);
+	} while(addr2 < addr);
+	return (1);
 }
 #endif
 
@@ -355,8 +348,7 @@ extern vm_map_t phys_map;
  * All requests are (re)mapped into kernel VA space via the useriomap
  * (a name with only slightly more meaning than "kernelmap")
  */
-vmapbuf(bp)
-	register struct buf *bp;
+vmapbuf(bp) register struct buf *bp;
 {
 	register int npf;
 	register caddr_t addr;
@@ -366,20 +358,20 @@ vmapbuf(bp)
 	vm_offset_t kva;
 	register vm_offset_t pa;
 
-	if ((flags & B_PHYS) == 0)
+	if((flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	addr = bp->b_saveaddr = bp->b_un.b_addr;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_un.b_addr = (caddr_t) (kva + off);
-	while (npf--) {
-		pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)addr);
-		if (pa == 0)
+	off                   = (int) addr & PGOFSET;
+	p                     = bp->b_proc;
+	npf                   = btoc(round_page(bp->b_bcount + off));
+	kva                   = kmem_alloc_wait(phys_map, ctob(npf));
+	bp->b_un.b_addr       = (caddr_t) (kva + off);
+	while(npf--) {
+		pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t) addr);
+		if(pa == 0)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		           VM_PROT_READ | VM_PROT_WRITE, TRUE);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
@@ -389,18 +381,17 @@ vmapbuf(bp)
  * Free the io map PTEs associated with this IO operation.
  * We also invalidate the TLB entries and restore the original b_addr.
  */
-vunmapbuf(bp)
-	register struct buf *bp;
+vunmapbuf(bp) register struct buf *bp;
 {
 	register int npf;
 	register caddr_t addr = bp->b_un.b_addr;
 	vm_offset_t kva;
 
-	if ((bp->b_flags & B_PHYS) == 0)
+	if((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+	npf = btoc(round_page(bp->b_bcount + ((int) addr & PGOFSET)));
+	kva = (vm_offset_t) ((int) addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
 	bp->b_un.b_addr = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+	bp->b_saveaddr  = NULL;
 }

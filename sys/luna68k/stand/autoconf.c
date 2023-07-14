@@ -49,18 +49,17 @@
 #include <sys/dkstat.h>
 #include <luna68k/stand/device.h>
 
-int	dkn;		    /* number of iostat dk numbers assigned so far */
-struct	hp_hw sc_table[MAX_CTLR];
+int dkn; /* number of iostat dk numbers assigned so far */
+struct hp_hw sc_table[MAX_CTLR];
 
 #ifdef DEBUG
-int	acdebug = 1;
+int acdebug = 1;
 #endif
 
 /*
  * Determine mass storage and memory configuration for a machine.
  */
-configure()
-{
+configure() {
 	register struct hp_hw *hw;
 	int found;
 
@@ -68,29 +67,27 @@ configure()
 	 * Look over each hardware device actually found and attempt
 	 * to match it with an ioconf.c table entry.
 	 */
-	for (hw = sc_table; hw->hw_type; hw++) {
-		if (hw->hw_type & CONTROLLER)
+	for(hw = sc_table; hw->hw_type; hw++) {
+		if(hw->hw_type & CONTROLLER)
 			found = find_controller(hw);
 		else
 			found = find_device(hw);
 #ifdef DEBUG
-		if (!found) {
+		if(!found) {
 			printf("unconfigured %s ", hw->hw_name);
 			printf("at 0x%x\n", hw->hw_addr);
 		}
 #endif
 	}
-
 }
 
-#define dr_type(d, s)	\
+#define dr_type(d, s) \
 	(strcmp((d)->d_name, (s)) == 0)
 
 #define same_hw_ctlr(hw, hc) \
 	((hw)->hw_type == SCSI && dr_type((hc)->hp_driver, "sc"))
 
-find_controller(hw)
-	register struct hp_hw *hw;
+find_controller(hw) register struct hp_hw *hw;
 {
 	register struct hp_ctlr *hc;
 	struct hp_ctlr *match_c;
@@ -98,25 +95,25 @@ find_controller(hw)
 	int sc;
 
 #ifdef DEBUG
-	if (acdebug)
+	if(acdebug)
 		printf("find_controller: hw: %s at sc%d (%x), type %x...",
 		       hw->hw_name, hw->hw_sc, hw->hw_addr, hw->hw_type);
 #endif
-	sc = hw->hw_sc;
+	sc      = hw->hw_sc;
 	match_c = NULL;
-	for (hc = hp_cinit; hc->hp_driver; hc++) {
-		if (hc->hp_alive)
+	for(hc = hp_cinit; hc->hp_driver; hc++) {
+		if(hc->hp_alive)
 			continue;
 		/*
 		 * Make sure we are looking at the right
 		 * controller type.
 		 */
-		if (!same_hw_ctlr(hw, hc))
+		if(!same_hw_ctlr(hw, hc))
 			continue;
 		/*
 		 * Exact match; all done
 		 */
-		if ((int)hc->hp_addr == sc) {
+		if((int) hc->hp_addr == sc) {
 			match_c = hc;
 			break;
 		}
@@ -124,12 +121,12 @@ find_controller(hw)
 		 * Wildcard; possible match so remember first instance
 		 * but continue looking for exact match.
 		 */
-		if ((int)hc->hp_addr == WILD_CARD_CTLR && match_c == NULL)
+		if((int) hc->hp_addr == WILD_CARD_CTLR && match_c == NULL)
 			match_c = hc;
 	}
 #ifdef DEBUG
-	if (acdebug) {
-		if (match_c)
+	if(acdebug) {
+		if(match_c)
 			printf("found %s%d\n",
 			       match_c->hp_driver->d_name,
 			       match_c->hp_unit);
@@ -141,31 +138,30 @@ find_controller(hw)
 	 * Didn't find an ioconf entry for this piece of hardware,
 	 * just ignore it.
 	 */
-	if (match_c == NULL)
-		return(0);
+	if(match_c == NULL)
+		return (0);
 	/*
 	 * Found a match, attempt to initialize and configure all attached
 	 * slaves.  Note, we can still fail if HW won't initialize.
 	 */
-	hc = match_c;
-	oaddr = hc->hp_addr;
+	hc          = match_c;
+	oaddr       = hc->hp_addr;
 	hc->hp_addr = hw->hw_addr;
-	if ((*hc->hp_driver->d_init)(hc)) {
+	if((*hc->hp_driver->d_init)(hc)) {
 		hc->hp_alive = 1;
 		printf("%s%d", hc->hp_driver->d_name, hc->hp_unit);
 		printf(" at 0x%x,", hc->hp_addr);
 		printf(" ipl %d", hc->hp_ipl);
-		if (hc->hp_flags)
+		if(hc->hp_flags)
 			printf(" flags 0x%x", hc->hp_flags);
 		printf("\n");
 		find_slaves(hc);
 	} else
 		hc->hp_addr = oaddr;
-	return(1);
+	return (1);
 }
 
-find_device(hw)
-	register struct hp_hw *hw;
+find_device(hw) register struct hp_hw *hw;
 {
 	register struct hp_device *hd;
 	struct hp_device *match_d;
@@ -173,22 +169,22 @@ find_device(hw)
 	int sc;
 
 #ifdef DEBUG
-	if (acdebug)
+	if(acdebug)
 		printf("find_device: hw: %s at sc%d (%x), type %x...",
 		       hw->hw_name, hw->hw_sc, hw->hw_addr, hw->hw_type);
 #endif
 	match_d = NULL;
-	for (hd = hp_dinit; hd->hp_driver; hd++) {
-		if (hd->hp_alive)
+	for(hd = hp_dinit; hd->hp_driver; hd++) {
+		if(hd->hp_alive)
 			continue;
 		/* Must not be a slave */
-		if (hd->hp_cdriver)
+		if(hd->hp_cdriver)
 			continue;
 		sc = (int) hd->hp_addr;
 		/*
 		 * Exact match; all done.
 		 */
-		if (sc > 0 && sc == hw->hw_sc) {
+		if(sc > 0 && sc == hw->hw_sc) {
 			match_d = hd;
 			break;
 		}
@@ -196,12 +192,12 @@ find_device(hw)
 		 * Wildcard; possible match so remember first instance
 		 * but continue looking for exact match.
 		 */
-		if (sc == 0 && same_hw_device(hw, hd) && match_d == NULL)
+		if(sc == 0 && same_hw_device(hw, hd) && match_d == NULL)
 			match_d = hd;
 	}
 #ifdef DEBUG
-	if (acdebug) {
-		if (match_d)
+	if(acdebug) {
+		if(match_d)
 			printf("found %s%d\n",
 			       match_d->hp_driver->d_name,
 			       match_d->hp_unit);
@@ -213,27 +209,27 @@ find_device(hw)
 	 * Didn't find an ioconf entry for this piece
 	 * of hardware, just ignore it.
 	 */
-	if (match_d == NULL)
-		return(0);
+	if(match_d == NULL)
+		return (0);
 	/*
 	 * Found a match, attempt to initialize.
 	 * Note, we can still fail if HW won't initialize.
 	 */
-	hd = match_d;
-	oaddr = hd->hp_addr;
+	hd          = match_d;
+	oaddr       = hd->hp_addr;
 	hd->hp_addr = hw->hw_addr;
-	if ((*hd->hp_driver->d_init)(hd)) {
+	if((*hd->hp_driver->d_init)(hd)) {
 		hd->hp_alive = 1;
 		printf("%s%d", hd->hp_driver->d_name, hd->hp_unit);
 		printf(" at 0x%x", hd->hp_addr);
-		if (hd->hp_ipl)
+		if(hd->hp_ipl)
 			printf(", ipl %d", hd->hp_ipl);
-		if (hd->hp_flags)
+		if(hd->hp_flags)
 			printf(", flags 0x%x", hd->hp_flags);
 		printf("\n");
 	} else
 		hd->hp_addr = oaddr;
-	return(1);
+	return (1);
 }
 
 /*
@@ -245,25 +241,24 @@ find_device(hw)
  * unused position instead of where it really is.  To save grief, non-
  * identifing devices should always be fully qualified.
  */
-find_slaves(hc)
-	register struct hp_ctlr *hc;
+find_slaves(hc) register struct hp_ctlr *hc;
 {
 	register int s;
 	register struct hp_device *hd;
 	struct hp_device *match_s;
-	int maxslaves = MAXSLAVES-1;
+	int maxslaves = MAXSLAVES - 1;
 	int new_s, new_c, old_s, old_c;
 	int rescan;
 
 #ifdef DEBUG
-	if (acdebug)
+	if(acdebug)
 		printf("find_slaves: for %s%d\n",
 		       hc->hp_driver->d_name, hc->hp_unit);
 #endif
-	for (s = 0; s < maxslaves; s++) {
-		rescan = 1;
+	for(s = 0; s < maxslaves; s++) {
+		rescan  = 1;
 		match_s = NULL;
-		for (hd = hp_dinit; hd->hp_driver; hd++) {
+		for(hd = hp_dinit; hd->hp_driver; hd++) {
 			/*
 			 * Rule out the easy ones:
 			 * 1. slave already assigned or not a slave
@@ -271,22 +266,22 @@ find_slaves(hc)
 			 * 3. controller specified but not this one
 			 * 4. slave specified but not this one
 			 */
-			if (hd->hp_alive || hd->hp_cdriver == NULL)
+			if(hd->hp_alive || hd->hp_cdriver == NULL)
 				continue;
-			if (!dr_type(hc->hp_driver, hd->hp_cdriver->d_name))
+			if(!dr_type(hc->hp_driver, hd->hp_cdriver->d_name))
 				continue;
-			if (hd->hp_ctlr >= 0 && hd->hp_ctlr != hc->hp_unit)
+			if(hd->hp_ctlr >= 0 && hd->hp_ctlr != hc->hp_unit)
 				continue;
-			if (hd->hp_slave >= 0 && hd->hp_slave != s)
+			if(hd->hp_slave >= 0 && hd->hp_slave != s)
 				continue;
 			/*
 			 * Case 0: first possible match.
 			 * Remember it and keep looking for better.
 			 */
-			if (match_s == NULL) {
+			if(match_s == NULL) {
 				match_s = hd;
-				new_c = hc->hp_unit;
-				new_s = s;
+				new_c   = hc->hp_unit;
+				new_s   = s;
 				continue;
 			}
 			/*
@@ -296,29 +291,29 @@ find_slaves(hc)
 			 * "reserve" locations for dynamic addition of
 			 * disk/tape drives by fully qualifing the location.
 			 */
-			if (hd->hp_slave == s && hd->hp_ctlr == hc->hp_unit) {
+			if(hd->hp_slave == s && hd->hp_ctlr == hc->hp_unit) {
 				match_s = hd;
-				rescan = 0;
+				rescan  = 0;
 				break;
 			}
 			/*
 			 * Case 2: right controller, wildcarded slave.
 			 * Remember first and keep looking for an exact match.
 			 */
-			if (hd->hp_ctlr == hc->hp_unit &&
-			    match_s->hp_ctlr < 0) {
+			if(hd->hp_ctlr == hc->hp_unit &&
+			   match_s->hp_ctlr < 0) {
 				match_s = hd;
-				new_s = s;
+				new_s   = s;
 				continue;
 			}
 			/*
 			 * Case 3: right slave, wildcarded controller.
 			 * Remember and keep looking for a better match.
 			 */
-			if (hd->hp_slave == s &&
-			    match_s->hp_ctlr < 0 && match_s->hp_slave < 0) {
+			if(hd->hp_slave == s &&
+			   match_s->hp_ctlr < 0 && match_s->hp_slave < 0) {
 				match_s = hd;
-				new_c = hc->hp_unit;
+				new_c   = hc->hp_unit;
 				continue;
 			}
 			/*
@@ -334,45 +329,45 @@ find_slaves(hc)
 		 * for the init routines but we also need to remember all
 		 * the old values in case this doesn't pan out.
 		 */
-		if (match_s) {
-			hd = match_s;
+		if(match_s) {
+			hd    = match_s;
 			old_c = hd->hp_ctlr;
 			old_s = hd->hp_slave;
-			if (hd->hp_ctlr < 0)
+			if(hd->hp_ctlr < 0)
 				hd->hp_ctlr = new_c;
-			if (hd->hp_slave < 0)
+			if(hd->hp_slave < 0)
 				hd->hp_slave = new_s;
 #ifdef DEBUG
-			if (acdebug)
+			if(acdebug)
 				printf("looking for %s%d at slave %d...",
 				       hd->hp_driver->d_name,
 				       hd->hp_unit, hd->hp_slave);
 #endif
 
-			if ((*hd->hp_driver->d_init)(hd)) {
+			if((*hd->hp_driver->d_init)(hd)) {
 #ifdef DEBUG
-				if (acdebug)
+				if(acdebug)
 					printf("found\n");
 #endif
 				printf("%s%d at %s%d, slave %d",
 				       hd->hp_driver->d_name, hd->hp_unit,
 				       hc->hp_driver->d_name, hd->hp_ctlr,
 				       hd->hp_slave);
-				if (hd->hp_flags)
+				if(hd->hp_flags)
 					printf(" flags 0x%x", hd->hp_flags);
 				printf("\n");
 				hd->hp_alive = 1;
-				if (hd->hp_dk && dkn < DK_NDRIVE)
+				if(hd->hp_dk && dkn < DK_NDRIVE)
 					hd->hp_dk = dkn++;
 				else
 					hd->hp_dk = -1;
 				rescan = 1;
 			} else {
 #ifdef DEBUG
-				if (acdebug)
+				if(acdebug)
 					printf("not found\n");
 #endif
-				hd->hp_ctlr = old_c;
+				hd->hp_ctlr  = old_c;
 				hd->hp_slave = old_s;
 			}
 			/*
@@ -393,15 +388,15 @@ find_slaves(hc)
 			 * ioconf entries of the same type by setting their
 			 * alive fields to -1.
 			 */
-			if (rescan) {
-				for (hd = hp_dinit; hd->hp_driver; hd++) {
-					if (hd->hp_alive)
+			if(rescan) {
+				for(hd = hp_dinit; hd->hp_driver; hd++) {
+					if(hd->hp_alive)
 						continue;
-					if (match_s->hp_alive == 1) {	/* 1 */
-						if (hd->hp_flags == match_s->hp_flags)
+					if(match_s->hp_alive == 1) { /* 1 */
+						if(hd->hp_flags == match_s->hp_flags)
 							hd->hp_alive = -1;
-					} else {			/* 2 */
-						if (hd->hp_driver == match_s->hp_driver)
+					} else { /* 2 */
+						if(hd->hp_driver == match_s->hp_driver)
 							hd->hp_alive = -1;
 					}
 				}
@@ -412,63 +407,62 @@ find_slaves(hc)
 		/*
 		 * Reset bogon alive fields prior to attempting next slave
 		 */
-		for (hd = hp_dinit; hd->hp_driver; hd++)
-			if (hd->hp_alive == -1)
+		for(hd = hp_dinit; hd->hp_driver; hd++)
+			if(hd->hp_alive == -1)
 				hd->hp_alive = 0;
 	}
 }
 
-same_hw_device(hw, hd)
-	struct hp_hw *hw;
-	struct hp_device *hd;
+same_hw_device(hw, hd) struct hp_hw *hw;
+struct hp_device *hd;
 {
 	int found = 0;
 
-	switch (hw->hw_type) {
-	case NET:
-		found = dr_type(hd->hp_driver, "le");
-		break;
-	case SCSI:
-		found = dr_type(hd->hp_driver, "scsi");
-		break;
-	case VME:
-	case MISC:
-		break;
+	switch(hw->hw_type) {
+		case NET:
+			found = dr_type(hd->hp_driver, "le");
+			break;
+		case SCSI:
+			found = dr_type(hd->hp_driver, "scsi");
+			break;
+		case VME:
+		case MISC:
+			break;
 	}
-	return(found);
+	return (found);
 }
 
 #define setup_hw(hw, addr, sc, type, id, name) \
-	(hw)->hw_addr = addr; \
-	(hw)->hw_sc   = sc; \
-	(hw)->hw_type = type; \
-	(hw)->hw_id   = id; \
+	(hw)->hw_addr = addr;                      \
+	(hw)->hw_sc   = sc;                        \
+	(hw)->hw_type = type;                      \
+	(hw)->hw_id   = id;                        \
 	(hw)->hw_name = name
 
-find_devs()
-{
+find_devs() {
 	register struct hp_hw *hw = sc_table;
-	
-	setup_hw(hw, (char *) 0x51000000, 0x5, SIO,      0x5, "uPD7201A (SIO)");
-	hw->hw_id2 = 0; hw++;
-	
-	setup_hw(hw, (char *) 0x51000004, 0x5, KEYBOARD, 0x5, "uPD7201A (KBD)");
-	hw->hw_id2 = 1; hw++;
-	
-	setup_hw(hw, (char *) 0xe1000000, 0xe, SCSI,     0xe, "MB89352  (SPC)");
+
+	setup_hw(hw, (char *) 0x51000000, 0x5, SIO, 0x5, "uPD7201A (SIO)");
+	hw->hw_id2 = 0;
 	hw++;
 
-	if (!badaddr((caddr_t) 0xf1000000)) {
-		setup_hw(hw, (char *) 0xf1000000, 0xf, NET,      0xf, "Am7990 (LANCE)");
+	setup_hw(hw, (char *) 0x51000004, 0x5, KEYBOARD, 0x5, "uPD7201A (KBD)");
+	hw->hw_id2 = 1;
+	hw++;
+
+	setup_hw(hw, (char *) 0xe1000000, 0xe, SCSI, 0xe, "MB89352  (SPC)");
+	hw++;
+
+	if(!badaddr((caddr_t) 0xf1000000)) {
+		setup_hw(hw, (char *) 0xf1000000, 0xf, NET, 0xf, "Am7990 (LANCE)");
 		hw++;
 	}
 }
 
-strcmp(s1, s2)
-	register char *s1, *s2;
+strcmp(s1, s2) register char *s1, *s2;
 {
-	while (*s1 == *s2)
-		if (*s1++=='\0' || *s2++ == '\0')
+	while(*s1 == *s2)
+		if(*s1++ == '\0' || *s2++ == '\0')
 			return (0);
 	return (*s1 - *s2);
 }

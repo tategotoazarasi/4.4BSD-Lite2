@@ -28,15 +28,14 @@
 #include <stdio.h>
 #include "tests.h"
 
-int Tflag = 0;		/* print timing */
-int Hflag = 0;		/* print help message */
-int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-int Nflag = 0;		/* Suppress directory operations */
+int Tflag = 0; /* print timing */
+int Hflag = 0; /* print help message */
+int Fflag = 0; /* test function only;  set count to 1, negate -t */
+int Nflag = 0; /* Suppress directory operations */
 
-#define SNAME "/this/is/a/symlink"	/* symlink prefix */
+#define SNAME "/this/is/a/symlink" /* symlink prefix */
 
-usage()
-{
+usage() {
 	fprintf(stdout, "usage: %s [-htfn] [files count fname sname]\n", Myname);
 	fprintf(stdout, "  Flags:  h    Help - print this usage info\n");
 	fprintf(stdout, "          t    Print execution time statistics\n");
@@ -44,18 +43,17 @@ usage()
 	fprintf(stdout, "          n    Suppress test directory create operations\n");
 }
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(argc, argv) int argc;
+char *argv[];
 {
-	int files = 10;		/* number of files in each dir */
+	int files = 10; /* number of files in each dir */
 	int fi;
-	int count = 20;	/* times to do each file */
+	int count = 20; /* times to do each file */
 	int ct;
 	int totfiles = 0;
-	int totdirs = 0;
-	char *fname = FNAME;
-	char *sname = SNAME;
+	int totdirs  = 0;
+	char *fname  = FNAME;
+	char *sname  = SNAME;
 	struct timeval time;
 	char str[MAXPATHLEN];
 	char new[MAXPATHLEN];
@@ -68,22 +66,22 @@ main(argc, argv)
 	setbuf(stdout, NULL);
 	Myname = *argv++;
 	argc--;
-	while (argc && **argv == '-') {
-		for (opts = &argv[0][1]; *opts; opts++) {
-			switch (*opts) {
-				case 'h':	/* help */
+	while(argc && **argv == '-') {
+		for(opts = &argv[0][1]; *opts; opts++) {
+			switch(*opts) {
+				case 'h': /* help */
 					usage();
 					exit(1);
 
-				case 't':	/* time */
+				case 't': /* time */
 					Tflag++;
 					break;
-				
-				case 'f':	/* funtionality */
+
+				case 'f': /* funtionality */
 					Fflag++;
 					break;
-				
-				case 'n':	/* No Test Directory create */
+
+				case 'n': /* No Test Directory create */
 					Nflag++;
 					break;
 
@@ -97,96 +95,96 @@ main(argc, argv)
 		argv++;
 	}
 
-	if (argc) {
+	if(argc) {
 		files = getparm(*argv, 1, "files");
 		argv++;
 		argc--;
 	}
-	if (argc) {
+	if(argc) {
 		count = getparm(*argv, 1, "count");
 		argv++;
 		argc--;
 	}
-	if (argc) {
+	if(argc) {
 		fname = *argv;
 		argv++;
 		argc--;
 	}
-	if (argc) {
+	if(argc) {
 		sname = *argv;
 		argv++;
 		argc--;
 	}
-	if (argc) {
+	if(argc) {
 		usage();
 		exit(1);
 	}
 
 #ifndef S_IFLNK
 	fprintf(stdout, "\
-%s: symlink and readlink not supported on this client\n", Myname);
-#else /* S_IFLNK */
-	if (Fflag) {
+%s: symlink and readlink not supported on this client\n",
+	        Myname);
+#else  /* S_IFLNK */
+	if(Fflag) {
 		Tflag = 0;
 		count = 1;
 	}
 
-	if (!Nflag)
+	if(!Nflag)
 		testdir(NULL);
 	else
 		mtestdir(NULL);
 
 	fprintf(stdout, "%s: symlink and readlink\n", Myname);
 
-	if (Tflag) {
+	if(Tflag) {
 		starttime();
 	}
 
-	for (ct = 0; ct < count; ct++) {
-		for (fi = 0; fi < files; fi++) {
+	for(ct = 0; ct < count; ct++) {
+		for(fi = 0; fi < files; fi++) {
 			sprintf(str, "%s%d", fname, fi);
 			sprintf(new, "%s%d", sname, fi);
-			if (symlink(new, str) < 0) {
+			if(symlink(new, str) < 0) {
 				error("can't make symlink %s", str);
-				if (errno == EOPNOTSUPP)
+				if(errno == EOPNOTSUPP)
 					complete();
 				else
 					exit(1);
 			}
-                        if (lstat(str, &statb) < 0) {
-                                error("can't stat %s after symlink", str);
-                                exit(1);
-                        }
-			if ((statb.st_mode & S_IFMT) != S_IFLNK) {
+			if(lstat(str, &statb) < 0) {
+				error("can't stat %s after symlink", str);
+				exit(1);
+			}
+			if((statb.st_mode & S_IFMT) != S_IFLNK) {
 				error("mode of %s not symlink");
 				exit(1);
 			}
-			if ((ret = readlink(str, buf, MAXPATHLEN))
-			     != strlen(new)) {
+			if((ret = readlink(str, buf, MAXPATHLEN)) != strlen(new)) {
 				error("readlink %s ret %d, expect %d",
-					str, ret, strlen(new));
+				      str, ret, strlen(new));
 				exit(1);
 			}
-			if (strncmp(new, buf, ret) != NULL) {
+			if(strncmp(new, buf, ret) != NULL) {
 				error("readlink %s returned bad linkname",
-					str);
+				      str);
 				exit(1);
 			}
-			if (unlink(str) < 0) {
+			if(unlink(str) < 0) {
 				error("can't unlink %s", str);
 				exit(1);
 			}
 		}
 	}
 
-	if (Tflag) {
+	if(Tflag) {
 		endtime(&time);
 	}
 	fprintf(stdout, "\t%d symlinks and readlinks on %d files",
-		files * count * 2, files);
-	if (Tflag) {
+	        files * count * 2, files);
+	if(Tflag) {
 		fprintf(stdout, " in %d.%-2d seconds",
-		    time.tv_sec, time.tv_usec / 10000);
+		        time.tv_sec, time.tv_usec / 10000);
 	}
 	fprintf(stdout, "\n");
 #endif /* S_IFLNK */

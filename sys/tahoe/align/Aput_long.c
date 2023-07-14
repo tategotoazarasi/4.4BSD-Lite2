@@ -36,12 +36,11 @@
  *	@(#)Aput_long.c	7.1 (Berkeley) 12/6/90
  */
 
-#include	"align.h"
+#include "align.h"
 
-put_longword (infop, longword, where)
-register	process_info	*infop;
-register	char		*where;
-register	long		longword;
+put_longword(infop, longword, where) register process_info *infop;
+register char *where;
+register long longword;
 /*
 /*	Put the longword at the given address in memory.
 /*	Caveat: It's quite difficult to find a pte reference
@@ -53,10 +52,11 @@ register	long		longword;
 	register long code;
 
 	code = writeable(infop, where, 4);
-	if ( code == TRUE ) {
-		*where++ = longword>>24;
-		*where++ = longword>>16;
-		*where++ = longword>>8;
-		*where = longword;
-	} else exception (infop, ILL_ACCESS, where, code);
+	if(code == TRUE) {
+		*where++ = longword >> 24;
+		*where++ = longword >> 16;
+		*where++ = longword >> 8;
+		*where   = longword;
+	} else
+		exception(infop, ILL_ACCESS, where, code);
 }

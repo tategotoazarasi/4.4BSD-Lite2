@@ -58,7 +58,7 @@
 extern int tmode;
 extern int kbd_status;
 
-int iscaps = 0;
+int iscaps         = 0;
 int change_country = K_JAPANESE_J;
 int country;
 
@@ -75,7 +75,7 @@ Key_table *key_table_addr = default_table;
 
 #ifdef CPU_SINGLE
 #include "ms.h"
-#include <sys/clist.h>	
+#include <sys/clist.h>
 #include <sys/ttydev.h>
 #include <sys/tty.h>
 #include <news3400/sio/scc.h>
@@ -84,8 +84,7 @@ Key_table *key_table_addr = default_table;
 
 extern int cnrint();
 
-kbd_open(chan)
-	int chan;
+kbd_open(chan) int chan;
 {
 	register int i;
 
@@ -95,10 +94,9 @@ kbd_open(chan)
 	return (0);
 }
 
-kbd_read(chan, buf, n)
-	int chan;
-	char *buf;
-	int n;
+kbd_read(chan, buf, n) int chan;
+char *buf;
+int n;
 {
 #if defined(news1700) || defined(news1200)
 
@@ -106,10 +104,9 @@ kbd_read(chan, buf, n)
 #endif
 }
 
-kbd_write(chan, buf, n)
-	int chan;
-	char *buf;
-	int n;
+kbd_write(chan, buf, n) int chan;
+char *buf;
+int n;
 {
 
 #if defined(news3400)
@@ -117,13 +114,12 @@ kbd_write(chan, buf, n)
 #endif
 }
 
-kbd_back(buf, len)
-	register char *buf;
-	register int len;
+kbd_back(buf, len) register char *buf;
+register int len;
 {
 	int s;
 
-	while (--len >= 0) {
+	while(--len >= 0) {
 		s = spltty();
 		cnrint(*buf++);
 		(void) splx(s);
@@ -131,68 +127,61 @@ kbd_back(buf, len)
 	return (0);
 }
 
-#define	KBPRI	(PZERO+1)
+#define KBPRI (PZERO + 1)
 
 struct clist scode_buf;
 struct clist keyboard_buf;
-char	kb_rwait;
+char kb_rwait;
 
-kbd_flush()
-{
+kbd_flush() {
 
 	ndflush(&scode_buf, scode_buf.c_cc);
 	return (0);
 }
 
-static
-kbd_put_raw(scode)
-	int scode;
+static kbd_put_raw(scode) int scode;
 {
 	extern char kb_busy;
 
-	if (kb_busy) {
-		if (scode_buf.c_cc < CBSIZE)
+	if(kb_busy) {
+		if(scode_buf.c_cc < CBSIZE)
 			putc(scode, &scode_buf);
-		if (kb_rwait) {
+		if(kb_rwait) {
 			kb_rwait = 0;
-			wakeup((caddr_t)&kb_rwait);
+			wakeup((caddr_t) &kb_rwait);
 		}
 	}
 	return (scode);
-	
 }
 
-kbd_read_raw(chan, buf, count)
-	int chan;
-	char *buf;
-	register int count;
+kbd_read_raw(chan, buf, count) int chan;
+char *buf;
+register int count;
 {
 	register int i;
 	register int n;
 	register int s;
 
-	if (count <= 0)
+	if(count <= 0)
 		return (count);
 	s = splscc();
-	while ((n = min(scode_buf.c_cc, count)) == 0) {
+	while((n = min(scode_buf.c_cc, count)) == 0) {
 		kb_rwait = 1;
-		sleep((caddr_t)&kb_rwait, KBPRI);
+		sleep((caddr_t) &kb_rwait, KBPRI);
 		kb_rwait = 0;
 	}
 	(void) splx(s);
-	for (i = n; i > 0 ; i--)
+	for(i = n; i > 0; i--)
 		*buf++ = getc(&scode_buf);
 	return (n);
 }
 
-kbd_nread()
-{
+kbd_nread() {
 
 	return (scode_buf.c_cc);
 }
 
-kbd_bell(n)
-	register int n;
+kbd_bell(n) register int n;
 {
 
 #if defined(news3400)
@@ -201,43 +190,40 @@ kbd_bell(n)
 	return (0);
 }
 
-kbd_putcode(code)
-	int code;
+kbd_putcode(code) int code;
 {
 	int c;
 
 	kbd_put_raw(code);
 	kbd_encode(code);
-	while ((c = getc(&keyboard_buf)) != -1)
-		cnrint(c); 
+	while((c = getc(&keyboard_buf)) != -1)
+		cnrint(c);
 }
 
-put_code(buf, cnt)
-	register char *buf;
-	register int cnt;
+put_code(buf, cnt) register char *buf;
+register int cnt;
 {
 
-	while (--cnt >= 0)
+	while(--cnt >= 0)
 		putc(*buf++, &keyboard_buf);
 }
 
-kb_softint()
-{
+kb_softint() {
 	int code;
 	extern int tty00_is_console;
 
-	while ((code = xgetc(SCC_KEYBOARD)) >= 0) {
-#if defined(news3200)		/* BEGIN reiko */
-		if ((code & 0x7f) == KEY_EISUU) {
-			int up = code & OFF;
+	while((code = xgetc(SCC_KEYBOARD)) >= 0) {
+#if defined(news3200) /* BEGIN reiko */
+		if((code & 0x7f) == KEY_EISUU) {
+			int up          = code & OFF;
 			static int kana = 0;
 
-			if (kana) {
-				if (up) {
+			if(kana) {
+				if(up) {
 					kana = 0;
 				}
 			} else {
-				if (up) {
+				if(up) {
 					code = KEY_KANA | OFF;
 					kana = 1;
 				} else {
@@ -248,13 +234,13 @@ kb_softint()
 #endif
 
 #ifdef NOTDEF /* KU:XXX */
-		if (!tty00_is_console) 
+		if(!tty00_is_console)
 #endif
 			rst_dimmer_cnt();
 #if NMS > 0
-		if (!mskeytrigger(0, code & OFF, code & 0x7f))
+		if(!mskeytrigger(0, code & OFF, code & 0x7f))
 #endif
-		kbd_putcode(code);
+			kbd_putcode(code);
 	}
 }
 #endif /* CPU_SINGLE */
@@ -276,8 +262,7 @@ static int port_kbd_intr;
 static int port_kbd_back;
 static int port_kbd_ctrl;
 
-keyboard(chan)
-	int chan;
+keyboard(chan) int chan;
 {
 	int kbd_ctrl(), kbd_output();
 	int kbd_read(), kbd_ioctl(), kbd_io();
@@ -289,7 +274,7 @@ keyboard(chan)
 	Xkb_intr = kb_intr;
 #endif
 	kb_ioctl = kbd_ioctl;
-	kb_read = kbd_read;
+	kb_read  = kbd_read;
 	kbd_init();
 	proc_create("kbd_ctrl", kbd_ctrl, 300, DEFAULT_STACK_SIZE, 0);
 	proc_create("kbd_output", kbd_output, 300, DEFAULT_STACK_SIZE, 0);
@@ -298,8 +283,7 @@ keyboard(chan)
 
 int (*reset_dimmer)();
 
-kbd_ctrl()
-{
+kbd_ctrl() {
 	register int m, n;
 	register int select;
 	int *len, from, count;
@@ -312,46 +296,45 @@ kbd_ctrl()
 	ports[2] = port_kbd_ctrl = STDPORT;
 
 #ifdef news3800
-	*(char *)KEYBD_RESET = 0;
-	*(char *)KEYBD_INTE = 1;
+	*(char *) KEYBD_RESET = 0;
+	*(char *) KEYBD_INTE  = 1;
 #endif
 
 	kbd_buf = buffer_alloc(32);
 	(void) spl0();
-	for (;;) {
-		if (buffer_status(kbd_buf) > 0)
+	for(;;) {
+		if(buffer_status(kbd_buf) > 0)
 			m = 3;
 		else
 			m = 2;
-		if ((select = msg_select(m, ports)) == 0) {
+		if((select = msg_select(m, ports)) == 0) {
 			msg_recv(ports[0], NULL, &addr, &count, 0);
-			if (reset_dimmer)
+			if(reset_dimmer)
 				(*reset_dimmer)();
-			while (--count >= 0) {
-				if (send_mouse == 0 || (*send_mouse)(*addr) == 0)
+			while(--count >= 0) {
+				if(send_mouse == 0 || (*send_mouse)(*addr) == 0)
 					kbd_encode(*addr);
 				addr++;
 			}
-		} else if (select == 1) {	/* ESC [ 6 n */
+		} else if(select == 1) { /* ESC [ 6 n */
 			msg_recv(ports[select], NULL, &addr, &count, 0);
 			put(kbd_buf, addr, count);
 		} else {
-			msg_recv(ports[select], &from, &len, NULL, 0); 
+			msg_recv(ports[select], &from, &len, NULL, 0);
 			n = buffer_status(kbd_buf);
 			n = min(n, *len);
-			n = get(kbd_buf, buf, min(n, sizeof (buf)));
+			n = get(kbd_buf, buf, min(n, sizeof(buf)));
 			msg_send(from, ports[select], buf, n, 0);
 		}
 	}
 }
 
-kbd_output()
-{
+kbd_output() {
 	char *addr;
 	int from, len;
 
 	(void) spl0();
-	for (;;) {
+	for(;;) {
 		msg_recv(STDPORT, &from, &addr, &len, 0);
 #ifdef news3800
 		len = kbd_write(0, addr, len);
@@ -360,15 +343,14 @@ kbd_output()
 	}
 }
 
-kbd_io()
-{
+kbd_io() {
 	struct kb_ctrl_req *req;
 	int from, reply;
 
 	(void) spl0();
-	for (;;) {
+	for(;;) {
 		msg_recv(STDPORT, &from, &req, NULL, 0);
-		if (req->kb_func == KIOCCHTBL || req->kb_func == KIOCOYATBL)
+		if(req->kb_func == KIOCCHTBL || req->kb_func == KIOCOYATBL)
 			kbd_ioctl(0, req->kb_func, req->kb_arg);
 		else
 			kbd_ioctl(0, req->kb_func, &req->kb_arg);
@@ -377,76 +359,69 @@ kbd_io()
 	}
 }
 
-kbd_read(chan, buf, n)
-	int chan;
-	char *buf;
-	int n;
+kbd_read(chan, buf, n) int chan;
+char *buf;
+int n;
 {
 	static int port;
 	char *addr;
 	int len;
 
-	if (port == 0)
+	if(port == 0)
 		port = port_create("port_kbd_read");
-	if (n <= 0)
+	if(n <= 0)
 		return (0);
-	msg_send(port_kbd_ctrl, port, &n, sizeof (n), 0);
+	msg_send(port_kbd_ctrl, port, &n, sizeof(n), 0);
 	msg_recv(port, NULL, &addr, &len, 0);
 	bcopy(addr, buf, len);
 	msg_free(port);
 	return (len);
 }
 
-kbd_write(chan, buf, n)
-	int chan;
-	char *buf;
-	int n;
+kbd_write(chan, buf, n) int chan;
+char *buf;
+int n;
 {
 
 #ifdef news3800
-	*(char *)BEEP_FREQ = ~(n & 1);
-	*(char *)KEYBD_BEEP = 1;
+	*(char *) BEEP_FREQ  = ~(n & 1);
+	*(char *) KEYBD_BEEP = 1;
 	return (n);
 #endif
 }
 
-kbd_back(buf, len)
-	char *buf;
-	int len;
+kbd_back(buf, len) char *buf;
+int len;
 {
 
 	msg_send(port_kbd_back, 0, buf, len, 0);
 	return (0);
 }
 
-kbd_nread()
-{
+kbd_nread() {
 
 	return (buffer_status(kbd_buf));
 }
 
-kbd_flush()
-{
+kbd_flush() {
 
 	buffer_flush(kbd_buf);
 	return (0);
 }
 
 #ifdef news3800
-kb_intr()
-{
+kb_intr() {
 	char c;
 
-	if (port_kbd_intr > 0)
-		while (*(char *)KBMS_STAT & (1 << b_KBREADY)) {
-			c = *(char *)KEYBD_DATA;
-			msg_send(port_kbd_intr, 0, &c, sizeof (char), 0);
+	if(port_kbd_intr > 0)
+		while(*(char *) KBMS_STAT & (1 << b_KBREADY)) {
+			c = *(char *) KEYBD_DATA;
+			msg_send(port_kbd_intr, 0, &c, sizeof(char), 0);
 		}
 }
 #endif /* news3800 */
 
-kbd_bell(n, port)
-	int n, port;
+kbd_bell(n, port) int n, port;
 {
 
 #ifdef news3800
@@ -457,120 +432,114 @@ kbd_bell(n, port)
 	return (0);
 }
 
-put_code(buf, cnt)
-	char *buf;
-	int cnt;
+put_code(buf, cnt) char *buf;
+int cnt;
 {
 
 	put(kbd_buf, buf, cnt);
 }
 #endif /* IPC_MRX */
 
-kbd_ioctl(chan, cmd, argp)
-	int chan;
-	int cmd;
-	int *argp;
+kbd_ioctl(chan, cmd, argp) int chan;
+int cmd;
+int *argp;
 {
-	switch (cmd) {
+	switch(cmd) {
 
-	case KIOCFLUSH:
-		return (kbd_flush());
+		case KIOCFLUSH:
+			return (kbd_flush());
 
-	case KIOCSETS:
-	case KIOCGETS:
-		return (kbd_string(cmd, (Pfk_string *)argp));
+		case KIOCSETS:
+		case KIOCGETS:
+			return (kbd_string(cmd, (Pfk_string *) argp));
 
-	case KIOCBELL:
-		return (kbd_bell(*argp));
+		case KIOCBELL:
+			return (kbd_bell(*argp));
 
-	case KIOCBACK:
-		if (argp == NULL)
+		case KIOCBACK:
+			if(argp == NULL)
+				return (-1);
+			if((int) ((Key_string *) argp)->key_string == NULL)
+				return (-1);
+			if((int) ((Key_string *) argp)->key_length <= 0)
+				return (-1);
+			return (kbd_back(((Key_string *) argp)->key_string,
+			                 ((Key_string *) argp)->key_length));
+
+		case KIOCREPT:
+			return (kbd_repeat(1));
+
+		case KIOCNRPT:
+			return (kbd_repeat(0));
+
+		case KIOCNREAD:
+			*argp = kbd_nread();
+			return (0);
+
+		case KIOCSETLOCK:
+			iscaps = *argp;
+			return (0);
+
+		case KIOCGETCNUM:
+			*argp = country;
+			return (0);
+
+		case KIOCSETCNUM:
+			country        = *argp;
+			change_country = country;
+			return (0);
+
+		case KIOCDEFTBL:
+			key_table_addr = default_table;
+			country        = K_JAPANESE_J;
+			return (0);
+
+		case KIOCCHTBL:
+			key_table_addr = (Key_table *) argp;
+			country        = change_country;
+			return (0);
+
+		case KIOCGETSTAT:
+			*argp = kbd_status;
+			return (0);
+
+		case KIOCSETSTAT:
+			kbd_status = *argp;
+			return (0);
+
+		default:
 			return (-1);
-		if ((int)((Key_string *)argp)->key_string == NULL)
-			return (-1);
-		if ((int)((Key_string *)argp)->key_length <= 0)
-			return (-1);
-		return (kbd_back(((Key_string *)argp)->key_string,
-		    ((Key_string *)argp)->key_length));
-
-	case KIOCREPT:
-		return (kbd_repeat(1));
-
-	case KIOCNRPT:
-		return (kbd_repeat(0));
-
-	case KIOCNREAD:
-		*argp = kbd_nread();
-		return (0);
-
-	case KIOCSETLOCK:
-		iscaps = *argp;
-		return (0);
-
-	case KIOCGETCNUM:
-		*argp = country;
-		return (0);
-
-	case KIOCSETCNUM:
-		country = *argp;
-		change_country = country;
-		return (0);
-
-	case KIOCDEFTBL:
-		key_table_addr = default_table;
-		country = K_JAPANESE_J;
-		return (0);
-
-	case KIOCCHTBL:
-		key_table_addr = (Key_table *)argp;
-		country = change_country;
-		return (0);
-
-	case KIOCGETSTAT:
-		*argp = kbd_status;
-		return (0);
-
-	case KIOCSETSTAT:
-		kbd_status = *argp;
-		return (0);
-
-	default:
-		return (-1);
 	}
 }
 
-kbd_bell_scc(n)
-	register int n;
+kbd_bell_scc(n) register int n;
 {
 	register int i;
 	static char bell_data[] = {
-		0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
-		0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
-		0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
-		0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0
-	};
+	        0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	        0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	        0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+	        0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0};
 
-	while (n > 0) {
-		i = min(n, sizeof (bell_data));
+	while(n > 0) {
+		i = min(n, sizeof(bell_data));
 		(void) kbd_write(0, bell_data, i);
 		n -= i;
 	}
 }
 
 #ifdef KBDEBUG
-scc_error_puts(chan, buf)
-	int chan;
-	char *buf;
+scc_error_puts(chan, buf) int chan;
+char *buf;
 {
-	while (*buf) {
+	while(*buf) {
 		scc_error_write(chan, *buf++, 1);
 	}
 }
 
-scc_error_write_hex(chan, n, zs)
-	int chan;
-	unsigned int n;
-	int zs;
+scc_error_write_hex(chan, n, zs) int chan;
+unsigned int n;
+int zs;
 {
 	int i;
 	int tmp, al;
@@ -578,9 +547,9 @@ scc_error_write_hex(chan, n, zs)
 
 	al = 0;
 
-	for (i = 28; i >= 0; i -= 4) {
+	for(i = 28; i >= 0; i -= 4) {
 		tmp = (n >> i) & 0x0f;
-		if (tmp || al || !zs || !i) {
+		if(tmp || al || !zs || !i) {
 			al++;
 			scc_error_write(chan, hex[tmp], 1);
 		}

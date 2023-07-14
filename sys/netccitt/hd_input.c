@@ -64,8 +64,7 @@ static free_iframes();
  *      completed reading a frame.
  */
 
-hdintr ()
-{
+hdintr() {
 	register struct mbuf *m;
 	register struct hdcb *hdp;
 	register struct ifnet *ifp;
@@ -73,19 +72,19 @@ hdintr ()
 	static struct ifnet *lastifp;
 	static struct hdcb *lasthdp;
 
-	for (;;) {
-		s = splimp ();
-		IF_DEQUEUE (&hdintrq, m);
-		splx (s);
-		if (m == 0)
+	for(;;) {
+		s = splimp();
+		IF_DEQUEUE(&hdintrq, m);
+		splx(s);
+		if(m == 0)
 			break;
-		if (m->m_len < HDHEADERLN) {
-			printf ("hdintr: packet too short (len=%d)\n",
-				m->m_len);
-			m_freem (m);
+		if(m->m_len < HDHEADERLN) {
+			printf("hdintr: packet too short (len=%d)\n",
+			       m->m_len);
+			m_freem(m);
 			continue;
 		}
-		if ((m->m_flags & M_PKTHDR) == 0)
+		if((m->m_flags & M_PKTHDR) == 0)
 			panic("hdintr");
 		ifp = m->m_pkthdr.rcvif;
 
@@ -93,15 +92,15 @@ hdintr ()
 		 * look up the appropriate hdlc control block
 		 */
 
-		if (ifp == lastifp)
+		if(ifp == lastifp)
 			hdp = lasthdp;
 		else {
-			for (hdp = hdcbhead; hdp; hdp = hdp->hd_next)
-				if (hdp->hd_ifp == ifp)
+			for(hdp = hdcbhead; hdp; hdp = hdp->hd_next)
+				if(hdp->hd_ifp == ifp)
 					break;
-			if (hdp == 0) {
-				printf ("hdintr: unknown interface %x\n", ifp);
-				m_freem (m);
+			if(hdp == 0) {
+				printf("hdintr: unknown interface %x\n", ifp);
+				m_freem(m);
 				continue;
 			}
 			lastifp = ifp;
@@ -110,226 +109,224 @@ hdintr ()
 
 		/* Process_rxframe returns FALSE if the frame was NOT queued
 		   for the next higher layers. */
-		if (process_rxframe (hdp, m) == FALSE)
-			m_freem (m);
+		if(process_rxframe(hdp, m) == FALSE)
+			m_freem(m);
 	}
 }
 
-process_rxframe (hdp, fbuf)
-register struct hdcb *hdp;
+process_rxframe(hdp, fbuf) register struct hdcb *hdp;
 register struct mbuf *fbuf;
 {
 	register int queued = FALSE, frametype, pf;
 	register struct Hdlc_frame *frame;
 
-	frame = mtod (fbuf, struct Hdlc_frame *);
-	pf = ((struct Hdlc_iframe *) frame) -> pf;
+	frame = mtod(fbuf, struct Hdlc_frame *);
+	pf    = ((struct Hdlc_iframe *) frame)->pf;
 
-	hd_trace (hdp, RX, frame);
-	if (frame -> address != ADDRESS_A && frame -> address != ADDRESS_B)
+	hd_trace(hdp, RX, frame);
+	if(frame->address != ADDRESS_A && frame->address != ADDRESS_B)
 		return (queued);
 
-	switch ((frametype = hd_decode (hdp, frame)) + hdp->hd_state) {
-	case DM + DISC_SENT:
-	case UA + DISC_SENT:
-		/*
+	switch((frametype = hd_decode(hdp, frame)) + hdp->hd_state) {
+		case DM + DISC_SENT:
+		case UA + DISC_SENT:
+			/*
 		 * Link now closed.  Leave timer running
 		 * so hd_timer() can periodically check the
 		 * status of interface driver flag bit IFF_UP.
 		 */
-		hdp->hd_state = DISCONNECTED;
-		break;
+			hdp->hd_state = DISCONNECTED;
+			break;
 
-	case DM + INIT:
-	case UA + INIT:
-		/*
+		case DM + INIT:
+		case UA + INIT:
+			/*
 		 * This is a non-standard state change needed for DCEs
 		 * that do dynamic link selection.  We can't go into the
 		 * usual "SEND DM" state because a DM is a SARM in LAP.
 		 */
-		hd_writeinternal (hdp, SABM, POLLOFF);
-		hdp->hd_state = SABM_SENT;
-		SET_TIMER (hdp);
-		break;
+			hd_writeinternal(hdp, SABM, POLLOFF);
+			hdp->hd_state = SABM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case SABM + DM_SENT: 
-	case SABM + WAIT_SABM: 
-		hd_writeinternal (hdp, UA, pf);
-	case UA + SABM_SENT: 
-	case UA + WAIT_UA: 
-		KILL_TIMER (hdp);
-		hd_initvars (hdp);
-		hdp->hd_state = ABM;
-		hd_message (hdp, "Link level operational");
-		/* Notify the packet level - to send RESTART. */
-		(void) pk_ctlinput (PRC_LINKUP, hdp->hd_pkp);
-		break;
+		case SABM + DM_SENT:
+		case SABM + WAIT_SABM:
+			hd_writeinternal(hdp, UA, pf);
+		case UA + SABM_SENT:
+		case UA + WAIT_UA:
+			KILL_TIMER(hdp);
+			hd_initvars(hdp);
+			hdp->hd_state = ABM;
+			hd_message(hdp, "Link level operational");
+			/* Notify the packet level - to send RESTART. */
+			(void) pk_ctlinput(PRC_LINKUP, hdp->hd_pkp);
+			break;
 
-	case SABM + SABM_SENT: 
-		/* Got a SABM collision. Acknowledge the remote's SABM
+		case SABM + SABM_SENT:
+			/* Got a SABM collision. Acknowledge the remote's SABM
 		   via UA but still wait for UA. */
-		hd_writeinternal (hdp, UA, pf);
-		break;
+			hd_writeinternal(hdp, UA, pf);
+			break;
 
-	case SABM + ABM: 
-		/* Request to reset the link from the remote. */
-		KILL_TIMER (hdp);
-		hd_message (hdp, "Link reset");
+		case SABM + ABM:
+			/* Request to reset the link from the remote. */
+			KILL_TIMER(hdp);
+			hd_message(hdp, "Link reset");
 #ifdef HDLCDEBUG
-		hd_dumptrace (hdp);
+			hd_dumptrace(hdp);
 #endif
-		hd_flush (hdp->hd_ifp);
-		hd_writeinternal (hdp, UA, pf);
-		hd_initvars (hdp);
-		(void) pk_ctlinput (PRC_LINKRESET, hdp->hd_pkp);
-		hdp->hd_resets++;
-		break;
+			hd_flush(hdp->hd_ifp);
+			hd_writeinternal(hdp, UA, pf);
+			hd_initvars(hdp);
+			(void) pk_ctlinput(PRC_LINKRESET, hdp->hd_pkp);
+			hdp->hd_resets++;
+			break;
 
-	case SABM + WAIT_UA: 
-		hd_writeinternal (hdp, UA, pf);
-		break;
+		case SABM + WAIT_UA:
+			hd_writeinternal(hdp, UA, pf);
+			break;
 
-	case DM + ABM: 
-		hd_message (hdp, "DM received: link down");
+		case DM + ABM:
+			hd_message(hdp, "DM received: link down");
 #ifdef HDLCDEBUG
-		hd_dumptrace (hdp);
+			hd_dumptrace(hdp);
 #endif
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
-		hd_flush (hdp->hd_ifp);
-	case DM + DM_SENT: 
-	case DM + WAIT_SABM: 
-	case DM + WAIT_UA: 
-		hd_writeinternal (hdp, SABM, pf);
-		hdp->hd_state = SABM_SENT;
-		SET_TIMER (hdp);
-		break;
+			(void) pk_ctlinput(PRC_LINKDOWN, hdp->hd_pkp);
+			hd_flush(hdp->hd_ifp);
+		case DM + DM_SENT:
+		case DM + WAIT_SABM:
+		case DM + WAIT_UA:
+			hd_writeinternal(hdp, SABM, pf);
+			hdp->hd_state = SABM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case DISC + INIT:
-	case DISC + DM_SENT: 
-	case DISC + SABM_SENT: 
-		/* Note: This is a non-standard state change. */
-		hd_writeinternal (hdp, UA, pf);
-		hd_writeinternal (hdp, SABM, POLLOFF);
-		hdp->hd_state = SABM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case DISC + INIT:
+		case DISC + DM_SENT:
+		case DISC + SABM_SENT:
+			/* Note: This is a non-standard state change. */
+			hd_writeinternal(hdp, UA, pf);
+			hd_writeinternal(hdp, SABM, POLLOFF);
+			hdp->hd_state = SABM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case DISC + WAIT_UA: 
-		hd_writeinternal (hdp, DM, pf);
-		SET_TIMER (hdp);
-		hdp->hd_state = DM_SENT;
-		break;
+		case DISC + WAIT_UA:
+			hd_writeinternal(hdp, DM, pf);
+			SET_TIMER(hdp);
+			hdp->hd_state = DM_SENT;
+			break;
 
-	case DISC + ABM: 
-		hd_message (hdp, "DISC received: link down");
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
-	case DISC + WAIT_SABM: 
-		hd_writeinternal (hdp, UA, pf);
-		hdp->hd_state = DM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case DISC + ABM:
+			hd_message(hdp, "DISC received: link down");
+			(void) pk_ctlinput(PRC_LINKDOWN, hdp->hd_pkp);
+		case DISC + WAIT_SABM:
+			hd_writeinternal(hdp, UA, pf);
+			hdp->hd_state = DM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case UA + ABM: 
-		hd_message (hdp, "UA received: link down");
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
-	case UA + WAIT_SABM: 
-		hd_writeinternal (hdp, DM, pf);
-		hdp->hd_state = DM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case UA + ABM:
+			hd_message(hdp, "UA received: link down");
+			(void) pk_ctlinput(PRC_LINKDOWN, hdp->hd_pkp);
+		case UA + WAIT_SABM:
+			hd_writeinternal(hdp, DM, pf);
+			hdp->hd_state = DM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case FRMR + DM_SENT: 
-		hd_writeinternal (hdp, SABM, pf);
-		hdp->hd_state = SABM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case FRMR + DM_SENT:
+			hd_writeinternal(hdp, SABM, pf);
+			hdp->hd_state = SABM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case FRMR + WAIT_SABM: 
-		hd_writeinternal (hdp, DM, pf);
-		hdp->hd_state = DM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case FRMR + WAIT_SABM:
+			hd_writeinternal(hdp, DM, pf);
+			hdp->hd_state = DM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case FRMR + ABM: 
-		hd_message (hdp, "FRMR received: link down");
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
+		case FRMR + ABM:
+			hd_message(hdp, "FRMR received: link down");
+			(void) pk_ctlinput(PRC_LINKDOWN, hdp->hd_pkp);
 #ifdef HDLCDEBUG
-		hd_dumptrace (hdp);
+			hd_dumptrace(hdp);
 #endif
-		hd_flush (hdp->hd_ifp);
-		hd_writeinternal (hdp, SABM, pf);
-		hdp->hd_state = WAIT_UA;
-		SET_TIMER (hdp);
-		break;
+			hd_flush(hdp->hd_ifp);
+			hd_writeinternal(hdp, SABM, pf);
+			hdp->hd_state = WAIT_UA;
+			SET_TIMER(hdp);
+			break;
 
-	case RR + ABM: 
-	case RNR + ABM: 
-	case REJ + ABM: 
-		process_sframe (hdp, (struct Hdlc_sframe *)frame, frametype);
-		break;
+		case RR + ABM:
+		case RNR + ABM:
+		case REJ + ABM:
+			process_sframe(hdp, (struct Hdlc_sframe *) frame, frametype);
+			break;
 
-	case IFRAME + ABM: 
-		queued = process_iframe (hdp, fbuf, (struct Hdlc_iframe *)frame);
-		break;
+		case IFRAME + ABM:
+			queued = process_iframe(hdp, fbuf, (struct Hdlc_iframe *) frame);
+			break;
 
-	case IFRAME + SABM_SENT: 
-	case RR + SABM_SENT: 
-	case RNR + SABM_SENT: 
-	case REJ + SABM_SENT: 
-		hd_writeinternal (hdp, DM, POLLON);
-		hdp->hd_state = DM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case IFRAME + SABM_SENT:
+		case RR + SABM_SENT:
+		case RNR + SABM_SENT:
+		case REJ + SABM_SENT:
+			hd_writeinternal(hdp, DM, POLLON);
+			hdp->hd_state = DM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case IFRAME + WAIT_SABM: 
-	case RR + WAIT_SABM: 
-	case RNR + WAIT_SABM: 
-	case REJ + WAIT_SABM: 
-		hd_writeinternal (hdp, FRMR, POLLOFF);
-		SET_TIMER (hdp);
-		break;
+		case IFRAME + WAIT_SABM:
+		case RR + WAIT_SABM:
+		case RNR + WAIT_SABM:
+		case REJ + WAIT_SABM:
+			hd_writeinternal(hdp, FRMR, POLLOFF);
+			SET_TIMER(hdp);
+			break;
 
-	case ILLEGAL + SABM_SENT: 
-		hdp->hd_unknown++;
-		hd_writeinternal (hdp, DM, POLLOFF);
-		hdp->hd_state = DM_SENT;
-		SET_TIMER (hdp);
-		break;
+		case ILLEGAL + SABM_SENT:
+			hdp->hd_unknown++;
+			hd_writeinternal(hdp, DM, POLLOFF);
+			hdp->hd_state = DM_SENT;
+			SET_TIMER(hdp);
+			break;
 
-	case ILLEGAL + ABM: 
-		hd_message (hdp, "Unknown frame received: link down");
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
-	case ILLEGAL + WAIT_SABM:
-		hdp->hd_unknown++;
+		case ILLEGAL + ABM:
+			hd_message(hdp, "Unknown frame received: link down");
+			(void) pk_ctlinput(PRC_LINKDOWN, hdp->hd_pkp);
+		case ILLEGAL + WAIT_SABM:
+			hdp->hd_unknown++;
 #ifdef HDLCDEBUG
-		hd_dumptrace (hdp);
+			hd_dumptrace(hdp);
 #endif
-		hd_writeinternal (hdp, FRMR, POLLOFF);
-		hdp->hd_state = WAIT_SABM;
-		SET_TIMER (hdp);
-		break;
+			hd_writeinternal(hdp, FRMR, POLLOFF);
+			hdp->hd_state = WAIT_SABM;
+			SET_TIMER(hdp);
+			break;
 	}
 
 	return (queued);
 }
 
-process_iframe (hdp, fbuf, frame)
-register struct hdcb *hdp;
+process_iframe(hdp, fbuf, frame) register struct hdcb *hdp;
 struct mbuf *fbuf;
 register struct Hdlc_iframe *frame;
 {
-	register int    nr = frame -> nr,
-	                ns = frame -> ns,
-	                pf = frame -> pf;
-	register int    queued = FALSE;
+	register int nr     = frame->nr,
+	             ns     = frame->ns,
+	             pf     = frame->pf;
+	register int queued = FALSE;
 
 	/* 
 	 *  Validate the iframe's N(R) value. It's N(R) value must be in
 	 *   sync with our V(S) value and our "last received nr".
 	 */
 
-	if (valid_nr (hdp, nr, FALSE) == FALSE) {
-		frame_reject (hdp, Z, frame);
+	if(valid_nr(hdp, nr, FALSE) == FALSE) {
+		frame_reject(hdp, Z, frame);
 		return (queued);
 	}
 
@@ -339,9 +336,9 @@ register struct Hdlc_iframe *frame;
 	 *  sequence number N(S) MUST be equal to V(S).
 	 */
 
-	if (ns != hdp->hd_vr) {
+	if(ns != hdp->hd_vr) {
 		hdp->hd_invalid_ns++;
-		if (pf || (hdp->hd_condition & REJ_CONDITION) == 0) {
+		if(pf || (hdp->hd_condition & REJ_CONDITION) == 0) {
 			hdp->hd_condition |= REJ_CONDITION;
 			/*
 			 * Flush the transmit queue. This is ugly but we
@@ -353,8 +350,8 @@ register struct Hdlc_iframe *frame;
 			 * will cause the DCE to receive two or more
 			 * rejects back to back, which must never happen.
 			 */
-			hd_flush (hdp->hd_ifp);
-			hd_writeinternal (hdp, REJ, pf);
+			hd_flush(hdp->hd_ifp);
+			hd_writeinternal(hdp, REJ, pf);
 		}
 		return (queued);
 	}
@@ -367,45 +364,45 @@ register struct Hdlc_iframe *frame;
 	 *  it is queued for the packet level.
 	 */
 
-	if (ns != (hdp -> hd_lasttxnr + hdp -> hd_xcp -> xc_lwsize) % MODULUS) {
-		hdp -> hd_vr = (hdp -> hd_vr + 1) % MODULUS;
-		if (pf == 1) {
+	if(ns != (hdp->hd_lasttxnr + hdp->hd_xcp->xc_lwsize) % MODULUS) {
+		hdp->hd_vr = (hdp->hd_vr + 1) % MODULUS;
+		if(pf == 1) {
 			/* Must generate a RR or RNR with final bit on. */
-			hd_writeinternal (hdp, RR, POLLON);
+			hd_writeinternal(hdp, RR, POLLON);
 		} else
 			/*    
 			 *  Hopefully we can piggyback the RR, if not we will generate
 			 *  a RR when T3 timer expires.
 			 */
-			if (hdp -> hd_rrtimer == 0)
+			if(hdp->hd_rrtimer == 0)
 				hdp->hd_rrtimer = hd_t3;
 
 		/* Forward iframe to packet level of X.25. */
-		fbuf -> m_data += HDHEADERLN;
-		fbuf -> m_len -= HDHEADERLN;
-		fbuf -> m_pkthdr.len -= HDHEADERLN;
-		fbuf -> m_pkthdr.rcvif = (struct ifnet *)hdp -> hd_pkp;
+		fbuf->m_data += HDHEADERLN;
+		fbuf->m_len -= HDHEADERLN;
+		fbuf->m_pkthdr.len -= HDHEADERLN;
+		fbuf->m_pkthdr.rcvif = (struct ifnet *) hdp->hd_pkp;
 #ifdef BSD4_3
-		fbuf->m_act = 0;	/* probably not necessary */
+		fbuf->m_act = 0; /* probably not necessary */
 #else
 		{
 			register struct mbuf *m;
-			
-			for (m = fbuf; m -> m_next; m = m -> m_next)
-				m -> m_act = (struct mbuf *) 0;
-			m -> m_act = (struct mbuf *) 1;
+
+			for(m = fbuf; m->m_next; m = m->m_next)
+				m->m_act = (struct mbuf *) 0;
+			m->m_act = (struct mbuf *) 1;
 		}
 #endif
-		pk_input (fbuf);
+		pk_input(fbuf);
 		queued = TRUE;
-		hd_start (hdp);
+		hd_start(hdp);
 	} else {
 		/* 
 		 *  Here if the remote station has transmitted more iframes then
 		 *  the number which have been acknowledged plus K. 
 		 */
 		hdp->hd_invalid_ns++;
-		frame_reject (hdp, W, frame);
+		frame_reject(hdp, W, frame);
 	}
 	return (queued);
 }
@@ -420,14 +417,13 @@ register struct Hdlc_iframe *frame;
  */
 
 bool
-range_check (rear, value, front)
-int     rear,
+        range_check(rear, value, front) int rear,
         value,
         front;
 {
 	register bool result = FALSE;
 
-	if (front > rear)
+	if(front > rear)
 		result = (rear <= value) && (value <= front);
 	else
 		result = (rear <= value) || (value <= front);
@@ -441,45 +437,43 @@ int     rear,
  *  condition Y (frame length error) are handled elsewhere.
  */
 
-static
-frame_reject (hdp, rejectcode, frame)
-struct hdcb *hdp;
+static frame_reject(hdp, rejectcode, frame) struct hdcb *hdp;
 struct Hdlc_iframe *frame;
 {
 	register struct Frmr_frame *frmr = &hd_frmr;
 
-	frmr -> frmr_control = ((struct Hdlc_frame *) frame) -> control;
+	frmr->frmr_control = ((struct Hdlc_frame *) frame)->control;
 
-	frmr -> frmr_ns = frame -> ns;
-	frmr -> frmr_f1_0 = 0;
-	frmr -> frmr_nr = frame -> nr;
-	frmr -> frmr_f2_0 = 0;
+	frmr->frmr_ns   = frame->ns;
+	frmr->frmr_f1_0 = 0;
+	frmr->frmr_nr   = frame->nr;
+	frmr->frmr_f2_0 = 0;
 
-	frmr -> frmr_0000 = 0;
-	frmr -> frmr_w = frmr -> frmr_x = frmr -> frmr_y =
-		frmr -> frmr_z = 0;
-	switch (rejectcode) {
-	case Z: 
-		frmr -> frmr_z = 1;/* invalid N(R). */
-		break;
+	frmr->frmr_0000 = 0;
+	frmr->frmr_w = frmr->frmr_x = frmr->frmr_y =
+	        frmr->frmr_z        = 0;
+	switch(rejectcode) {
+		case Z:
+			frmr->frmr_z = 1; /* invalid N(R). */
+			break;
 
-	case Y: 
-		frmr -> frmr_y = 1;/* iframe length error. */
-		break;
+		case Y:
+			frmr->frmr_y = 1; /* iframe length error. */
+			break;
 
-	case X: 
-		frmr -> frmr_x = 1;/* invalid information field. */
-		frmr -> frmr_w = 1;
-		break;
+		case X:
+			frmr->frmr_x = 1; /* invalid information field. */
+			frmr->frmr_w = 1;
+			break;
 
-	case W: 
-		frmr -> frmr_w = 1;/* invalid N(S). */
+		case W:
+			frmr->frmr_w = 1; /* invalid N(S). */
 	}
 
-	hd_writeinternal (hdp, FRMR, POLLOFF);
+	hd_writeinternal(hdp, FRMR, POLLOFF);
 
 	hdp->hd_state = WAIT_SABM;
-	SET_TIMER (hdp);
+	SET_TIMER(hdp);
 }
 
 /* 
@@ -488,53 +482,50 @@ struct Hdlc_iframe *frame;
  *  frames is done here.
  */
 
-process_sframe (hdp, frame, frametype)
-register struct hdcb *hdp;
+process_sframe(hdp, frame, frametype) register struct hdcb *hdp;
 register struct Hdlc_sframe *frame;
 int frametype;
 {
-	register int nr = frame -> nr, pf = frame -> pf, pollbit = 0;
+	register int nr = frame->nr, pf = frame->pf, pollbit = 0;
 
-	if (valid_nr (hdp, nr, pf) == TRUE) {
-		switch (frametype) {
-		case RR: 
-			hdp->hd_condition &= ~REMOTE_RNR_CONDITION;
-			break;
+	if(valid_nr(hdp, nr, pf) == TRUE) {
+		switch(frametype) {
+			case RR:
+				hdp->hd_condition &= ~REMOTE_RNR_CONDITION;
+				break;
 
-		case RNR: 
-			hdp->hd_condition |= REMOTE_RNR_CONDITION;
-			hdp->hd_retxcnt = 0;
-			break;
+			case RNR:
+				hdp->hd_condition |= REMOTE_RNR_CONDITION;
+				hdp->hd_retxcnt = 0;
+				break;
 
-		case REJ: 
-			hdp->hd_condition &= ~REMOTE_RNR_CONDITION;
-			rej_routine (hdp, nr);
+			case REJ:
+				hdp->hd_condition &= ~REMOTE_RNR_CONDITION;
+				rej_routine(hdp, nr);
 		}
 
-		if (pf == 1) {
+		if(pf == 1) {
 			hdp->hd_retxcnt = 0;
 			hdp->hd_condition &= ~TIMER_RECOVERY_CONDITION;
 
-			if (frametype == RR && hdp->hd_lastrxnr == hdp->hd_vs
-				&& hdp->hd_timer == 0 && hdp->hd_txq.head == 0)
+			if(frametype == RR && hdp->hd_lastrxnr == hdp->hd_vs && hdp->hd_timer == 0 && hdp->hd_txq.head == 0)
 				hd_writeinternal(hdp, RR, pf);
 			else
-			/* If any iframes have been queued because of the
+				/* If any iframes have been queued because of the
 			   timer condition, transmit then now. */
-			if (hdp->hd_condition & REMOTE_RNR_CONDITION) {
-				/* Remote is busy or timer condition, so only
+				if(hdp->hd_condition & REMOTE_RNR_CONDITION) {
+					/* Remote is busy or timer condition, so only
 				   send one. */
-				if (hdp->hd_vs != hdp->hd_retxqi)
-					hd_send_iframe (hdp, hdp->hd_retxq[hdp->hd_vs], pollbit);
-			}
-			else	/* Flush the retransmit list first. */
-				while (hdp->hd_vs != hdp->hd_retxqi)
-					hd_send_iframe (hdp, hdp->hd_retxq[hdp->hd_vs], POLLOFF);
+					if(hdp->hd_vs != hdp->hd_retxqi)
+						hd_send_iframe(hdp, hdp->hd_retxq[hdp->hd_vs], pollbit);
+				} else /* Flush the retransmit list first. */
+					while(hdp->hd_vs != hdp->hd_retxqi)
+						hd_send_iframe(hdp, hdp->hd_retxq[hdp->hd_vs], POLLOFF);
 		}
 
-		hd_start (hdp);
+		hd_start(hdp);
 	} else
-		frame_reject (hdp, Z, (struct Hdlc_iframe *)frame);	/* Invalid N(R). */
+		frame_reject(hdp, Z, (struct Hdlc_iframe *) frame); /* Invalid N(R). */
 }
 
 /* 
@@ -544,12 +535,11 @@ int frametype;
  */
 
 bool
-valid_nr (hdp, nr, finalbit)
-register struct hdcb *hdp;
+        valid_nr(hdp, nr, finalbit) register struct hdcb *hdp;
 register int finalbit;
 {
 	/* Make sure it really does acknowledge something. */
-	if (hdp->hd_lastrxnr == nr)
+	if(hdp->hd_lastrxnr == nr)
 		return (TRUE);
 
 	/* 
@@ -559,9 +549,9 @@ register int finalbit;
 	 *  more IFRAME's, else frame reject condition is entered.
 	 */
 
-	if (range_check (hdp->hd_lastrxnr, nr, hdp->hd_vs) == FALSE) {
-		if ((hdp->hd_condition & TIMER_RECOVERY_CONDITION) &&
-				range_check (hdp->hd_vs, nr, hdp->hd_xx) == TRUE)
+	if(range_check(hdp->hd_lastrxnr, nr, hdp->hd_vs) == FALSE) {
+		if((hdp->hd_condition & TIMER_RECOVERY_CONDITION) &&
+		   range_check(hdp->hd_vs, nr, hdp->hd_xx) == TRUE)
 			hdp->hd_vs = nr;
 
 		else {
@@ -577,10 +567,10 @@ register int finalbit;
 	 *  does acknowledge frames which we are sending.
 	 */
 
-	KILL_TIMER (hdp);
-	free_iframes (hdp, &nr, finalbit);/* Free all acknowledged iframes */
-	if (nr != hdp->hd_vs)
-		SET_TIMER (hdp);
+	KILL_TIMER(hdp);
+	free_iframes(hdp, &nr, finalbit); /* Free all acknowledged iframes */
+	if(nr != hdp->hd_vs)
+		SET_TIMER(hdp);
 
 	return (TRUE);
 }
@@ -590,9 +580,7 @@ register int finalbit;
  *  It then resets the Send State Variable V(S) to accomplish this.
  */
 
-static
-rej_routine (hdp, rejnr)
-register struct hdcb *hdp;
+static rej_routine(hdp, rejnr) register struct hdcb *hdp;
 register int rejnr;
 {
 	register int anchor;
@@ -602,7 +590,7 @@ register int rejnr;
 	 * transmission will be out of sequence.
 	 */
 
-	hd_flush (hdp->hd_ifp);
+	hd_flush(hdp->hd_ifp);
 
 	/* 
 	 *  Determine how many frames should be re-transmitted. In the case 
@@ -611,22 +599,21 @@ register int rejnr;
 	 */
 
 	anchor = hdp->hd_vs;
-	if (hdp->hd_condition & TIMER_RECOVERY_CONDITION)
+	if(hdp->hd_condition & TIMER_RECOVERY_CONDITION)
 		anchor = hdp->hd_xx;
 
 	anchor = (anchor - rejnr + 8) % MODULUS;
 
-	if (anchor > 0) {
+	if(anchor > 0) {
 
 		/* There is at least one iframe to retransmit. */
-		KILL_TIMER (hdp);
+		KILL_TIMER(hdp);
 		hdp->hd_vs = rejnr;
 
-		while (hdp->hd_vs != hdp->hd_retxqi)
-			hd_send_iframe (hdp, hdp->hd_retxq[hdp->hd_vs], POLLOFF);
-
+		while(hdp->hd_vs != hdp->hd_retxqi)
+			hd_send_iframe(hdp, hdp->hd_retxq[hdp->hd_vs], POLLOFF);
 	}
-	hd_start (hdp);
+	hd_start(hdp);
 }
 
 /* 
@@ -634,14 +621,12 @@ register int rejnr;
  *  when a previously written iframe is acknowledged.
  */
 
-static
-free_iframes (hdp, nr, finalbit)
-register struct hdcb *hdp;
+static free_iframes(hdp, nr, finalbit) register struct hdcb *hdp;
 int *nr;
 register int finalbit;
 
 {
-	register int    i, k;
+	register int i, k;
 
 	/* 
 	 *  We  need to do the  following  because  of a  funny quirk  in  the 
@@ -652,18 +637,17 @@ register int finalbit;
 	 *  acknowledged!
 	 */
 
-	if ((hdp->hd_condition & TIMER_RECOVERY_CONDITION) && *nr == hdp->hd_xx && finalbit == 0) {
+	if((hdp->hd_condition & TIMER_RECOVERY_CONDITION) && *nr == hdp->hd_xx && finalbit == 0) {
 		*nr = (*nr - 1 + 8) % MODULUS;
-/*		printf ("QUIRK\n"); */
+		/*		printf ("QUIRK\n"); */
 	}
 
 	k = (*nr - hdp->hd_lastrxnr + 8) % MODULUS;
 
 	/* Loop here freeing all acknowledged iframes. */
-	for (i = 0; i < k; ++i) {
-		m_freem (hdp->hd_retxq[hdp->hd_lastrxnr]);
+	for(i = 0; i < k; ++i) {
+		m_freem(hdp->hd_retxq[hdp->hd_lastrxnr]);
 		hdp->hd_retxq[hdp->hd_lastrxnr] = 0;
-		hdp->hd_lastrxnr = (hdp->hd_lastrxnr + 1) % MODULUS;
+		hdp->hd_lastrxnr                = (hdp->hd_lastrxnr + 1) % MODULUS;
 	}
-
 }

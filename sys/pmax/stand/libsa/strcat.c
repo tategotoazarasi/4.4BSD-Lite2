@@ -40,7 +40,7 @@
 
 char *
 strcat(s1, s2)
-	char *s1, *s2;
+char *s1, *s2;
 {
 	return (callv->strcat(s1, s2));
 }

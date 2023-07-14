@@ -57,35 +57,34 @@
 #include <news3400/hbdev/rsreg.h>
 #include <news3400/sio/sccparam.h>
 
-#define	CN_RXE		RXE
-#define	CN_TXE		TXE
-#define	CN_ON		(RXE|TXE|RTS|DTR)
-#define	CN_OFF		0
-#define	CN_RTS		RTS
-#define	CN_DTR		DTR
-#define	CN_CTS		CTS
-#define	CN_DCD		DCD
-#define	CN_DSR		DSR
-#define	CN_RI		RI
-#define	CN_BRK		XBREAK
+#define CN_RXE RXE
+#define CN_TXE TXE
+#define CN_ON (RXE | TXE | RTS | DTR)
+#define CN_OFF 0
+#define CN_RTS RTS
+#define CN_DTR DTR
+#define CN_CTS CTS
+#define CN_DCD DCD
+#define CN_DSR DSR
+#define CN_RI RI
+#define CN_BRK XBREAK
 
 /*
  * Local variables for the driver
  */
 
-#define	splcons	spltty
+#define splcons spltty
 
 char cn_active[1];
 char cn_stopped[1];
 struct tty cn_tty[1];
 
-void	cnstart();
-int	ttrstrt();
-int	cnrint(), cnxint(), cnsint();
+void cnstart();
+int ttrstrt();
+int cnrint(), cnxint(), cnsint();
 
-bmattach(i)
-{
-	        /* temporary hack for pseudo-device initialization */;
+bmattach(i) {
+	/* temporary hack for pseudo-device initialization */;
 }
 
 /*
@@ -93,34 +92,34 @@ bmattach(i)
  */
 /*ARGSUSED*/
 cnopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	register struct tty *tp = &cn_tty[0];
 
-	if (cn_active[0] == 0) {
-		if (cn_init() < 0)
+	if(cn_active[0] == 0) {
+		if(cn_init() < 0)
 			return (ENXIO);
 		cn_enable();
 		cn_active[0] = 1;
 	}
-	if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	if(tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
-	tp->t_addr = (caddr_t)0;
+	tp->t_addr  = (caddr_t) 0;
 	tp->t_oproc = cnstart;
 	tp->t_state |= TS_WOPEN;
 	/*
 	 * If this is first open, initialze tty state to default.
 	 */
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
+		if(tp->t_ispeed == 0) {
+			tp->t_iflag  = TTYDEF_IFLAG;
+			tp->t_oflag  = TTYDEF_OFLAG;
+			tp->t_cflag  = TTYDEF_CFLAG;
+			tp->t_lflag  = TTYDEF_LFLAG;
 			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		}
 		cnparam(tp, &tp->t_termios);
@@ -139,8 +138,8 @@ cnopen(dev, flag, mode, p)
  */
 /*ARGSUSED*/
 cnclose(dev, flag)
-	dev_t dev;
-	int flag;
+        dev_t dev;
+int flag;
 {
 	register struct tty *tp = &cn_tty[0];
 
@@ -152,9 +151,9 @@ cnclose(dev, flag)
 
 /*ARGSUSED*/
 cnread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
 	register struct tty *tp = &cn_tty[0];
 
@@ -163,9 +162,9 @@ cnread(dev, uio, flag)
 
 /*ARGSUSED*/
 cnwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
 	register struct tty *tp = &cn_tty[0];
 
@@ -175,15 +174,14 @@ cnwrite(dev, uio, flag)
 /*
  * console receiver interrupt.
  */
-_cnrint(buf, n)
-	register char *buf;
-	register int n;
+_cnrint(buf, n) register char *buf;
+register int n;
 {
 	register struct tty *tp = &cn_tty[0];
 	register int (*rint)();
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		wakeup((caddr_t)&tp->t_rawq);
+	if((tp->t_state & TS_ISOPEN) == 0) {
+		wakeup((caddr_t) &tp->t_rawq);
 		cn_enable();
 		return;
 	}
@@ -192,7 +190,7 @@ _cnrint(buf, n)
 	 * until there are no more in the silo.
 	 */
 	rint = linesw[tp->t_line].l_rint;
-	while (--n >= 0)
+	while(--n >= 0)
 		(*rint)(*buf++, tp);
 	cn_enable();
 }
@@ -202,98 +200,109 @@ _cnrint(buf, n)
  */
 /*ARGSUSED*/
 cnioctl(dev, cmd, data, flag)
-	dev_t dev;
-	caddr_t data;
+        dev_t dev;
+caddr_t data;
 {
 	register struct tty *tp = &cn_tty[0];
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case TIOCSBRK:
-		(void) cnmctl(CN_BRK, DMBIS);
-		break;
+		case TIOCSBRK:
+			(void) cnmctl(CN_BRK, DMBIS);
+			break;
 
-	case TIOCCBRK:
-		(void) cnmctl(CN_BRK, DMBIC);
-		break;
+		case TIOCCBRK:
+			(void) cnmctl(CN_BRK, DMBIC);
+			break;
 
-	case TIOCSDTR:
-		(void) cnmctl(CN_DTR|CN_RTS, DMBIS);
-		break;
+		case TIOCSDTR:
+			(void) cnmctl(CN_DTR | CN_RTS, DMBIS);
+			break;
 
-	case TIOCCDTR:
-		(void) cnmctl(CN_DTR|CN_RTS, DMBIC);
-		break;
+		case TIOCCDTR:
+			(void) cnmctl(CN_DTR | CN_RTS, DMBIC);
+			break;
 
-	case TIOCMSET:
-		(void) cnmctl(dmtocn(*(int *)data), DMSET);
-		break;
+		case TIOCMSET:
+			(void) cnmctl(dmtocn(*(int *) data), DMSET);
+			break;
 
-	case TIOCMBIS:
-		(void) cnmctl(dmtocn(*(int *)data), DMBIS);
-		break;
+		case TIOCMBIS:
+			(void) cnmctl(dmtocn(*(int *) data), DMBIS);
+			break;
 
-	case TIOCMBIC:
-		(void) cnmctl(dmtocn(*(int *)data), DMBIC);
-		break;
+		case TIOCMBIC:
+			(void) cnmctl(dmtocn(*(int *) data), DMBIC);
+			break;
 
-	case TIOCMGET:
-		*(int *)data = cntodm(cnmctl(0, DMGET));
-		break;
+		case TIOCMGET:
+			*(int *) data = cntodm(cnmctl(0, DMGET));
+			break;
 
-	default:
-		return (ENOTTY);
+		default:
+			return (ENOTTY);
 	}
 	return (0);
 }
 
-dmtocn(bits)
-	register int bits;
+dmtocn(bits) register int bits;
 {
 	register int b;
 
 	b = 0;
-	if (bits & DML_LE)  b |= CN_TXE|CN_RXE;
-	if (bits & DML_DTR) b |= CN_DTR;
-	if (bits & DML_RTS) b |= CN_RTS;
-	if (bits & DML_CTS) b |= CN_CTS;
-	if (bits & DML_CAR) b |= CN_DCD;
-	if (bits & DML_RNG) b |= CN_RI;
-	if (bits & DML_DSR) b |= CN_DSR;
-	return(b);
+	if(bits & DML_LE)
+		b |= CN_TXE | CN_RXE;
+	if(bits & DML_DTR)
+		b |= CN_DTR;
+	if(bits & DML_RTS)
+		b |= CN_RTS;
+	if(bits & DML_CTS)
+		b |= CN_CTS;
+	if(bits & DML_CAR)
+		b |= CN_DCD;
+	if(bits & DML_RNG)
+		b |= CN_RI;
+	if(bits & DML_DSR)
+		b |= CN_DSR;
+	return (b);
 }
 
-cntodm(bits)
-	register int bits;
+cntodm(bits) register int bits;
 {
 	register int b;
 
 	b = 0;
-	if (bits & (CN_TXE|CN_RXE)) b |= DML_LE;
-	if (bits & CN_DTR) b |= DML_DTR;
-	if (bits & CN_RTS) b |= DML_RTS;
-	if (bits & CN_CTS) b |= DML_CTS;
-	if (bits & CN_DCD) b |= DML_CAR;
-	if (bits & CN_RI)  b |= DML_RNG;
-	if (bits & CN_DSR) b |= DML_DSR;
-	return(b);
+	if(bits & (CN_TXE | CN_RXE))
+		b |= DML_LE;
+	if(bits & CN_DTR)
+		b |= DML_DTR;
+	if(bits & CN_RTS)
+		b |= DML_RTS;
+	if(bits & CN_CTS)
+		b |= DML_CTS;
+	if(bits & CN_DCD)
+		b |= DML_CAR;
+	if(bits & CN_RI)
+		b |= DML_RNG;
+	if(bits & CN_DSR)
+		b |= DML_DSR;
+	return (b);
 }
- 
+
 /*
  * Set parameters from open or stty into the console hardware
  * registers.
  */
-cnparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+cnparam(tp, t) register struct tty *tp;
+register struct termios *t;
 {
 	register int param;
 	register int cflag = t->c_cflag;
@@ -304,7 +313,7 @@ cnparam(tp, t)
 	 * before the line interrupts.
 	 */
 	s = splcons();
-	if ((tp->t_ispeed)==0) {
+	if((tp->t_ispeed) == 0) {
 		tp->t_cflag |= HUPCL;
 		(void) cnmctl(CN_OFF, DMSET);
 		(void) splx(s);
@@ -312,22 +321,22 @@ cnparam(tp, t)
 	}
 
 	param = cn_get_param() &
-		~(CHAR_SIZE|PARITY|EVEN|STOPBIT|BAUD_RATE|NOCHECK);
-	if ((cflag & CREAD) == 0)
+	        ~(CHAR_SIZE | PARITY | EVEN | STOPBIT | BAUD_RATE | NOCHECK);
+	if((cflag & CREAD) == 0)
 		param &= ~RXE;
-	switch (cflag & CSIZE) {
-	    case CS5: break;
-	    case CS6: param |= C6BIT; break;
-	    case CS7: param |= C7BIT; break;
-	    case CS8: param |= C8BIT; break;
+	switch(cflag & CSIZE) {
+		case CS5: break;
+		case CS6: param |= C6BIT; break;
+		case CS7: param |= C7BIT; break;
+		case CS8: param |= C8BIT; break;
 	}
-	if (cflag & PARENB)
+	if(cflag & PARENB)
 		param |= PARITY;
-	if ((cflag & PARODD) == 0)
+	if((cflag & PARODD) == 0)
 		param |= EVEN;
-	if ((tp->t_iflag & INPCK) == 0)
+	if((tp->t_iflag & INPCK) == 0)
 		param |= NOCHECK;
-	if (cflag & CSTOPB)
+	if(cflag & CSTOPB)
 		param |= STOP2;
 	else
 		param |= STOP1;
@@ -339,8 +348,7 @@ cnparam(tp, t)
  * console transmitter interrupt.
  * Restart the idle line.
  */
-_cnxint(count)
-	int count;
+_cnxint(count) int count;
 {
 	register struct tty *tp = &cn_tty[0];
 	int s;
@@ -348,12 +356,12 @@ _cnxint(count)
 	cn_stopped[0] = 0;
 	tp->t_state &= ~TS_BUSY;
 	s = splcons();
-	if (tp->t_state & TS_FLUSH)
+	if(tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
 	else
 		ndflush(&tp->t_outq, count);
 	(void) splx(s);
-	if (tp->t_line)
+	if(tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
 	else
 		cnstart(tp);
@@ -363,8 +371,7 @@ _cnxint(count)
  * Start (restart) transmission on the console.
  */
 void
-cnstart(tp)
-	register struct tty *tp;
+        cnstart(tp) register struct tty *tp;
 {
 	register int nch;
 	int s;
@@ -377,13 +384,13 @@ cnstart(tp)
 	/*
 	 * If it's currently active, or delaying, no need to do anything.
 	 */
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if(tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
 		goto out;
 	/*
 	 * If ther are still characters in the IOP,
 	 * just reenable transmit.
 	 */
-	if (cn_stopped[0]) {
+	if(cn_stopped[0]) {
 		cn_stopped[0] = 0;
 		cn_start();
 		goto out;
@@ -392,10 +399,10 @@ cnstart(tp)
 	 * If there are sleepers, and output has drained below low
 	 * water mark, wake up the sleepers.
 	 */
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
+	if(tp->t_outq.c_cc <= tp->t_lowat) {
+		if(tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t) &tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -403,18 +410,18 @@ cnstart(tp)
 	 * Now restart transmission unless the output queue is
 	 * empty.
 	 */
-	if (tp->t_outq.c_cc == 0)
+	if(tp->t_outq.c_cc == 0)
 		goto out;
-	if (tp->t_flags & (RAW|LITOUT))
+	if(tp->t_flags & (RAW | LITOUT))
 		nch = ndqb(&tp->t_outq, 0);
 	else {
 		nch = ndqb(&tp->t_outq, 0200);
 		/*
 		 * If first thing on queue is a delay process it.
 		 */
-		if (nch == 0) {
+		if(nch == 0) {
 			nch = getc(&tp->t_outq);
-			timeout(ttrstrt, (caddr_t)tp, (nch&0x7f)+6);
+			timeout(ttrstrt, (caddr_t) tp, (nch & 0x7f) + 6);
 			tp->t_state |= TS_TIMEOUT;
 			goto out;
 		}
@@ -422,7 +429,7 @@ cnstart(tp)
 	/*
 	 * If characters to transmit, restart transmission.
 	 */
-	if (nch) {
+	if(nch) {
 		tp->t_state |= TS_BUSY;
 		cn_output(tp, nch);
 	}
@@ -434,8 +441,7 @@ out:
  * Stop output on a line, e.g. for ^S/^Q or output flush.
  */
 /*ARGSUSED*/
-cnstop(tp, flag)
-	register struct tty *tp;
+cnstop(tp, flag) register struct tty *tp;
 {
 	register int s;
 
@@ -443,10 +449,10 @@ cnstop(tp, flag)
 	 * Block input/output interrupts while messing with state.
 	 */
 	s = splcons();
-	if (tp->t_state & TS_BUSY) {
+	if(tp->t_state & TS_BUSY) {
 		cn_stop(0);
 		cn_stopped[0] = 1;
-		if ((tp->t_state & TS_TTSTOP) == 0) {
+		if((tp->t_state & TS_TTSTOP) == 0) {
 			tp->t_state |= TS_FLUSH;
 			cn_stop(1);
 		}
@@ -457,60 +463,56 @@ cnstop(tp, flag)
 /*
  * console modem control
  */
-cnmctl(bits, how)
-	int bits, how;
+cnmctl(bits, how) int bits, how;
 {
 	register int mbits;
 	int s;
 
-	bits &= (RXE|TXE|RTS|DTR|XBREAK);
+	bits &= (RXE | TXE | RTS | DTR | XBREAK);
 
 	s = splcons();
 
 	mbits = cn_get_param();
-	switch (how) {
-	case DMSET:
-		mbits = mbits & ~(RXE|TXE|RTS|DTR|XBREAK) | bits;
-		break;
+	switch(how) {
+		case DMSET:
+			mbits = mbits & ~(RXE | TXE | RTS | DTR | XBREAK) | bits;
+			break;
 
-	case DMBIS:
-		mbits |= bits;
-		break;
+		case DMBIS:
+			mbits |= bits;
+			break;
 
-	case DMBIC:
-		mbits &= ~bits;
-		break;
+		case DMBIC:
+			mbits &= ~bits;
+			break;
 
-	case DMGET:
-		(void) splx(s);
-		return(mbits);
+		case DMGET:
+			(void) splx(s);
+			return (mbits);
 	}
 	cn_set_param(mbits);
 
 	(void) splx(s);
-	return(mbits);
+	return (mbits);
 }
 
 /*
  * console status interrupt
  */
-_cnsint(stat)
-	int stat;
+_cnsint(stat) int stat;
 {
 	register struct tty *tp = &cn_tty[0];
 
-	if (stat & OVERRUN_ERROR)
+	if(stat & OVERRUN_ERROR)
 		printf("console: fifo overflow\n");
-	if (stat & RBREAK)
-		(*linesw[tp->t_line].l_rint)
-		    (tp->t_flags & RAW ? '\0' : tp->t_cc[VINTR], tp);
+	if(stat & RBREAK)
+		(*linesw[tp->t_line].l_rint)(tp->t_flags &RAW ? '\0' : tp->t_cc[VINTR], tp);
 }
 
 /*
  * console control interrupt
  */
-cncint()
-{
+cncint() {
 	printf("cncint:\n");
 }
 
@@ -534,11 +536,11 @@ cncint()
 #include <news3400/mrx/h/console.h>
 
 #ifdef mips
-#define ipc_phys(x)	K0_TT0(x)
-#define ipc_log(x)	TT0_K0(x)
+#define ipc_phys(x) K0_TT0(x)
+#define ipc_log(x) TT0_K0(x)
 #else
-#define ipc_phys(x)	(caddr_t)((int)(x) & ~0x80000000)
-#define ipc_log(x)	(caddr_t)((int)(x) | 0x80000000)
+#define ipc_phys(x) (caddr_t)((int) (x) & ~0x80000000)
+#define ipc_log(x) (caddr_t)((int) (x) | 0x80000000)
 #endif
 
 #if NBM > 0
@@ -546,20 +548,19 @@ extern char *ext_fnt_addr[];
 extern char *ext_fnt24_addr[];
 #endif /* NBM > 0 */
 
-int	port_cnrecv;
-int	port_cnxmit;
-int	port_cnstat;
-int	port_cnctrl;
-int	port_cnfont;
-int	port_cnrecv_iop;
-int	port_cnxmit_iop;
-int	port_cnstat_iop;
-int	port_cnctrl_iop;
+int port_cnrecv;
+int port_cnxmit;
+int port_cnstat;
+int port_cnctrl;
+int port_cnfont;
+int port_cnrecv_iop;
+int port_cnxmit_iop;
+int port_cnstat_iop;
+int port_cnctrl_iop;
 
-int	cnfont();
+int cnfont();
 
-cn_init()
-{
+cn_init() {
 	struct cons_ctrl_req req;
 	int *reply;
 
@@ -574,41 +575,39 @@ cn_init()
 	port_cnxmit_iop = object_query("cons_output");
 	port_cnctrl_iop = object_query("cons_ctrl");
 	port_cnstat_iop = object_query("cons_stat");
-	req.cons_func = CIO_ASKDEVICE;
+	req.cons_func   = CIO_ASKDEVICE;
 	msg_send(port_cnctrl_iop, port_cnctrl, &req, sizeof(req), 0);
 	msg_recv(port_cnctrl, NULL, &reply, NULL, 0);
 	tty00_is_console = *reply;
 	msg_free(port_cnctrl);
 #if NBM > 0
 	req.cons_func = CIO_SET16FNT;
-	req.cons_addr = (char *)ipc_phys(ext_fnt_addr);
+	req.cons_addr = (char *) ipc_phys(ext_fnt_addr);
 	msg_send(port_cnctrl_iop, port_cnctrl, &req, sizeof(req), 0);
 	msg_recv(port_cnctrl, NULL, NULL, NULL, 0);
 	req.cons_func = CIO_SET24FNT;
-	req.cons_addr = (char *)ipc_phys(ext_fnt24_addr);
+	req.cons_addr = (char *) ipc_phys(ext_fnt24_addr);
 	msg_send(port_cnctrl_iop, port_cnctrl, &req, sizeof(req), 0);
 	msg_recv(port_cnctrl, NULL, NULL, NULL, 0);
 #endif
 	return (0);
 }
 
-cn_enable()
-{
+cn_enable() {
 	int len;
 
 	len = MAX_CIO;
 	msg_send(port_cnrecv_iop, port_cnrecv, &len, sizeof(len), 0);
 }
 
-cnrint(port)
-	int port;
+cnrint(port) int port;
 {
 	int len;
 	char *buf;
 
 	msg_recv(port, NULL, &buf, &len, 0);
 #ifdef mips
-	_cnrint((char *)MACH_CACHED_TO_UNCACHED(buf), len);
+	_cnrint((char *) MACH_CACHED_TO_UNCACHED(buf), len);
 #else
 	dcia();
 	_cnrint(buf, len);
@@ -616,8 +615,7 @@ cnrint(port)
 	msg_free(port);
 }
 
-cnxint(port)
-	int port;
+cnxint(port) int port;
 {
 	int *len;
 
@@ -625,34 +623,30 @@ cnxint(port)
 	_cnxint(*len);
 }
 
-cn_start()
-{
+cn_start() {
 	int func;
 
 	func = CIO_START;
 	msg_send(port_cnctrl_iop, 0, &func, sizeof(func), 0);
 }
 
-cn_output(tp, n)
-	struct tty *tp;
-	int n;
+cn_output(tp, n) struct tty *tp;
+int n;
 {
 
 	msg_send(port_cnxmit_iop, port_cnxmit, tp->t_outq.c_cf,
-	    min(n, MAX_CIO), 0);
+	         min(n, MAX_CIO), 0);
 }
 
-cn_stop(flush)
-	int flush;
+cn_stop(flush) int flush;
 {
-	int	func;
+	int func;
 
 	func = flush ? CIO_FLUSH : CIO_STOP;
 	msg_send(port_cnctrl_iop, 0, &func, sizeof(func), 0);
 }
 
-cnsint(port)
-	int port;
+cnsint(port) int port;
 {
 	int *stat;
 
@@ -661,8 +655,7 @@ cnsint(port)
 	msg_send(port_cnstat_iop, port_cnstat, NULL, 0, 0);
 }
 
-cn_get_param()
-{
+cn_get_param() {
 	struct cons_ctrl_req req;
 	int *reply, param;
 
@@ -676,36 +669,34 @@ cn_get_param()
 	return (param);
 }
 
-cn_set_param(param)
-	int param;
+cn_set_param(param) int param;
 {
 	struct cons_ctrl_req req;
 
-	req.cons_func = CIO_SETPARAMS;
+	req.cons_func   = CIO_SETPARAMS;
 	req.cons_status = param;
 
 	/* message length 8 means 2 * sizeof(int) : func and status */
 	msg_send(port_cnctrl_iop, 0, &req, 8, 0);
 }
 
-cnfont(port)
-	int port;
+cnfont(port) int port;
 {
 	int *func;
 
 	msg_recv(port, NULL, &func, NULL, 0);
 #if NBM > 0
-	switch (*func) {
+	switch(*func) {
 
-	case FONT_JISROMAN:
-		font_jisroman();
-		font_jisroman24();
-		break;
+		case FONT_JISROMAN:
+			font_jisroman();
+			font_jisroman24();
+			break;
 
-	case FONT_ASCII:
-		font_ascii();
-		font_ascii24();
-		break;
+		case FONT_ASCII:
+			font_ascii();
+			font_ascii24();
+			break;
 	}
 #endif /* NBM > 0 */
 	msg_free(port);
@@ -720,72 +711,62 @@ cnfont(port)
 int lastcount;
 int start_dimmer = 1;
 
-cn_init()
-{
+cn_init() {
 
-	if (start_dimmer) {
+	if(start_dimmer) {
 		auto_dimmer();
 		start_dimmer = 0;
 	}
 	return (0);
 }
 
-cn_enable()
-{
+cn_enable() {
 
 	/* nothing to do */
 }
 
-cnrint(code)
-	char code;
+cnrint(code) char code;
 {
 
 	_cnrint(&code, 1);
 }
 
-cnxint()
-{
+cnxint() {
 
 	_cnxint(lastcount);
 }
 
-cn_start()
-{
+cn_start() {
 
 	/* nothing to do */
 }
 
-cn_output(tp, n)
-	struct tty *tp;
-	int n;
+cn_output(tp, n) struct tty *tp;
+int n;
 {
 
 	lastcount = vt100_write(0, tp->t_outq.c_cf, n);
 	cnxint();
 }
 
-cn_stop(flush)
-	int flush;
+cn_stop(flush) int flush;
 {
 
 	/* nothing to do */
 }
 
-cnsint(param)
-	int param;
+cnsint(param) int param;
 {
 
 	_cnsint(param);
 }
 
-cn_get_param()
-{
+cn_get_param() {
 
 	return (bitmap_get_param());
 }
 
-cn_set_param(param)
-	int param;
+cn_set_param(param) int param;
 {
 
 	bitmap_set_param(param);

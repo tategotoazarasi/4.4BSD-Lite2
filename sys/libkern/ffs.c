@@ -40,15 +40,14 @@ static char sccsid[] = "@(#)ffs.c	8.1 (Berkeley) 6/4/93";
 /*
  * ffs -- vax ffs instruction
  */
-int
-ffs(mask)
-	register int mask;
+int ffs(mask)
+register int mask;
 {
 	register int bit;
 
-	if (mask == 0)
-		return(0);
-	for (bit = 1; !(mask & 1); bit++)
+	if(mask == 0)
+		return (0);
+	for(bit = 1; !(mask & 1); bit++)
 		mask >>= 1;
-	return(bit);
+	return (bit);
 }

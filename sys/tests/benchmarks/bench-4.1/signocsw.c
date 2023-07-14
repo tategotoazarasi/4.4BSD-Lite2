@@ -3,15 +3,14 @@
  */
 #include <signal.h>
 
-int	pid;
-int	nsigs;
-int	sigsub();
+int pid;
+int nsigs;
+int sigsub();
 
-main(argc, argv)
-	char *argv[];
+main(argc, argv) char *argv[];
 {
 
-	if (argc < 2) {
+	if(argc < 2) {
 		printf("usage: %s nsignals\n", argv[0]);
 		exit(1);
 	}
@@ -21,11 +20,10 @@ main(argc, argv)
 	kill(pid, SIGALRM);
 }
 
-sigsub()
-{
+sigsub() {
 	static int i = 0;
 
 	signal(SIGALRM, sigsub);
-	if (i++ < nsigs)
+	if(i++ < nsigs)
 		kill(pid, SIGALRM);
 }

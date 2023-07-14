@@ -75,17 +75,16 @@
 #include <machine/reg.h>
 #include <miscfs/procfs/procfs.h>
 
-int
-procfs_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+int procfs_read_regs(p, regs)
+struct proc *p;
+struct reg *regs;
 {
 
-	if ((p->p_flag & P_INMEM) == 0)
+	if((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	bcopy((void *) p->p_md.md_regs, (void *) regs->r_regs,
-		sizeof(regs->r_regs));
+	      sizeof(regs->r_regs));
 
 	return (0);
 }
@@ -94,57 +93,52 @@ procfs_read_regs(p, regs)
  * Update the process's current register
  * set.
  */
-int
-procfs_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+int procfs_write_regs(p, regs)
+struct proc *p;
+struct reg *regs;
 {
 	int oldsr;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	if((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	/* no user modifiable bits in the SR register */
 	oldsr = p->p_md.md_regs[SR];
 	bcopy((void *) regs->r_regs, (void *) p->p_md.md_regs,
-		sizeof(regs->r_regs));
+	      sizeof(regs->r_regs));
 	p->p_md.md_regs[SR] = oldsr;
 
 	return (0);
 }
 
-int
-procfs_read_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+int procfs_read_fpregs(p, fpregs)
+struct proc *p;
+struct fpreg *fpregs;
 {
 
 	return (EOPNOTSUPP);
 }
 
-int
-procfs_write_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+int procfs_write_fpregs(p, fpregs)
+struct proc *p;
+struct fpreg *fpregs;
 {
 
 	return (EOPNOTSUPP);
 }
 
-int
-procfs_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+int procfs_sstep(p, sstep)
+struct proc *p;
+int sstep;
 {
 
-	if (sstep && cpu_singlestep(p))
+	if(sstep && cpu_singlestep(p))
 		return (EIO);
 
 	return (0);
 }
 
 void
-procfs_fix_sstep(p)
-	struct proc *p;
+        procfs_fix_sstep(p) struct proc *p;
 {
 }

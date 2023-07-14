@@ -59,8 +59,8 @@
 
 static int
 procfs_rwmem(p, uio)
-	struct proc *p;
-	struct uio *uio;
+struct proc *p;
+struct uio *uio;
 {
 	int error;
 	int writing;
@@ -76,8 +76,8 @@ procfs_rwmem(p, uio)
 		vm_object_t object;
 		vm_offset_t kva;
 		vm_offset_t uva;
-		int page_offset;		/* offset into page */
-		vm_offset_t pageno;		/* page number */
+		int page_offset;    /* offset into page */
+		vm_offset_t pageno; /* page number */
 		vm_map_entry_t out_entry;
 		vm_prot_t out_prot;
 		vm_page_t m;
@@ -87,7 +87,7 @@ procfs_rwmem(p, uio)
 		int fix_prot;
 
 		uva = (vm_offset_t) uio->uio_offset;
-		if (uva > VM_MAXUSER_ADDRESS) {
+		if(uva > VM_MAXUSER_ADDRESS) {
 			error = 0;
 			break;
 		}
@@ -95,7 +95,7 @@ procfs_rwmem(p, uio)
 		/*
 		 * Get the page number of this segment.
 		 */
-		pageno = trunc_page(uva);
+		pageno      = trunc_page(uva);
 		page_offset = uva - pageno;
 
 		/*
@@ -107,17 +107,17 @@ procfs_rwmem(p, uio)
 		 * The map we want...
 		 */
 		map = &p->p_vmspace->vm_map;
-  
+
 		/*
 		 * Check the permissions for the area we're interested
 		 * in.
 		 */
 		fix_prot = 0;
-		if (writing)
+		if(writing)
 			fix_prot = !vm_map_check_protection(map, pageno,
-					pageno + PAGE_SIZE, VM_PROT_WRITE);
+			                                    pageno + PAGE_SIZE, VM_PROT_WRITE);
 
-		if (fix_prot) {
+		if(fix_prot) {
 			/*
 			 * If the page is not writable, we make it so.
 			 * XXX It is possible that a page may *not* be
@@ -126,8 +126,8 @@ procfs_rwmem(p, uio)
 			 * VM_PROT_ALL, or VM_PROT_READ|VM_PROT_EXECUTE.
 			 */
 			error = vm_map_protect(map, pageno,
-					pageno + PAGE_SIZE, VM_PROT_ALL, 0);
-			if (error)
+			                       pageno + PAGE_SIZE, VM_PROT_ALL, 0);
+			if(error)
 				break;
 		}
 
@@ -137,33 +137,33 @@ procfs_rwmem(p, uio)
 		 * would be a *bit* nicer...  We use tmap because
 		 * vm_map_lookup() can change the map argument.
 		 */
-		tmap = map;
+		tmap  = map;
 		error = vm_map_lookup(&tmap, pageno,
-				      writing ? VM_PROT_WRITE : VM_PROT_READ,
-				      &out_entry, &object, &off, &out_prot,
-				      &wired, &single_use);
+		                      writing ? VM_PROT_WRITE : VM_PROT_READ,
+		                      &out_entry, &object, &off, &out_prot,
+		                      &wired, &single_use);
 		/*
 		 * We're done with tmap now.
 		 */
-		if (!error)
+		if(!error)
 			vm_map_lookup_done(tmap, out_entry);
-  
+
 		/*
 		 * Fault the page in...
 		 */
-		if (!error && writing && object->shadow) {
+		if(!error && writing && object->shadow) {
 			m = vm_page_lookup(object, off);
-			if (m == 0 || (m->flags & PG_COPYONWRITE))
+			if(m == 0 || (m->flags & PG_COPYONWRITE))
 				error = vm_fault(map, pageno,
-							VM_PROT_WRITE, FALSE);
+				                 VM_PROT_WRITE, FALSE);
 		}
 
 		/* Find space in kernel_map for the page we're interested in */
-		if (!error)
+		if(!error)
 			error = vm_map_find(kernel_map, object, off, &kva,
-					PAGE_SIZE, 1);
+			                    PAGE_SIZE, 1);
 
-		if (!error) {
+		if(!error) {
 			/*
 			 * Neither vm_map_lookup() nor vm_map_find() appear
 			 * to add a reference count to the object, so we do
@@ -175,20 +175,20 @@ procfs_rwmem(p, uio)
 			 * Mark the page we just found as pageable.
 			 */
 			error = vm_map_pageable(kernel_map, kva,
-				kva + PAGE_SIZE, 0);
+			                        kva + PAGE_SIZE, 0);
 
 			/*
 			 * Now do the i/o move.
 			 */
-			if (!error)
+			if(!error)
 				error = uiomove(kva + page_offset, len, uio);
 
 			vm_map_remove(kernel_map, kva, kva + PAGE_SIZE);
 		}
-		if (fix_prot)
+		if(fix_prot)
 			vm_map_protect(map, pageno, pageno + PAGE_SIZE,
-					VM_PROT_READ|VM_PROT_EXECUTE, 0);
-	} while (error == 0 && uio->uio_resid > 0);
+			               VM_PROT_READ | VM_PROT_EXECUTE, 0);
+	} while(error == 0 && uio->uio_resid > 0);
 
 	return (error);
 }
@@ -199,15 +199,14 @@ procfs_rwmem(p, uio)
  * the kernel and then doing a uiomove direct
  * from the kernel address space.
  */
-int
-procfs_domem(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+int procfs_domem(curp, p, pfs, uio)
+struct proc *curp;
+struct proc *p;
+struct pfsnode *pfs;
+struct uio *uio;
 {
 
-	if (uio->uio_resid == 0)
+	if(uio->uio_resid == 0)
 		return (0);
 
 	return (procfs_rwmem(p, uio));
@@ -226,7 +225,7 @@ procfs_domem(curp, p, pfs, uio)
  */
 struct vnode *
 procfs_findtextvp(p)
-	struct proc *p;
+struct proc *p;
 {
 
 	return (p->p_textvp);
@@ -243,30 +242,30 @@ procfs_findtextvp(p)
  */
 struct vnode *
 procfs_findtextvp(p)
-	struct proc *p;
+struct proc *p;
 {
 	int error;
 	vm_object_t object;
-	vm_offset_t pageno;		/* page number */
+	vm_offset_t pageno; /* page number */
 
 	/* find a vnode pager for the user address space */
 
-	for (pageno = VM_MIN_ADDRESS;
-			pageno < VM_MAXUSER_ADDRESS;
-			pageno += PAGE_SIZE) {
+	for(pageno = VM_MIN_ADDRESS;
+	    pageno < VM_MAXUSER_ADDRESS;
+	    pageno += PAGE_SIZE) {
 		vm_map_t map;
 		vm_map_entry_t out_entry;
 		vm_prot_t out_prot;
 		boolean_t wired, single_use;
 		vm_offset_t off;
 
-		map = &p->p_vmspace->vm_map;
+		map   = &p->p_vmspace->vm_map;
 		error = vm_map_lookup(&map, pageno,
-			      VM_PROT_READ,
-			      &out_entry, &object, &off, &out_prot,
-			      &wired, &single_use);
+		                      VM_PROT_READ,
+		                      &out_entry, &object, &off, &out_prot,
+		                      &wired, &single_use);
 
-		if (!error) {
+		if(!error) {
 			vm_pager_t pager;
 
 			printf("procfs: found vm object\n");
@@ -282,9 +281,9 @@ procfs_findtextvp(p)
 
 			pager = object->pager;
 			printf("procfs: pager = %x\n", pager);
-			if (pager)
+			if(pager)
 				printf("procfs: found pager, type = %d\n", pager->pg_type);
-			if (pager && pager->pg_type == PG_VNODE) {
+			if(pager && pager->pg_type == PG_VNODE) {
 				struct vnode *vp;
 
 				vp = (struct vnode *) pager->pg_handle;

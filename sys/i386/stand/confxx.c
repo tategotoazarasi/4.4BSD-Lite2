@@ -41,10 +41,10 @@
  *	@(#)confxx.c	8.2 (Berkeley) 1/21/94
  */
 
-int	xxstrategy(), xxopen(), xxioctl();
+int xxstrategy(), xxopen(), xxioctl();
 
 struct devsw devsw[] = {
-	{ "XX",	xxstrategy,	xxopen,		nullsys,	noioctl },
+        {"XX", xxstrategy, xxopen, nullsys, noioctl},
 };
 
-int	ndevs = (sizeof(devsw) / sizeof(devsw[0]));
+int ndevs = (sizeof(devsw) / sizeof(devsw[0]));

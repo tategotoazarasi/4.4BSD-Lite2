@@ -76,14 +76,13 @@
 /*#include <machine/frame.h>*/
 #include <miscfs/procfs/procfs.h>
 
-int
-procfs_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+int procfs_read_regs(p, regs)
+struct proc *p;
+struct reg *regs;
 {
 	struct frame *f;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	if((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	f = (struct frame *) p->p_md.md_regs;
@@ -100,14 +99,13 @@ procfs_read_regs(p, regs)
  * may have fix-up work to do, especially
  * if the IAR or PCW are modified.
  */
-int
-procfs_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+int procfs_write_regs(p, regs)
+struct proc *p;
+struct reg *regs;
 {
 	struct frame *f;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	if((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
 	f = (struct frame *) p->p_md.md_regs;
@@ -118,36 +116,33 @@ procfs_write_regs(p, regs)
 	return (0);
 }
 
-int
-procfs_read_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+int procfs_read_fpregs(p, fpregs)
+struct proc *p;
+struct fpreg *fpregs;
 {
 
 	return (EOPNOTSUPP);
 }
 
-int
-procfs_write_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+int procfs_write_fpregs(p, fpregs)
+struct proc *p;
+struct fpreg *fpregs;
 {
 
 	return (EOPNOTSUPP);
 }
 
 
-int
-procfs_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+int procfs_sstep(p, sstep)
+struct proc *p;
+int sstep;
 {
 	int error;
 	struct reg r;
 
 	error = procfs_read_regs(p, &r);
-	if (error == 0) {
-		if (sstep)
+	if(error == 0) {
+		if(sstep)
 			r.r_sr |= PSL_T;
 		else
 			r.r_sr |= PSL_T;
@@ -158,7 +153,6 @@ procfs_sstep(p, sstep)
 }
 
 void
-procfs_fix_sstep(p)
-	struct proc *p;
+        procfs_fix_sstep(p) struct proc *p;
 {
 }

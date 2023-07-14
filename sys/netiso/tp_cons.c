@@ -117,24 +117,23 @@ int tpcons_output();
  *  version of the previous procedure for X.25
  */
 
-tpcons_pcbconnect(isop, nam)
-struct isopcb *isop;
+tpcons_pcbconnect(isop, nam) struct isopcb *isop;
 register struct mbuf *nam;
 {
 	int error;
-	if (error = iso_pcbconnect(isop, nam))
+	if(error = iso_pcbconnect(isop, nam))
 		return error;
-	if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *)0)) == 0) {
+	if((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
 		IFDEBUG(D_CCONS)
-			printf("tpcons_pcbconnect: no pklcd; returns 0x%x\n", error);
+		printf("tpcons_pcbconnect: no pklcd; returns 0x%x\n", error);
 		ENDDEBUG
 		return ENOBUFS;
 	}
-	if (error = cons_connect(isop)) { /* if it doesn't work */
+	if(error = cons_connect(isop)) { /* if it doesn't work */
 		/* oh, dear, throw packet away */
-		pk_disconnect((struct pklcd *)isop->isop_chan);
+		pk_disconnect((struct pklcd *) isop->isop_chan);
 		isop->isop_chan = 0;
-	} else 
+	} else
 		isop->isop_refcnt = 1;
 	return error;
 }
@@ -148,54 +147,54 @@ register struct mbuf *nam;
  */
 ProtoHook
 tpcons_ctlinput(cmd, siso, isop)
-	int cmd; 
-	struct sockaddr_iso *siso;
-	struct isopcb *isop;
+int cmd;
+struct sockaddr_iso *siso;
+struct isopcb *isop;
 {
 	register struct tp_pcb *tpcb = 0;
 
-	if (isop->isop_socket)
-		tpcb = (struct tp_pcb *)isop->isop_socket->so_pcb;
-	switch (cmd) {
+	if(isop->isop_socket)
+		tpcb = (struct tp_pcb *) isop->isop_socket->so_pcb;
+	switch(cmd) {
 
-	case PRC_CONS_SEND_DONE:
-		if (tpcb) {
-			struct 	tp_event 		E;
-			int 					error = 0;
+		case PRC_CONS_SEND_DONE:
+			if(tpcb) {
+				struct tp_event E;
+				int error = 0;
 
-			if (tpcb->tp_class == TP_CLASS_0) {
-				/* only if class is exactly class zero, not
+				if(tpcb->tp_class == TP_CLASS_0) {
+					/* only if class is exactly class zero, not
 				 * still in class negotiation
 				 */
-				/* fake an ack */
-				register SeqNum	seq =  SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
+					/* fake an ack */
+					register SeqNum seq = SEQ_ADD(tpcb, tpcb->tp_snduna, 1);
 
-				IFTRACE(D_DATA)
-					tptrace(TPPTmisc, "FAKE ACK seq cdt 1", 
-						seq, 0,0,0);
-				ENDTRACE
-				IFDEBUG(D_DATA)
-					printf("FAKE ACK seq 0x%x cdt 1\n", seq );
-				ENDDEBUG
-				E.ATTR(AK_TPDU).e_cdt = 1;
-				E.ATTR(AK_TPDU).e_seq = seq;
-				E.ATTR(AK_TPDU).e_subseq = 0;
-				E.ATTR(AK_TPDU).e_fcc_present = 0;
-				error =  DoEvent(AK_TPDU);
-				if( error ) {
-					tpcb->tp_sock->so_error = error;
-				}
-			} /* else ignore it */
-		}
-		break;
-	case PRC_ROUTEDEAD:
-		if (tpcb && tpcb->tp_class == TP_CLASS_0) {
-			tpiso_reset(isop);
+					IFTRACE(D_DATA)
+					tptrace(TPPTmisc, "FAKE ACK seq cdt 1",
+					        seq, 0, 0, 0);
+					ENDTRACE
+					IFDEBUG(D_DATA)
+					printf("FAKE ACK seq 0x%x cdt 1\n", seq);
+					ENDDEBUG
+					E.ATTR(AK_TPDU).e_cdt         = 1;
+					E.ATTR(AK_TPDU).e_seq         = seq;
+					E.ATTR(AK_TPDU).e_subseq      = 0;
+					E.ATTR(AK_TPDU).e_fcc_present = 0;
+					error                         = DoEvent(AK_TPDU);
+					if(error) {
+						tpcb->tp_sock->so_error = error;
+					}
+				} /* else ignore it */
+			}
 			break;
-		} /* else drop through */
-	default:
-		(void) tpclnp_ctlinput(cmd, siso);
-		break;
+		case PRC_ROUTEDEAD:
+			if(tpcb && tpcb->tp_class == TP_CLASS_0) {
+				tpiso_reset(isop);
+				break;
+			} /* else drop through */
+		default:
+			(void) tpclnp_ctlinput(cmd, siso);
+			break;
 	}
 	return 0;
 }
@@ -210,18 +209,18 @@ tpcons_ctlinput(cmd, siso, isop)
  */
 ProtoHook
 tpcons_input(m, faddr, laddr, channel)
-	struct mbuf 		*m;
-	struct sockaddr_iso	*faddr, *laddr;
-	caddr_t				channel;
+struct mbuf *m;
+struct sockaddr_iso *faddr, *laddr;
+caddr_t channel;
 {
-	if( m == MNULL)
+	if(m == MNULL)
 		return 0;
 
-	m = (struct mbuf *)tp_inputprep(m);
+	m = (struct mbuf *) tp_inputprep(m);
 
 	IFDEBUG(D_TPINPUT)
-		printf("tpcons_input before tp_input(m 0x%x)\n", m);
-		dump_buf( m, 12+ m->m_len);
+	printf("tpcons_input before tp_input(m 0x%x)\n", m);
+	dump_buf(m, 12 + m->m_len);
 	ENDDEBUG
 	tp_input(m, faddr, laddr, channel, tpcons_output, 0);
 	return 0;
@@ -240,43 +239,42 @@ tpcons_input(m, faddr, laddr, channel)
  *  whatever (E*) is returned form the net layer output routine.
  */
 
-int
-tpcons_output(isop, m0, datalen, nochksum)
-	struct isopcb		*isop;
-	struct mbuf 		*m0;
-	int 				datalen;
-	int					nochksum;
+int tpcons_output(isop, m0, datalen, nochksum)
+struct isopcb *isop;
+struct mbuf *m0;
+int datalen;
+int nochksum;
 {
-	register	struct mbuf *m = m0;
-	int					error;
+	register struct mbuf *m = m0;
+	int error;
 
 	IFDEBUG(D_EMIT)
-		printf(
-		"tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
-			isop, m0, datalen, isop->isop_socket);
+	printf(
+	        "tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
+	        isop, m0, datalen, isop->isop_socket);
 	ENDDEBUG
-	if (m == MNULL)
+	if(m == MNULL)
 		return 0;
-	if ((m->m_flags & M_PKTHDR) == 0) {
+	if((m->m_flags & M_PKTHDR) == 0) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == 0)
+		if(m == 0)
 			return ENOBUFS;
 		m->m_next = m0;
 	}
 	m->m_pkthdr.len = datalen;
-	if (isop->isop_chan == 0) {
+	if(isop->isop_chan == 0) {
 		/* got a restart maybe? */
-		if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *)0)) == 0) {
+		if((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
 			IFDEBUG(D_CCONS)
-				printf("tpcons_output: no pklcd\n");
+			printf("tpcons_output: no pklcd\n");
 			ENDDEBUG
 			error = ENOBUFS;
 		}
-		if (error = cons_connect(isop)) {
-			pk_disconnect((struct pklcd *)isop->isop_chan);
+		if(error = cons_connect(isop)) {
+			pk_disconnect((struct pklcd *) isop->isop_chan);
 			isop->isop_chan = 0;
 			IFDEBUG(D_CCONS)
-				printf("tpcons_output: can't reconnect\n");
+			printf("tpcons_output: can't reconnect\n");
 			ENDDEBUG
 		}
 	} else {
@@ -296,13 +294,12 @@ tpcons_output(isop, m0, datalen, nochksum)
  *  whatever (E*) is returned form the net layer output routine.
  */
 
-int
-tpcons_dg_output(chan, m0, datalen)
-	caddr_t				chan;
-	struct mbuf 		*m0;
-	int 				datalen;
+int tpcons_dg_output(chan, m0, datalen)
+caddr_t chan;
+struct mbuf *m0;
+int datalen;
 {
-	return tpcons_output(((struct pklcd *)chan)->lcd_upnext, m0, datalen, 0);
+	return tpcons_output(((struct pklcd *) chan)->lcd_upnext, m0, datalen, 0);
 }
 #endif /* TPCONS */
 #endif /* ISO */

@@ -69,32 +69,28 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define	off(what, str, mem) def(what, (int)offsetof(str, mem))
+#define off(what, str, mem) def(what, (int) offsetof(str, mem))
 
 void
-def(what, where)
-	char *what;
-	int where;
+        def(what, where) char *what;
+int where;
 {
 
-	if (printf("#define\t%s\t%d\n", what, where) < 0) {
+	if(printf("#define\t%s\t%d\n", what, where) < 0) {
 		perror("printf");
 		exit(1);
 	}
 }
 
-void
-flush()
-{
+void flush() {
 
-	if (fflush(stdout)) {
+	if(fflush(stdout)) {
 		perror("fflush");
 		exit(1);
 	}
 }
 
-main()
-{
+main() {
 
 	/* general constants */
 	def("BSD", BSD);
@@ -156,13 +152,13 @@ main()
 
 	/* interrupt enable register PTE */
 	def("IE_REG_PTE", PG_V | PG_W | PG_S | PG_NC | PG_OBIO |
-	    ((u_int)INT_ENABLE_REG_PHYSADR >> PGSHIFT));
+	                          ((u_int) INT_ENABLE_REG_PHYSADR >> PGSHIFT));
 
 #ifdef notyet
 	/* ZSCC interrupt fields */
 	off("ZSC_A", struct zs_softc, sc_a);
 	off("ZSC_B", struct zs_softc, sc_b);
-/*	off("ZL_WREG", struct zs_line, zl_wreg); */
+	/*	off("ZL_WREG", struct zs_line, zl_wreg); */
 	off("ZL_TBC", struct zs_line, zl_tbc);
 	off("ZL_TBA", struct zs_line, zl_tba);
 	off("ZL_RBPUT", struct zs_line, zl_rbput);

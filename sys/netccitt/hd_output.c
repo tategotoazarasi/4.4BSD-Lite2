@@ -63,21 +63,20 @@
  *      by the input and control routines of the HDLC layer.
  */
 
-hd_output (hdp, m0)
-register struct hdcb *hdp;
+hd_output(hdp, m0) register struct hdcb *hdp;
 struct mbuf *m0;
 {
 	struct x25config *xcp;
 	register struct mbuf *m = m0;
 	int len;
 
-	if (m == NULL)
-		panic ("hd_output");
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic ("hd_output 2");
+	if(m == NULL)
+		panic("hd_output");
+	if((m->m_flags & M_PKTHDR) == 0)
+		panic("hd_output 2");
 
-	if (hdp->hd_state != ABM) {
-		m_freem (m);
+	if(hdp->hd_state != ABM) {
+		m_freem(m);
 		return;
 	}
 
@@ -88,19 +87,18 @@ struct mbuf *m0;
 	 */
 
 	M_PREPEND(m, HDHEADERLN, M_DONTWAIT);
-	if (m == NULL)
+	if(m == NULL)
 		return;
-	for (len = 0; m; m = m->m_next)
+	for(len = 0; m; m = m->m_next)
 		len += m->m_len;
-	m = m0;
+	m               = m0;
 	m->m_pkthdr.len = len;
 
-	hd_append (&hdp->hd_txq, m);
-	hd_start (hdp);
+	hd_append(&hdp->hd_txq, m);
+	hd_start(hdp);
 }
 
-hd_start (hdp)
-register struct hdcb *hdp;
+hd_start(hdp) register struct hdcb *hdp;
 {
 	register struct mbuf *m;
 
@@ -110,8 +108,8 @@ register struct hdcb *hdp;
 	 * transmitted as soon as these conditions are cleared.
 	 */
 
-	while (!(hdp->hd_condition & (TIMER_RECOVERY_CONDITION | REMOTE_RNR_CONDITION | REJ_CONDITION))) {
-		if (hdp->hd_vs == (hdp->hd_lastrxnr + hdp->hd_xcp->xc_lwsize) % MODULUS) {
+	while(!(hdp->hd_condition & (TIMER_RECOVERY_CONDITION | REMOTE_RNR_CONDITION | REJ_CONDITION))) {
+		if(hdp->hd_vs == (hdp->hd_lastrxnr + hdp->hd_xcp->xc_lwsize) % MODULUS) {
 
 			/* We have now exceeded the  maximum  number  of 
 			   outstanding iframes. Therefore,  we must wait 
@@ -123,10 +121,10 @@ register struct hdcb *hdp;
 		}
 
 		/* hd_remove top iframe from transmit queue. */
-		if ((m = hd_remove (&hdp->hd_txq)) == NULL)
+		if((m = hd_remove(&hdp->hd_txq)) == NULL)
 			break;
 
-		hd_send_iframe (hdp, m, POLLOFF);
+		hd_send_iframe(hdp, m, POLLOFF);
 	}
 }
 
@@ -140,59 +138,57 @@ register struct hdcb *hdp;
  *       of old frames is required.
  */
 
-hd_send_iframe (hdp, buf, poll_bit)
-register struct hdcb *hdp;
+hd_send_iframe(hdp, buf, poll_bit) register struct hdcb *hdp;
 register struct mbuf *buf;
 int poll_bit;
 {
 	register struct Hdlc_iframe *iframe;
 	struct mbuf *m;
 
-	KILL_TIMER (hdp);
+	KILL_TIMER(hdp);
 
-	if (buf == 0) {
-		printf ("hd_send_iframe: zero arg\n");
+	if(buf == 0) {
+		printf("hd_send_iframe: zero arg\n");
 #ifdef HDLCDEBUG
-		hd_status (hdp);
-		hd_dumptrace (hdp);
+		hd_status(hdp);
+		hd_dumptrace(hdp);
 #endif
 		hdp->hd_vs = (hdp->hd_vs + 7) % MODULUS;
 		return;
 	}
-	iframe = mtod (buf, struct Hdlc_iframe *);
+	iframe = mtod(buf, struct Hdlc_iframe *);
 
-	iframe -> hdlc_0 = 0;
-	iframe -> nr = hdp->hd_vr;
-	iframe -> pf = poll_bit;
-	iframe -> ns = hdp->hd_vs;
-	iframe -> address = ADDRESS_B;
+	iframe->hdlc_0   = 0;
+	iframe->nr       = hdp->hd_vr;
+	iframe->pf       = poll_bit;
+	iframe->ns       = hdp->hd_vs;
+	iframe->address  = ADDRESS_B;
 	hdp->hd_lasttxnr = hdp->hd_vr;
-	hdp->hd_rrtimer = 0;
+	hdp->hd_rrtimer  = 0;
 
-	if (hdp->hd_vs == hdp->hd_retxqi) {
+	if(hdp->hd_vs == hdp->hd_retxqi) {
 		/* Check for retransmissions. */
 		/* Put iframe only once in the Retransmission queue. */
 		hdp->hd_retxq[hdp->hd_retxqi] = buf;
-		hdp->hd_retxqi = (hdp->hd_retxqi + 1) % MODULUS;
+		hdp->hd_retxqi                = (hdp->hd_retxqi + 1) % MODULUS;
 		hdp->hd_iframes_out++;
 	}
 
 	hdp->hd_vs = (hdp->hd_vs + 1) % MODULUS;
 
-	hd_trace (hdp, TX, (struct Hdlc_frame *)iframe);
+	hd_trace(hdp, TX, (struct Hdlc_frame *) iframe);
 
 	/* Write buffer on device. */
-	m = hdp->hd_dontcopy ? buf : m_copy(buf, 0, (int)M_COPYALL);
-	if (m == 0) {
+	m = hdp->hd_dontcopy ? buf : m_copy(buf, 0, (int) M_COPYALL);
+	if(m == 0) {
 		printf("hdlc: out of mbufs\n");
 		return;
 	}
 	(*hdp->hd_output)(hdp, m);
-	SET_TIMER (hdp);
+	SET_TIMER(hdp);
 }
 
-hd_ifoutput(hdp, m)
-register struct mbuf *m;
+hd_ifoutput(hdp, m) register struct mbuf *m;
 register struct hdcb *hdp;
 {
 	/*
@@ -200,16 +196,16 @@ register struct hdcb *hdp;
 	 * not yet active.
 	 */
 	register struct ifnet *ifp = hdp->hd_ifp;
-	int s = splimp();
+	int s                      = splimp();
 
-	if (IF_QFULL(&ifp->if_snd)) {
+	if(IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
-	    /* printf("%s%d: HDLC says OK to send but queue full, may hang\n",
+		/* printf("%s%d: HDLC says OK to send but queue full, may hang\n",
 			ifp->if_name, ifp->if_unit);*/
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(&ifp->if_snd, m);
-		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		if((ifp->if_flags & IFF_OACTIVE) == 0)
 			(*ifp->if_start)(ifp);
 	}
 	splx(s);
@@ -221,27 +217,26 @@ register struct hdcb *hdp;
  *  received an acknowledgement for a iframe.
  */
 
-hd_resend_iframe (hdp)
-register struct hdcb *hdp;
+hd_resend_iframe(hdp) register struct hdcb *hdp;
 {
 
-	if (hdp->hd_retxcnt++ < hd_n2) {
-		if (!(hdp->hd_condition & TIMER_RECOVERY_CONDITION)) {
+	if(hdp->hd_retxcnt++ < hd_n2) {
+		if(!(hdp->hd_condition & TIMER_RECOVERY_CONDITION)) {
 			hdp->hd_xx = hdp->hd_vs;
 			hdp->hd_condition |= TIMER_RECOVERY_CONDITION;
 		}
 
 		hdp->hd_vs = hdp->hd_lastrxnr;
-		hd_send_iframe (hdp, hdp->hd_retxq[hdp->hd_vs], POLLON);
+		hd_send_iframe(hdp, hdp->hd_retxq[hdp->hd_vs], POLLON);
 	} else {
 		/* At this point we have not received a RR even after N2
 		   retries - attempt to reset link. */
 
-		hd_initvars (hdp);
-		hd_writeinternal (hdp, SABM, POLLOFF);
+		hd_initvars(hdp);
+		hd_writeinternal(hdp, SABM, POLLOFF);
 		hdp->hd_state = WAIT_UA;
-		SET_TIMER (hdp);
-		hd_message (hdp, "Timer recovery failed: link down");
-		(void) pk_ctlinput (PRC_LINKDOWN, hdp->hd_pkp);
+		SET_TIMER(hdp);
+		hd_message(hdp, "Timer recovery failed: link down");
+		(void) pk_ctlinput(PRC_LINKDOWN, hdp->hd_pkp);
 	}
 }

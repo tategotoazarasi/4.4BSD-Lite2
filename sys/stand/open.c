@@ -70,23 +70,21 @@
  */
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
-};
-#define	NFSYS	(sizeof(file_system) / sizeof(struct fs_ops))
+        {ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat}};
+#define NFSYS (sizeof(file_system) / sizeof(struct fs_ops))
 
 struct open_file files[SOPEN_MAX];
 
-open(fname, mode)
-	char *fname;
-	int mode;
+open(fname, mode) char *fname;
+int mode;
 {
 	register struct open_file *f;
 	register int fd, i, error;
 	char *file;
 
 	/* find a free file descriptor */
-	for (fd = 0, f = files; fd < SOPEN_MAX; fd++, f++)
-		if (f->f_flags == 0)
+	for(fd = 0, f = files; fd < SOPEN_MAX; fd++, f++)
+		if(f->f_flags == 0)
 			goto fnd;
 	return (-1);
 fnd:
@@ -95,28 +93,28 @@ fnd:
 	 * Convert open mode (0,1,2) to F_READ, F_WRITE.
 	 */
 	f->f_flags = mode + 1;
-	f->f_dev = (struct devsw *)0;
-	file = (char *)0;
-	error = devopen(f, fname, &file);
-	if (error || f->f_dev == (struct devsw *)0)
+	f->f_dev   = (struct devsw *) 0;
+	file       = (char *) 0;
+	error      = devopen(f, fname, &file);
+	if(error || f->f_dev == (struct devsw *) 0)
 		goto err;
 
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
-	if (file == (char *)0) {
+	if(file == (char *) 0) {
 		f->f_flags |= F_RAW;
 		return (0);
 	}
 
 	/* pass file name to the different filesystem open routines */
-	for (i = 0; i < NFSYS; i++) {
+	for(i = 0; i < NFSYS; i++) {
 		/* convert mode (0,1,2) to FREAD, FWRITE. */
 		error = (file_system[i].open)(file, f);
-		if (error == 0) {
+		if(error == 0) {
 			f->f_ops = &file_system[i];
 			return (fd);
 		}
 	}
-	if (!error)
+	if(!error)
 		error = ENOENT;
 
 err:

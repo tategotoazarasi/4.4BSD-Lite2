@@ -24,44 +24,38 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-extern void exit(int) __attribute__ ((__noreturn__));
-extern int gettimeofday(struct timeval *, void*);
+extern void exit(int) __attribute__((__noreturn__));
 
-int splnet(void)
-{
+extern int gettimeofday(struct timeval *, void *);
+
+int splnet(void) {
 	// FIXME
 	return 1;
 }
 
-int splimp(void)
-{
+int splimp(void) {
 	// FIXME
 	return 5;
 }
 
-void splx(int x)
-{
+void splx(int x) {
 	// FIXME
 }
 
-int subyte(void *base, int byte)
-{
+int subyte(void *base, int byte) {
 	return 0;
 }
 
-int suibyte(void *base, int byte)
-{
+int suibyte(void *base, int byte) {
 	return 0;
 }
 
-void microtime(tvp)
-	register struct timeval *tvp;
+void microtime(tvp) register struct timeval *tvp;
 {
 	gettimeofday(tvp, NULL);
 }
 
-void ovbcopy(const void *src, void *dest, size_t n)
-{
+void ovbcopy(const void *src, void *dest, size_t n) {
 	bcopy(src, dest, n);
 }
 
@@ -69,12 +63,12 @@ void ovbcopy(const void *src, void *dest, size_t n)
 // sys/conf/param.c
 //////////////////////////////////////////////////////////////////////////////
 #define HZ 100
-int hz = HZ;
+int hz   = HZ;
 int tick = 1000000 / HZ;
-struct	proc proc0;
-struct	proc *curproc = &proc0;
-struct	pcred cred0;
-struct	ucred ucred0;
+struct proc proc0;
+struct proc *curproc = &proc0;
+struct pcred cred0;
+struct ucred ucred0;
 
 //////////////////////////////////////////////////////////////////////////////
 // sys/i386/i386/machdep.c
@@ -83,43 +77,39 @@ struct	ucred ucred0;
  * insert an element into a queue 
  */
 #undef insque
-void _insque(element, head)
-	register struct prochd *element, *head;
+void _insque(element, head) register struct prochd *element, *head;
 {
-	element->ph_link = head->ph_link;
-	head->ph_link = (struct proc *)element;
-	element->ph_rlink = (struct proc *)head;
-	((struct prochd *)(element->ph_link))->ph_rlink=(struct proc *)element;
+	element->ph_link                                 = head->ph_link;
+	head->ph_link                                    = (struct proc *) element;
+	element->ph_rlink                                = (struct proc *) head;
+	((struct prochd *) (element->ph_link))->ph_rlink = (struct proc *) element;
 }
 
 /*
  * remove an element from a queue
  */
 #undef remque
-void _remque(element)
-	register struct prochd *element;
+void _remque(element) register struct prochd *element;
 {
-	((struct prochd *)(element->ph_link))->ph_rlink = element->ph_rlink;
-	((struct prochd *)(element->ph_rlink))->ph_link = element->ph_link;
-	element->ph_rlink = (struct proc *)0;
+	((struct prochd *) (element->ph_link))->ph_rlink = element->ph_rlink;
+	((struct prochd *) (element->ph_rlink))->ph_link = element->ph_link;
+	element->ph_rlink                                = (struct proc *) 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 // sys/i386/i386/trap.c
 //////////////////////////////////////////////////////////////////////////////
 int
-copyout(from, to, len)
-	void *from;
-	void *to;
-	u_int len;
+        copyout(from, to, len) void *from;
+void *to;
+u_int len;
 {
-	bcopy (from, to, len);
+	bcopy(from, to, len);
 	return 0;
 }
 
-int copyin(void* from, void* to, u_int len)
-{
-	bcopy (from, to, len);
+int copyin(void *from, void *to, u_int len) {
+	bcopy(from, to, len);
 	return 0;
 }
 
@@ -138,13 +128,15 @@ int copyin(void* from, void* to, u_int len)
  *	value is returned from timeout, rather, the original arguments
  *	to timeout are used to identify entries for untimeout.
  */
-volatile struct	timeval time;
+volatile struct timeval time;
 
 void
-timeout(ftn, arg, ticks)
-	void (*ftn) __P((void *));
-	void *arg;
-	register int ticks;
+        timeout(ftn, arg, ticks)
+
+                void(*ftn)
+                        __P((void *) );
+void *arg;
+register int ticks;
 {
 	// FIXME
 }
@@ -154,20 +146,23 @@ timeout(ftn, arg, ticks)
 //////////////////////////////////////////////////////////////////////////////
 #undef malloc
 #undef free
-extern void *malloc (size_t __size);
-extern void *memalign (size_t __alignment, size_t __size);
-extern void free (void *__ptr);
+
+extern void *malloc(size_t __size);
+
+extern void *memalign(size_t __alignment, size_t __size);
+
+extern void free(void *__ptr);
 
 /*
  * Allocate a block of memory
  */
 void *
 xmalloc(size, type, flags)
-	unsigned long size;
-	int type, flags;
+unsigned long size;
+int type, flags;
 {
 	// mbuf requires 128-byte alignment
-	if (size > 8 && (size & (size-1)) == 0)
+	if(size > 8 && (size & (size - 1)) == 0)
 		return memalign(size, size);
 	else
 		return malloc(size);
@@ -177,9 +172,8 @@ xmalloc(size, type, flags)
  * Free a block of memory allocated by malloc.
  */
 void
-xfree(addr, type)
-	void *addr;
-	int type;
+        xfree(addr, type) void *addr;
+int type;
 {
 	return free(addr);
 }
@@ -193,13 +187,12 @@ xfree(addr, type)
  * indicating use of super-powers.
  * Returns 0 or error.
  */
-int
-suser(cred, acflag)
-	struct ucred *cred;
-	u_short *acflag;
+int suser(cred, acflag)
+struct ucred *cred;
+u_short *acflag;
 {
-	if (cred->cr_uid == 0) {
-		if (acflag)
+	if(cred->cr_uid == 0) {
+		if(acflag)
 			*acflag |= ASU;
 		return (0);
 	}
@@ -221,10 +214,9 @@ suser(cred, acflag)
  * call should be interrupted by the signal (return EINTR).
  */
 int
-tsleep(ident, priority, wmesg, timo)
-	void *ident;
-	int priority, timo;
-	char *wmesg;
+        tsleep(ident, priority, wmesg, timo) void *ident;
+int priority, timo;
+char *wmesg;
 {
 	printf("tsleep\n");
 	exit(1);
@@ -235,8 +227,7 @@ tsleep(ident, priority, wmesg, timo)
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
-wakeup(ident)
-	register void *ident;
+        wakeup(ident) register void *ident;
 {
 	// FIXME
 }
@@ -249,23 +240,22 @@ wakeup(ident)
  * for an integer-valued sysctl function.
  */
 int
-sysctl_int(oldp, oldlenp, newp, newlen, valp)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	int *valp;
+        sysctl_int(oldp, oldlenp, newp, newlen, valp) void *oldp;
+size_t *oldlenp;
+void *newp;
+size_t newlen;
+int *valp;
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < sizeof(int))
+	if(oldp && *oldlenp < sizeof(int))
 		return (ENOMEM);
-	if (newp && newlen != sizeof(int))
+	if(newp && newlen != sizeof(int))
 		return (EINVAL);
 	*oldlenp = sizeof(int);
-	if (oldp)
+	if(oldp)
 		error = copyout(valp, oldp, sizeof(int));
-	if (error == 0 && newp)
+	if(error == 0 && newp)
 		error = copyin(newp, valp, sizeof(int));
 	return (error);
 }
@@ -274,16 +264,15 @@ sysctl_int(oldp, oldlenp, newp, newlen, valp)
 //////////////////////////////////////////////////////////////////////////////
 // sys/kern/subr_prf.c
 //////////////////////////////////////////////////////////////////////////////
-void panic(const char *fmt, ...)
-{
+void panic(const char *fmt, ...) {
 	printf("panic: ");
 	// FIXME
 	/*
-	va_list args;
-	va_start(args, fmt);
-	vprintf(fmt, args);
-	va_end(args);
-	*/
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+    */
 	exit(1);
 }
 
@@ -292,8 +281,7 @@ void panic(const char *fmt, ...)
  * called by interrupt routines).  If there is no process reading the
  * log yet, it writes to the console also.
  */
-void log(int level, const char *fmt, ...)
-{
+void log(int level, const char *fmt, ...) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -310,12 +298,12 @@ u_long pidhash;
  */
 struct proc *
 pfind(pid)
-	register pid_t pid;
+register pid_t pid;
 {
 	register struct proc *p;
 
-	for (p = PIDHASH(pid)->lh_first; p != 0; p = p->p_hash.le_next)
-		if (p->p_pid == pid)
+	for(p = PIDHASH(pid)->lh_first; p != 0; p = p->p_hash.le_next)
+		if(p->p_pid == pid)
 			return (p);
 	return (NULL);
 }
@@ -327,47 +315,46 @@ pfind(pid)
  * Do a wakeup when a selectable event occurs.
  */
 void
-selwakeup(sip)
-	register struct selinfo *sip;
+        selwakeup(sip) register struct selinfo *sip;
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 // sys/kern/uipc_syscalls.c
 //////////////////////////////////////////////////////////////////////////////
-int
-sockargs(mp, buf, buflen, type)
-	struct mbuf **mp;
-	caddr_t buf;
-	int buflen, type;
+int sockargs(mp, buf, buflen, type)
+struct mbuf **mp;
+caddr_t buf;
+int buflen, type;
 {
 	register struct sockaddr *sa;
 	register struct mbuf *m;
 	int error;
 
-	if ((u_int)buflen > MLEN) {
+	if((u_int) buflen > MLEN) {
 #ifdef COMPAT_OLDSOCK
-		if (type == MT_SONAME && (u_int)buflen <= 112)
-			buflen = MLEN;		/* unix domain compat. hack */
+		if(type == MT_SONAME && (u_int) buflen <= 112)
+			buflen = MLEN; /* unix domain compat. hack */
 		else
 #endif
-		return (EINVAL);
+			return (EINVAL);
 	}
 	m = m_get(M_WAIT, type);
-	if (m == NULL)
+	if(m == NULL)
 		return (ENOBUFS);
 	m->m_len = buflen;
-	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
-	if (error) {
+	error    = copyin(buf, mtod(m, caddr_t), (u_int) buflen);
+	if(error) {
 		(void) m_free(m);
 		return (error);
 	}
 	*mp = m;
-	if (type == MT_SONAME) {
-		sa = mtod(m, struct sockaddr *);
+	if(type == MT_SONAME) {
+		sa = mtod(m,
+		          struct sockaddr *);
 
 #if defined(COMPAT_OLDSOCK) && BYTE_ORDER != BIG_ENDIAN
-		if (sa->sa_family == 0 && sa->sa_len < AF_MAX)
+		if(sa->sa_family == 0 && sa->sa_len < AF_MAX)
 			sa->sa_family = sa->sa_len;
 #endif
 		sa->sa_len = buflen;
@@ -385,9 +372,9 @@ sockargs(mp, buf, buflen, type)
  * destination.
  */
 void
-rt_missmsg(type, rtinfo, flags, error)
-	int type, flags, error;
-	register struct rt_addrinfo *rtinfo;
+        rt_missmsg(type, rtinfo, flags, error) int type,
+        flags, error;
+register struct rt_addrinfo *rtinfo;
 {
 	// FIXME
 }
@@ -397,8 +384,7 @@ rt_missmsg(type, rtinfo, flags, error)
  * socket indicating that the status of a network interface has changed.
  */
 void
-rt_ifmsg(ifp)
-	register struct ifnet *ifp;
+        rt_ifmsg(ifp) register struct ifnet *ifp;
 {
 	// FIXME
 }
@@ -412,10 +398,10 @@ rt_ifmsg(ifp)
  * copies of it.
  */
 void
-rt_newaddrmsg(cmd, ifa, error, rt)
-	int cmd, error;
-	register struct ifaddr *ifa;
-	register struct rtentry *rt;
+        rt_newaddrmsg(cmd, ifa, error, rt) int cmd,
+        error;
+register struct ifaddr *ifa;
+register struct rtentry *rt;
 {
 	// FIXME
 }
@@ -425,10 +411,10 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 //////////////////////////////////////////////////////////////////////////////
 
 struct vm_map mb_map_0;
-vm_map_t	mb_map = &mb_map_0;
+vm_map_t mb_map = &mb_map_0;
 
-void* mcl_maxaddr;
-void* mcl_next;
+void *mcl_maxaddr;
+void *mcl_next;
 
 /*
  * Allocate wired-down memory in the kernel's address map for the higher
@@ -448,15 +434,15 @@ void* mcl_next;
  */
 vm_offset_t
 kmem_malloc(map, size, canwait)
-	register vm_map_t	map;
-	register vm_size_t	size;
-	boolean_t		canwait;
+register vm_map_t map;
+register vm_size_t size;
+boolean_t canwait;
 {
-	if (map != mb_map)
+	if(map != mb_map)
 		panic("kmem_malloc: unknown map");
-	if (size != CLBYTES)
+	if(size != CLBYTES)
 		panic("kmem_malloc: unsupported size");
-	if (mcl_next + size >= mcl_maxaddr)
+	if(mcl_next + size >= mcl_maxaddr)
 		panic("kmem_malloc: memory exceeds");
 	vm_offset_t ret = mcl_next;
 	mcl_next += size;
@@ -464,15 +450,13 @@ kmem_malloc(map, size, canwait)
 	return ret;
 }
 
-void cpu_startup()
-{
+void cpu_startup() {
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
-	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+     * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
+     * we use the more space efficient malloc in place of kmem_alloc.
+     */
+	mclrefcnt = (char *) malloc(NMBCLUSTERS + CLBYTES / MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES / MCLBYTES);
 	mcl_next = mbutl = memalign(CLBYTES, NMBCLUSTERS * CLBYTES);
-	mcl_maxaddr = mcl_next + NMBCLUSTERS * CLBYTES;
+	mcl_maxaddr      = mcl_next + NMBCLUSTERS * CLBYTES;
 }
-

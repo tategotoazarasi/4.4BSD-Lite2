@@ -54,33 +54,33 @@
  */
 char *
 readdisklabel(io, strat, lp)
-	struct iob *io;
-	int (*strat)();
-	register struct disklabel *lp;
+struct iob *io;
+int (*strat)();
+register struct disklabel *lp;
 {
 	struct iob liob;
 	struct disklabel *dlp;
 	char *msg = NULL;
 
-	liob.i_adapt = io->i_adapt;
-	liob.i_ctlr = io->i_ctlr;
-	liob.i_unit = io->i_unit;
-	liob.i_part = 2;
-	liob.i_boff = 0;
+	liob.i_adapt  = io->i_adapt;
+	liob.i_ctlr   = io->i_ctlr;
+	liob.i_unit   = io->i_unit;
+	liob.i_part   = 2;
+	liob.i_boff   = 0;
 	liob.i_cyloff = 0;
-	liob.i_bn = LABELSECTOR;
-	liob.i_ma = liob.i_buf;
-	liob.i_cc = lp->d_secsize ? lp->d_secsize : DEV_BSIZE;
-	if ((*strat)(&liob, F_READ) == -1)
+	liob.i_bn     = LABELSECTOR;
+	liob.i_ma     = liob.i_buf;
+	liob.i_cc     = lp->d_secsize ? lp->d_secsize : DEV_BSIZE;
+	if((*strat)(&liob, F_READ) == -1)
 		return ("I/O error");
 
-	for (dlp = (struct disklabel *)liob.i_buf;
-	     dlp <= (struct disklabel *)(liob.i_buf+DEV_BSIZE-sizeof(*dlp));
-	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
+	for(dlp = (struct disklabel *) liob.i_buf;
+	    dlp <= (struct disklabel *) (liob.i_buf + DEV_BSIZE - sizeof(*dlp));
+	    dlp = (struct disklabel *) ((char *) dlp + sizeof(long))) {
+		if(dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+			if(msg == NULL)
 				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS || dkcksum(dlp))
+		} else if(dlp->d_npartitions > MAXPARTITIONS || dkcksum(dlp))
 			msg = "disk label corrupted";
 		else {
 			*lp = *dlp;
@@ -94,15 +94,14 @@ readdisklabel(io, strat, lp)
 /*
  * Compute checksum for disk label.
  */
-dkcksum(lp)
-	register struct disklabel *lp;
+dkcksum(lp) register struct disklabel *lp;
 {
 	register u_short *start, *end;
 	register u_short sum = 0;
 
-	start = (u_short *)lp;
-	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
-	while (start < end)
+	start = (u_short *) lp;
+	end   = (u_short *) &lp->d_partitions[lp->d_npartitions];
+	while(start < end)
 		sum ^= *start++;
 	return (sum);
 }

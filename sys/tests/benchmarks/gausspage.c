@@ -8,84 +8,82 @@
  */
 #include <math.h>
 
-float	rnd(), gauss();
-char	*valloc();
-int	rand();
+float rnd(), gauss();
+char *valloc();
+int rand();
 
-main(argc, argv)
-	char *argv[];
+main(argc, argv) char *argv[];
 {
 	register int pn, i, niter, delta;
 	register char *pages;
-	float sd = 10.0;
+	float sd   = 10.0;
 	int npages = 4096, pagesize, debug = 0;
 	char *name;
 
 	name = argv[0];
 	argc--, argv++;
 again:
-	if (argc < 1) {
-usage:
+	if(argc < 1) {
+	usage:
 		printf(
-"usage: %s [ -d ] [ -k #Kb ] [ -s standard-deviation ] iterations\n", name);
+		        "usage: %s [ -d ] [ -k #Kb ] [ -s standard-deviation ] iterations\n", name);
 		exit(1);
 	}
-	if (strcmp(*argv, "-s") == 0) {
+	if(strcmp(*argv, "-s") == 0) {
 		argc--, argv++;
-		if (argc < 1)
+		if(argc < 1)
 			goto usage;
 		sscanf(*argv, "%f", &sd);
-		if (sd <= 0) {
+		if(sd <= 0) {
 			printf("%s: Bad standard deviation.\n", *argv);
 			exit(2);
 		}
 		argc--, argv++;
 		goto again;
 	}
-	if (strcmp(*argv, "-k") == 0) {
+	if(strcmp(*argv, "-k") == 0) {
 		argc--, argv++;
-		if (argc < 1)
+		if(argc < 1)
 			goto usage;
 		npages = atoi(*argv);
-		if (npages <= 0) {
+		if(npages <= 0) {
 			printf("%s: Bad virtual memory size.\n", *argv);
 			exit(2);
 		}
 		argc--, argv++;
 		goto again;
 	}
-	if (strcmp(*argv, "-d") == 0) {
+	if(strcmp(*argv, "-d") == 0) {
 		argc--, argv++;
 		debug++;
 		goto again;
 	}
-	niter = atoi(*argv);
+	niter    = atoi(*argv);
 	pagesize = getpagesize();
 	npages /= pagesize / 1024;
 	pages = valloc(npages, pagesize);
-	if (pages == (char *)0) {
+	if(pages == (char *) 0) {
 		printf("Can't allocate %d pages (%2.1f megabytes).\n",
-		    npages, (npages*pagesize) / (1024. * 1024.));
+		       npages, (npages * pagesize) / (1024. * 1024.));
 		exit(3);
 	}
-	if (pagesize != 1024)
+	if(pagesize != 1024)
 		printf("Pagesize %dKb\n", pagesize / 1024);
 	pn = 0;
-	for (i = 0; i < niter; i++) {
+	for(i = 0; i < niter; i++) {
 		delta = gauss(sd, 0.0);
-		while (pn + delta < 0 || pn + delta > npages)
+		while(pn + delta < 0 || pn + delta > npages)
 			delta = gauss(sd, 0.0);
 		pn += delta;
-		if (debug)
+		if(debug)
 			printf("touch page %d\n", pn);
 		else
 			pages[pn * pagesize] = 1;
 	}
 }
 
-float
-gauss(sd, mean)
-	float sd, mean;
+float gauss(sd, mean)
+float sd, mean;
 {
 	register float qa, qb;
 
@@ -94,11 +92,9 @@ gauss(sd, mean)
 	return (qa * cos(qb) * sd + mean);
 }
 
-float
-rnd()
-{
-	static int seed = 1;
+float rnd() {
+	static int seed    = 1;
 	static int biggest = 0x7fffffff;
 
-	return ((float)rand(seed) / (float)biggest);
+	return ((float) rand(seed) / (float) biggest);
 }

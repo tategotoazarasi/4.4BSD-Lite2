@@ -61,27 +61,26 @@
 /*
  * Implement an FBIOGETCMAP-like ioctl.
  */
-int
-bt_getcmap(p, cm, cmsize)
-	register struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
+int bt_getcmap(p, cm, cmsize)
+register struct fbcmap *p;
+union bt_cmap *cm;
+int cmsize;
 {
 	register u_int i, start, count;
 	register u_char *cp;
 
 	start = p->index;
 	count = p->count;
-	if (start >= cmsize || start + count > cmsize)
+	if(start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-	if (!useracc(p->red, count, B_WRITE) ||
-	    !useracc(p->green, count, B_WRITE) ||
-	    !useracc(p->blue, count, B_WRITE))
+	if(!useracc(p->red, count, B_WRITE) ||
+	   !useracc(p->green, count, B_WRITE) ||
+	   !useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
-		p->red[i] = cp[0];
+	for(cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
+		p->red[i]   = cp[0];
 		p->green[i] = cp[1];
-		p->blue[i] = cp[2];
+		p->blue[i]  = cp[2];
 	}
 	return (0);
 }
@@ -89,24 +88,23 @@ bt_getcmap(p, cm, cmsize)
 /*
  * Implement the software portion of an FBIOPUTCMAP-like ioctl.
  */
-int
-bt_putcmap(p, cm, cmsize)
-	register struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
+int bt_putcmap(p, cm, cmsize)
+register struct fbcmap *p;
+union bt_cmap *cm;
+int cmsize;
 {
 	register u_int i, start, count;
 	register u_char *cp;
 
 	start = p->index;
 	count = p->count;
-	if (start >= cmsize || start + count > cmsize)
+	if(start >= cmsize || start + count > cmsize)
 		return (EINVAL);
-	if (!useracc(p->red, count, B_READ) ||
-	    !useracc(p->green, count, B_READ) ||
-	    !useracc(p->blue, count, B_READ))
+	if(!useracc(p->red, count, B_READ) ||
+	   !useracc(p->green, count, B_READ) ||
+	   !useracc(p->blue, count, B_READ))
 		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
+	for(cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		cp[0] = p->red[i];
 		cp[1] = p->green[i];
 		cp[2] = p->blue[i];

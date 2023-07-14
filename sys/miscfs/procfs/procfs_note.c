@@ -49,23 +49,22 @@
 #include <sys/signal.h>
 #include <miscfs/procfs/procfs.h>
 
-int
-procfs_donote(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+int procfs_donote(curp, p, pfs, uio)
+struct proc *curp;
+struct proc *p;
+struct pfsnode *pfs;
+struct uio *uio;
 {
 	int xlen;
 	int error;
-	char note[PROCFS_NOTELEN+1];
+	char note[PROCFS_NOTELEN + 1];
 
-	if (uio->uio_rw != UIO_WRITE)
+	if(uio->uio_rw != UIO_WRITE)
 		return (EINVAL);
 
-	xlen = PROCFS_NOTELEN;
+	xlen  = PROCFS_NOTELEN;
 	error = vfs_getuserstr(uio, note, &xlen);
-	if (error)
+	if(error)
 		return (error);
 
 	/* send to process's notify function */

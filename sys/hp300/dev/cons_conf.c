@@ -58,21 +58,21 @@
 extern int itecnprobe(), itecninit(), itecngetc(), itecnputc();
 #endif
 #if NDCA > 0
-extern	int dcacnprobe(), dcacninit(), dcacngetc(), dcacnputc();
+extern int dcacnprobe(), dcacninit(), dcacngetc(), dcacnputc();
 #endif
 #if NDCM > 0
-extern	int dcmcnprobe(), dcmcninit(), dcmcngetc(), dcmcnputc();
+extern int dcmcnprobe(), dcmcninit(), dcmcngetc(), dcmcnputc();
 #endif
 
-struct	consdev constab[] = {
+struct consdev constab[] = {
 #if NITE > 0
-	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
+        {itecnprobe, itecninit, itecngetc, itecnputc},
 #endif
 #if NDCA > 0
-	{ dcacnprobe,	dcacninit,	dcacngetc,	dcacnputc },
+        {dcacnprobe, dcacninit, dcacngetc, dcacnputc},
 #endif
 #if NDCM > 0
-	{ dcmcnprobe,	dcmcninit,	dcmcngetc,	dcmcnputc },
+        {dcmcnprobe, dcmcninit, dcmcngetc, dcmcnputc},
 #endif
-	{ 0 },
+        {0},
 };

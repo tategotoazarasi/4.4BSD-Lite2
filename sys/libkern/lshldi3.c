@@ -47,19 +47,18 @@ static char sccsid[] = "@(#)lshldi3.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __lshldi3(a, shift)
-	quad_t a;
-	qshift_t shift;
+quad_t a;
+qshift_t shift;
 {
 	union uu aa;
 
 	aa.q = a;
-	if (shift >= LONG_BITS) {
-		aa.ul[H] = shift >= QUAD_BITS ? 0 :
-		    aa.ul[L] << (shift - LONG_BITS);
+	if(shift >= LONG_BITS) {
+		aa.ul[H] = shift >= QUAD_BITS ? 0 : aa.ul[L] << (shift - LONG_BITS);
 		aa.ul[L] = 0;
-	} else if (shift > 0) {
+	} else if(shift > 0) {
 		aa.ul[H] = (aa.ul[H] << shift) |
-		    (aa.ul[L] >> (LONG_BITS - shift));
+		           (aa.ul[L] >> (LONG_BITS - shift));
 		aa.ul[L] <<= shift;
 	}
 	return (aa.q);

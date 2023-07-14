@@ -58,36 +58,35 @@ extern u_char lbl_buff[];
  */
 char *
 readdisklabel(dev, strat, lp)
-	int dev;
-	int (*strat)();
-	register struct disklabel *lp;
+int dev;
+int (*strat)();
+register struct disklabel *lp;
 {
 	register u_char *bp = lbl_buff;
 	struct disklabel *dlp;
-	char *msg = NULL;
+	char *msg                      = NULL;
 	static struct scsi_fmt_cdb cdb = {
-		6,
-		CMD_READ, 0, 0, 0, 1, 0
-	};
+	        6,
+	        CMD_READ, 0, 0, 0, 1, 0};
 
-	if (lp->d_secperunit == 0)
+	if(lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
+	if(lp->d_partitions[0].p_size == 0)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
-	if (scsi_immed_command(0, dev, 0, &cdb, bp, DEV_BSIZE) != 0) {
+	if(scsi_immed_command(0, dev, 0, &cdb, bp, DEV_BSIZE) != 0) {
 		msg = "I/O error";
 	} else {
-		for (dlp = (struct disklabel *)bp;
-		     dlp <= (struct disklabel *)(bp + DEV_BSIZE - sizeof(*dlp));
-		     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-			if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-				if (msg == NULL)
+		for(dlp = (struct disklabel *) bp;
+		    dlp <= (struct disklabel *) (bp + DEV_BSIZE - sizeof(*dlp));
+		    dlp = (struct disklabel *) ((char *) dlp + sizeof(long))) {
+			if(dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+				if(msg == NULL)
 					msg = "no disk label";
-			} else if (dlp->d_npartitions > MAXPARTITIONS ||
-				   dkcksum(dlp) != 0)
+			} else if(dlp->d_npartitions > MAXPARTITIONS ||
+			          dkcksum(dlp) != 0)
 				msg = "disk label corrupted";
 			else {
 				*lp = *dlp;

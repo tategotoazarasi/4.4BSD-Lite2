@@ -55,18 +55,17 @@ extern int oc_cksum();
  * inside the "if".  If fact, if m_copydata & sb_compact are doing
  * their job, we should never do the hairy code inside the "if".
  */
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+in_cksum(m, len) register struct mbuf *m;
+register int len;
 {
 	register int sum = 0;
 	register int i;
 
-	while (len > m->m_len) {
+	while(len > m->m_len) {
 		sum = oc_cksum(mtod(m, u_char *), i = m->m_len, sum);
-		m = m->m_next;
+		m   = m->m_next;
 		len -= i;
-		if (i & 1) {
+		if(i & 1) {
 			/*
 			 * ouch - we ended on an odd byte with more
 			 * to do.  This xfer is obviously not interested
@@ -74,9 +73,9 @@ in_cksum(m, len)
 			 */
 			register u_char *cp;
 
-			while (len > m->m_len) {
+			while(len > m->m_len) {
 				cp = mtod(m, u_char *);
-				if (i & 1) {
+				if(i & 1) {
 					i = m->m_len - 1;
 					--len;
 					sum += *cp++;
@@ -84,11 +83,11 @@ in_cksum(m, len)
 					i = m->m_len;
 
 				sum = oc_cksum(cp, i, sum);
-				m = m->m_next;
+				m   = m->m_next;
 				len -= i;
 			}
-			if (i & 1) {
-				cp =  mtod(m, u_char *);
+			if(i & 1) {
+				cp = mtod(m, u_char *);
 				sum += *cp++;
 				return (0xffff & ~oc_cksum(cp, len - 1, sum));
 			}

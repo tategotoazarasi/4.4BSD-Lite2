@@ -12,43 +12,40 @@
  */
 #include <signal.h>
 
-void	sigsub();
-int	otherpid;
-int	nsigs;
+void sigsub();
+int otherpid;
+int nsigs;
 
-main(argc, argv)
-	char *argv[];
+main(argc, argv) char *argv[];
 {
 	int pid;
 
-	if (argc < 2) {
+	if(argc < 2) {
 		printf("usage: %s nsignals\n", argv[0]);
 		exit(1);
 	}
 	nsigs = atoi(argv[1]);
 	signal(SIGALRM, sigsub);
 	otherpid = getpid();
-	pid = fork();
-	if (pid != 0) {
+	pid      = fork();
+	if(pid != 0) {
 		otherpid = pid;
 		kill(otherpid, SIGALRM);
 	}
-	for (;;)
+	for(;;)
 		sigpause(0);
 }
 
-void
-sigsub()
-{
+void sigsub() {
 	static mustreset = 1;
 	void (*osig)();
 
-	if (mustreset) {
+	if(mustreset) {
 		osig = signal(SIGALRM, sigsub);
-		if (osig == sigsub)
+		if(osig == sigsub)
 			mustreset = 0;
 	}
 	kill(otherpid, SIGALRM);
-	if (--nsigs <= 0)
+	if(--nsigs <= 0)
 		exit(0);
 }

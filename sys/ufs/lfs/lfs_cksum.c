@@ -44,15 +44,15 @@
  */
 u_long
 cksum(str, len)
-	register void *str;
-	register size_t len;
+register void *str;
+register size_t len;
 {
 	register u_long sum;
-	
+
 	len &= ~(sizeof(u_short) - 1);
-	for (sum = 0; len; len -= sizeof(u_short)) {
-		sum ^= *(u_short *)str;
-		str = (void *)((u_short *)str + 1);
+	for(sum = 0; len; len -= sizeof(u_short)) {
+		sum ^= *(u_short *) str;
+		str = (void *) ((u_short *) str + 1);
 	}
 	return (sum);
 }

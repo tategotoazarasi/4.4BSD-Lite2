@@ -52,31 +52,28 @@
 #include <sys/ktrace.h>
 
 /* ARGSUSED */
-fork(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	register_t *retval;
+fork(p, uap, retval) struct proc *p;
+void *uap;
+register_t *retval;
 {
 
 	return (fork1(p, 0, retval));
 }
 
 /* ARGSUSED */
-vfork(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	register_t *retval;
+vfork(p, uap, retval) struct proc *p;
+void *uap;
+register_t *retval;
 {
 
 	return (fork1(p, 1, retval));
 }
 
-int	nprocs = 1;		/* process 0 */
+int nprocs = 1; /* process 0 */
 
-fork1(p1, isvfork, retval)
-	register struct proc *p1;
-	int isvfork;
-	register_t *retval;
+fork1(p1, isvfork, retval) register struct proc *p1;
+int isvfork;
+register_t *retval;
 {
 	register struct proc *p2;
 	register uid_t uid;
@@ -93,7 +90,7 @@ fork1(p1, isvfork, retval)
 	 * processes, maxproc is the limit.
 	 */
 	uid = p1->p_cred->p_ruid;
-	if ((nprocs >= maxproc - 1 && uid != 0) || nprocs >= maxproc) {
+	if((nprocs >= maxproc - 1 && uid != 0) || nprocs >= maxproc) {
 		tablefull("proc");
 		return (EAGAIN);
 	}
@@ -103,8 +100,8 @@ fork1(p1, isvfork, retval)
 	 * a nonprivileged user to exceed their current limit.
 	 */
 	count = chgproccnt(uid, 1);
-	if (uid != 0 && count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur) {
-		(void)chgproccnt(uid, -1);
+	if(uid != 0 && count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+		(void) chgproccnt(uid, -1);
 		return (EAGAIN);
 	}
 
@@ -122,11 +119,11 @@ retry:
 	 * restart somewhat above 0, as the low-numbered procs
 	 * tend to include daemons that don't exit.
 	 */
-	if (nextpid >= PID_MAX) {
-		nextpid = 100;
+	if(nextpid >= PID_MAX) {
+		nextpid    = 100;
 		pidchecked = 0;
 	}
-	if (nextpid >= pidchecked) {
+	if(nextpid >= pidchecked) {
 		int doingzomb = 0;
 
 		pidchecked = PID_MAX;
@@ -136,33 +133,33 @@ retry:
 		 * than nextpid, so we can avoid checking for a while.
 		 */
 		p2 = allproc.lh_first;
-again:
-		for (; p2 != 0; p2 = p2->p_list.le_next) {
-			while (p2->p_pid == nextpid ||
-			    p2->p_pgrp->pg_id == nextpid) {
+	again:
+		for(; p2 != 0; p2 = p2->p_list.le_next) {
+			while(p2->p_pid == nextpid ||
+			      p2->p_pgrp->pg_id == nextpid) {
 				nextpid++;
-				if (nextpid >= pidchecked)
+				if(nextpid >= pidchecked)
 					goto retry;
 			}
-			if (p2->p_pid > nextpid && pidchecked > p2->p_pid)
+			if(p2->p_pid > nextpid && pidchecked > p2->p_pid)
 				pidchecked = p2->p_pid;
-			if (p2->p_pgrp->pg_id > nextpid && 
-			    pidchecked > p2->p_pgrp->pg_id)
+			if(p2->p_pgrp->pg_id > nextpid &&
+			   pidchecked > p2->p_pgrp->pg_id)
 				pidchecked = p2->p_pgrp->pg_id;
 		}
-		if (!doingzomb) {
+		if(!doingzomb) {
 			doingzomb = 1;
-			p2 = zombproc.lh_first;
+			p2        = zombproc.lh_first;
 			goto again;
 		}
 	}
 
 	nprocs++;
-	p2 = newproc;
-	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_pid = nextpid;
+	p2         = newproc;
+	p2->p_stat = SIDL; /* protect against others */
+	p2->p_pid  = nextpid;
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
+	p2->p_forw = p2->p_back = NULL; /* shouldn't be necessary */
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 
 	/*
@@ -171,9 +168,9 @@ again:
 	 * then copy the section that is copied directly from the parent.
 	 */
 	bzero(&p2->p_startzero,
-	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
+	      (unsigned) ((caddr_t) &p2->p_endzero - (caddr_t) &p2->p_startzero));
 	bcopy(&p1->p_startcopy, &p2->p_startcopy,
-	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+	      (unsigned) ((caddr_t) &p2->p_endcopy - (caddr_t) &p2->p_startcopy));
 
 	/*
 	 * Duplicate sub-structures as needed.
@@ -181,17 +178,17 @@ again:
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
 	p2->p_flag = P_INMEM;
-	if (p1->p_flag & P_PROFIL)
+	if(p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	MALLOC(p2->p_cred, struct pcred *, sizeof(struct pcred),
-	    M_SUBPROC, M_WAITOK);
+	       M_SUBPROC, M_WAITOK);
 	bcopy(p1->p_cred, p2->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
 
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
-	if (p2->p_textvp)
+	if(p2->p_textvp)
 		VREF(p2->p_textvp);
 
 	p2->p_fd = fdcopy(p1);
@@ -201,16 +198,16 @@ again:
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD)
+	if(p1->p_limit->p_lflags & PL_SHAREMOD)
 		p2->p_limit = limcopy(p1->p_limit);
 	else {
 		p2->p_limit = p1->p_limit;
 		p2->p_limit->p_refcnt++;
 	}
 
-	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
+	if(p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
-	if (isvfork)
+	if(isvfork)
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
@@ -222,9 +219,9 @@ again:
 	 * Copy traceflag and tracefile if enabled.
 	 * If not inherited, these were zeroed above.
 	 */
-	if (p1->p_traceflag&KTRFAC_INHERIT) {
+	if(p1->p_traceflag & KTRFAC_INHERIT) {
 		p2->p_traceflag = p1->p_traceflag;
-		if ((p2->p_tracep = p1->p_tracep) != NULL)
+		if((p2->p_tracep = p1->p_tracep) != NULL)
 			VREF(p2->p_tracep);
 	}
 #endif
@@ -244,7 +241,7 @@ again:
 	 */
 	retval[0] = p1->p_pid;
 	retval[1] = 1;
-	if (vm_fork(p1, p2, isvfork)) {
+	if(vm_fork(p1, p2, isvfork)) {
 		/*
 		 * Child process.  Set start time and get to work.
 		 */
@@ -273,8 +270,8 @@ again:
 	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
-	if (isvfork)
-		while (p2->p_flag & P_PPWAIT)
+	if(isvfork)
+		while(p2->p_flag & P_PPWAIT)
 			tsleep(p1, PWAIT, "ppwait", 0);
 
 	/*

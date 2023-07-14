@@ -49,14 +49,14 @@
 
 /*ARGSUSED*/
 cttyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	struct vnode *ttyvp = cttyvp(p);
 	int error;
 
-	if (ttyvp == NULL)
+	if(ttyvp == NULL)
 		return (ENXIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 #ifdef PARANOID
@@ -69,8 +69,8 @@ cttyopen(dev, flag, mode, p)
 	 * to delete this test. (mckusick 5/93)
 	 */
 	error = VOP_ACCESS(ttyvp,
-	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), p->p_ucred, p);
-	if (!error)
+	                   (flag & FREAD ? VREAD : 0) | (flag & FWRITE ? VWRITE : 0), p->p_ucred, p);
+	if(!error)
 #endif /* PARANOID */
 		error = VOP_OPEN(ttyvp, flag, NOCRED, p);
 	VOP_UNLOCK(ttyvp, 0, p);
@@ -79,15 +79,15 @@ cttyopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 cttyread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
-	struct proc *p = uio->uio_procp;
+	struct proc *p               = uio->uio_procp;
 	register struct vnode *ttyvp = cttyvp(p);
 	int error;
 
-	if (ttyvp == NULL)
+	if(ttyvp == NULL)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_READ(ttyvp, uio, flag, NOCRED);
@@ -97,15 +97,15 @@ cttyread(dev, uio, flag)
 
 /*ARGSUSED*/
 cttywrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+        dev_t dev;
+struct uio *uio;
+int flag;
 {
-	struct proc *p = uio->uio_procp;
+	struct proc *p      = uio->uio_procp;
 	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
-	if (ttyvp == NULL)
+	if(ttyvp == NULL)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
@@ -115,18 +115,18 @@ cttywrite(dev, uio, flag)
 
 /*ARGSUSED*/
 cttyioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+        dev_t dev;
+u_long cmd;
+caddr_t addr;
+int flag;
+struct proc *p;
 {
 	struct vnode *ttyvp = cttyvp(p);
 
-	if (ttyvp == NULL)
+	if(ttyvp == NULL)
 		return (EIO);
-	if (cmd == TIOCNOTTY) {
-		if (!SESS_LEADER(p)) {
+	if(cmd == TIOCNOTTY) {
+		if(!SESS_LEADER(p)) {
 			p->p_flag &= ~P_CONTROLT;
 			return (0);
 		} else
@@ -137,13 +137,13 @@ cttyioctl(dev, cmd, addr, flag, p)
 
 /*ARGSUSED*/
 cttyselect(dev, flag, p)
-	dev_t dev;
-	int flag;
-	struct proc *p;
+        dev_t dev;
+int flag;
+struct proc *p;
 {
 	struct vnode *ttyvp = cttyvp(p);
 
-	if (ttyvp == NULL)
-		return (1);	/* try operation to get EOF/failure */
-	return (VOP_SELECT(ttyvp, flag, FREAD|FWRITE, NOCRED, p));
+	if(ttyvp == NULL)
+		return (1); /* try operation to get EOF/failure */
+	return (VOP_SELECT(ttyvp, flag, FREAD | FWRITE, NOCRED, p));
 }

@@ -38,8 +38,7 @@
 
 #include <pmax/stand/dec_prom.h>
 
-strcmp(s1, s2)
-	char *s1, *s2;
+strcmp(s1, s2) char *s1, *s2;
 {
 	return (callv->strcmp(s1, s2));
 }

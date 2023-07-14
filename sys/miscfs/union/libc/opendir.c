@@ -47,27 +47,27 @@ static char sccsid[] = "@(#)opendir.c	8.6 (Berkeley) 8/14/94";
  * Open a directory.
  */
 DIR *
-opendir(name)
-	const char *name;
+        opendir(name)
+                const char *name;
 {
 
-	return (__opendir2(name, DTF_HIDEW|DTF_NODUP));
+	return (__opendir2(name, DTF_HIDEW | DTF_NODUP));
 }
 
 DIR *
-__opendir2(name, flags)
-	const char *name;
-	int flags;
+        __opendir2(name, flags)
+                const char *name;
+int flags;
 {
 	DIR *dirp;
 	int fd;
 	int incr;
 	int unionstack;
 
-	if ((fd = open(name, O_RDONLY)) == -1)
+	if((fd = open(name, O_RDONLY)) == -1)
 		return (NULL);
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
-	    (dirp = (DIR *)malloc(sizeof(DIR))) == NULL) {
+	if(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
+	   (dirp = (DIR *) malloc(sizeof(DIR))) == NULL) {
 		close(fd);
 		return (NULL);
 	}
@@ -78,7 +78,7 @@ __opendir2(name, flags)
 	 * Hopefully this can be a big win someday by allowing page
 	 * trades to user space to be done by getdirentries()
 	 */
-	if ((CLBYTES % DIRBLKSIZ) == 0)
+	if((CLBYTES % DIRBLKSIZ) == 0)
 		incr = CLBYTES;
 	else
 		incr = DIRBLKSIZ;
@@ -86,10 +86,10 @@ __opendir2(name, flags)
 	/*
 	 * Determine whether this directory is the top of a union stack.
 	 */
-	if (flags & DTF_NODUP) {
+	if(flags & DTF_NODUP) {
 		struct statfs sfb;
 
-		if (fstatfs(fd, &sfb) < 0) {
+		if(fstatfs(fd, &sfb) < 0) {
 			free(dirp);
 			close(fd);
 			return (NULL);
@@ -99,10 +99,10 @@ __opendir2(name, flags)
 		unionstack = 0;
 	}
 
-	if (unionstack) {
-		int len = 0;
-		int space = 0;
-		char *buf = 0;
+	if(unionstack) {
+		int len     = 0;
+		int space   = 0;
+		char *buf   = 0;
 		char *ddptr = 0;
 		int n;
 		struct dirent **dpv;
@@ -119,11 +119,11 @@ __opendir2(name, flags)
 			 * Always make at least DIRBLKSIZ bytes
 			 * available to getdirentries
 			 */
-			if (space < DIRBLKSIZ) {
+			if(space < DIRBLKSIZ) {
 				space += incr;
 				len += incr;
 				buf = realloc(buf, len);
-				if (buf == NULL) {
+				if(buf == NULL) {
 					free(dirp);
 					close(fd);
 					return (NULL);
@@ -132,11 +132,11 @@ __opendir2(name, flags)
 			}
 
 			n = getdirentries(fd, ddptr, space, &dirp->dd_seek);
-			if (n > 0) {
+			if(n > 0) {
 				ddptr += n;
 				space -= n;
 			}
-		} while (n > 0);
+		} while(n > 0);
 
 		flags |= __DTF_READALL;
 
@@ -147,9 +147,9 @@ __opendir2(name, flags)
 		 * programs which plan to fchdir to a descriptor
 		 * which has also been read -- see fts.c.
 		 */
-		if (flags & DTF_REWIND) {
+		if(flags & DTF_REWIND) {
 			(void) close(fd);
-			if ((fd = open(name, O_RDONLY)) == -1) {
+			if((fd = open(name, O_RDONLY)) == -1) {
 				free(buf);
 				free(dirp);
 				return (NULL);
@@ -169,27 +169,27 @@ __opendir2(name, flags)
 		 * On the second pass, save pointers to each one.
 		 * Then sort the pointers and remove duplicate names.
 		 */
-		for (dpv = 0;;) {
-			n = 0;
+		for(dpv = 0;;) {
+			n     = 0;
 			ddptr = buf;
-			while (ddptr < buf + len) {
+			while(ddptr < buf + len) {
 				struct dirent *dp;
 
 				dp = (struct dirent *) ddptr;
-				if ((int)dp & 03)
+				if((int) dp & 03)
 					break;
-				if ((dp->d_reclen <= 0) ||
-				    (dp->d_reclen > (buf + len + 1 - ddptr)))
+				if((dp->d_reclen <= 0) ||
+				   (dp->d_reclen > (buf + len + 1 - ddptr)))
 					break;
 				ddptr += dp->d_reclen;
-				if (dp->d_fileno) {
-					if (dpv)
+				if(dp->d_fileno) {
+					if(dpv)
 						dpv[n] = dp;
 					n++;
 				}
 			}
 
-			if (dpv) {
+			if(dpv) {
 				struct dirent *xp;
 
 				/*
@@ -198,52 +198,52 @@ __opendir2(name, flags)
 				mergesort(dpv, n, sizeof(*dpv), alphasort);
 
 				dpv[n] = NULL;
-				xp = NULL;
+				xp     = NULL;
 
 				/*
 				 * Scan through the buffer in sort order,
 				 * zapping the inode number of any
 				 * duplicate names.
 				 */
-				for (n = 0; dpv[n]; n++) {
+				for(n = 0; dpv[n]; n++) {
 					struct dirent *dp = dpv[n];
 
-					if ((xp == NULL) ||
-					    strcmp(dp->d_name, xp->d_name)) {
+					if((xp == NULL) ||
+					   strcmp(dp->d_name, xp->d_name)) {
 						xp = dp;
 					} else {
 						dp->d_fileno = 0;
 					}
-					if (dp->d_type == DT_WHT &&
-					    (flags & DTF_HIDEW))
+					if(dp->d_type == DT_WHT &&
+					   (flags & DTF_HIDEW))
 						dp->d_fileno = 0;
 				}
 
 				free(dpv);
 				break;
 			} else {
-				dpv = malloc((n+1) * sizeof(struct dirent *));
-				if (dpv == NULL)
+				dpv = malloc((n + 1) * sizeof(struct dirent *));
+				if(dpv == NULL)
 					break;
 			}
 		}
 
-		dirp->dd_len = len;
+		dirp->dd_len  = len;
 		dirp->dd_size = ddptr - dirp->dd_buf;
 	} else {
 		dirp->dd_len = incr;
 		dirp->dd_buf = malloc(dirp->dd_len);
-		if (dirp->dd_buf == NULL) {
+		if(dirp->dd_buf == NULL) {
 			free(dirp);
-			close (fd);
+			close(fd);
 			return (NULL);
 		}
 		dirp->dd_seek = 0;
 		flags &= ~DTF_REWIND;
 	}
 
-	dirp->dd_loc = 0;
-	dirp->dd_fd = fd;
+	dirp->dd_loc   = 0;
+	dirp->dd_fd    = fd;
 	dirp->dd_flags = flags;
 
 	/*

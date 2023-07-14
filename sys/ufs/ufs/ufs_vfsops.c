@@ -58,11 +58,10 @@
  * Nothing to do at the moment.
  */
 /* ARGSUSED */
-int
-ufs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+int ufs_start(mp, flags, p)
+struct mount *mp;
+int flags;
+struct proc *p;
 {
 
 	return (0);
@@ -71,15 +70,14 @@ ufs_start(mp, flags, p)
 /*
  * Return the root of a filesystem.
  */
-int
-ufs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+int ufs_root(mp, vpp)
+struct mount *mp;
+struct vnode **vpp;
 {
 	struct vnode *nvp;
 	int error;
 
-	if (error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp))
+	if(error = VFS_VGET(mp, (ino_t) ROOTINO, &nvp))
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -88,70 +86,69 @@ ufs_root(mp, vpp)
 /*
  * Do operations associated with quotas
  */
-int
-ufs_quotactl(mp, cmds, uid, arg, p)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
+int ufs_quotactl(mp, cmds, uid, arg, p)
+struct mount *mp;
+int cmds;
+uid_t uid;
+caddr_t arg;
+struct proc *p;
 {
 	int cmd, type, error;
 
 #ifndef QUOTA
 	return (EOPNOTSUPP);
 #else
-	if (uid == -1)
+	if(uid == -1)
 		uid = p->p_cred->p_ruid;
 	cmd = cmds >> SUBCMDSHIFT;
 
-	switch (cmd) {
-	case Q_SYNC:
-		break;
-	case Q_GETQUOTA:
-		if (uid == p->p_cred->p_ruid)
+	switch(cmd) {
+		case Q_SYNC:
 			break;
-		/* fall through */
-	default:
-		if (error = suser(p->p_ucred, &p->p_acflag))
-			return (error);
+		case Q_GETQUOTA:
+			if(uid == p->p_cred->p_ruid)
+				break;
+			/* fall through */
+		default:
+			if(error = suser(p->p_ucred, &p->p_acflag))
+				return (error);
 	}
 
 	type = cmds & SUBCMDMASK;
-	if ((u_int)type >= MAXQUOTAS)
+	if((u_int) type >= MAXQUOTAS)
 		return (EINVAL);
-	if (vfs_busy(mp, LK_NOWAIT, 0, p))
+	if(vfs_busy(mp, LK_NOWAIT, 0, p))
 		return (0);
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case Q_QUOTAON:
-		error = quotaon(p, mp, type, arg);
-		break;
+		case Q_QUOTAON:
+			error = quotaon(p, mp, type, arg);
+			break;
 
-	case Q_QUOTAOFF:
-		error = quotaoff(p, mp, type);
-		break;
+		case Q_QUOTAOFF:
+			error = quotaoff(p, mp, type);
+			break;
 
-	case Q_SETQUOTA:
-		error = setquota(mp, uid, type, arg);
-		break;
+		case Q_SETQUOTA:
+			error = setquota(mp, uid, type, arg);
+			break;
 
-	case Q_SETUSE:
-		error = setuse(mp, uid, type, arg);
-		break;
+		case Q_SETUSE:
+			error = setuse(mp, uid, type, arg);
+			break;
 
-	case Q_GETQUOTA:
-		error = getquota(mp, uid, type, arg);
-		break;
+		case Q_GETQUOTA:
+			error = getquota(mp, uid, type, arg);
+			break;
 
-	case Q_SYNC:
-		error = qsync(mp);
-		break;
+		case Q_SYNC:
+			error = qsync(mp);
+			break;
 
-	default:
-		error = EINVAL;
-		break;
+		default:
+			error = EINVAL;
+			break;
 	}
 	vfs_unbusy(mp, p);
 	return (error);
@@ -161,13 +158,12 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 /*
  * Initial UFS filesystems, done only once.
  */
-int
-ufs_init(vfsp)
-	struct vfsconf *vfsp;
+int ufs_init(vfsp)
+struct vfsconf *vfsp;
 {
 	static int done;
 
-	if (done)
+	if(done)
 		return (0);
 	done = 1;
 	ufs_ihashinit();
@@ -184,14 +180,13 @@ ufs_init(vfsp)
  * Verify that a host should have access to a filesystem, and if so
  * return a vnode for the presented file handle.
  */
-int
-ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
-	register struct mount *mp;
-	struct ufid *ufhp;
-	struct mbuf *nam;
-	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
+int ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
+register struct mount *mp;
+struct ufid *ufhp;
+struct mbuf *nam;
+struct vnode **vpp;
+int *exflagsp;
+struct ucred **credanonp;
 {
 	register struct inode *ip;
 	register struct netcred *np;
@@ -200,24 +195,24 @@ ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
 	int error;
 
 	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
+     * Get the export permission structure for this <mp, client> tuple.
+     */
 	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
+	if(np == NULL)
 		return (EACCES);
 
-	if (error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) {
+	if(error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) {
 		*vpp = NULLVP;
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
+	if(ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);
 	}
-	*vpp = nvp;
-	*exflagsp = np->netc_exflags;
+	*vpp       = nvp;
+	*exflagsp  = np->netc_exflags;
 	*credanonp = &np->netc_anon;
 	return (0);
 }

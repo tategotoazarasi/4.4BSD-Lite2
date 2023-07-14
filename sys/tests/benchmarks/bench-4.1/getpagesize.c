@@ -1,5 +1,4 @@
-getpagesize()
-{
+getpagesize() {
 
 	return (1024);
 }

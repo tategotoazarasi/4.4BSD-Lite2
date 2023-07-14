@@ -64,20 +64,19 @@
 
 #include <stand/stand.h>
 
-ioctl(fd, cmd, arg)
-	int fd;
-	int cmd;
-	char *arg;
+ioctl(fd, cmd, arg) int fd;
+int cmd;
+char *arg;
 {
 	register struct open_file *f = &files[fd];
 
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if((unsigned) fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return (-1);
 	}
-	if (f->f_flags & F_RAW) {
+	if(f->f_flags & F_RAW) {
 		errno = (f->f_dev->dv_ioctl)(f, cmd, arg);
-		if (errno)
+		if(errno)
 			return (-1);
 		return (0);
 	}

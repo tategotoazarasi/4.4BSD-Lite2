@@ -27,47 +27,46 @@ char *Myname;
  * "fname" and "dname" are the base of the names used for
  * files and directories.
  */
-dirtree(lev, files, dirs, fname, dname, totfiles, totdirs)
-	int lev;
-	int files;
-	int dirs;
-	char *fname;
-	char *dname;
-	int *totfiles;
-	int *totdirs;
+dirtree(lev, files, dirs, fname, dname, totfiles, totdirs) int lev;
+int files;
+int dirs;
+char *fname;
+char *dname;
+int *totfiles;
+int *totdirs;
 {
 	int fd;
 	int f, d;
 	char name[MAXPATHLEN];
 
-	if (lev-- == 0) {
+	if(lev-- == 0) {
 		return;
 	}
-	for ( f = 0; f < files; f++) {
+	for(f = 0; f < files; f++) {
 		sprintf(name, "%s%d", fname, f);
-		if ((fd = creat(name, 0666)) < 0) {
+		if((fd = creat(name, 0666)) < 0) {
 			error("creat %s failed", name);
 			exit(1);
 		}
 		(*totfiles)++;
-		if (close(fd) < 0) {
+		if(close(fd) < 0) {
 			error("close %d failed", fd);
 			exit(1);
 		}
 	}
-	for ( d = 0; d < dirs; d++) {
+	for(d = 0; d < dirs; d++) {
 		sprintf(name, "%s%d", dname, d);
-		if (mkdir(name, 0777) < 0) {
+		if(mkdir(name, 0777) < 0) {
 			error("mkdir %s failed", name);
 			exit(1);
 		}
 		(*totdirs)++;
-		if (chdir(name) < 0) {
+		if(chdir(name) < 0) {
 			error("chdir %s failed", name);
 			exit(1);
 		}
 		dirtree(lev, files, dirs, fname, dname, totfiles, totdirs);
-		if (chdir("..") < 0) {
+		if(chdir("..") < 0) {
 			error("chdir .. failed");
 			exit(1);
 		}
@@ -86,44 +85,43 @@ dirtree(lev, files, dirs, fname, dname, totfiles, totdirs)
  *
  * This is used to test the unlink function and to clean up after tests.
  */
-rmdirtree(lev, files, dirs, fname, dname, totfiles, totdirs, ignore)
-	int lev;
-	int files;
-	int dirs;
-	char *fname;
-	char *dname;
-	int *totfiles;		/* total removed */
-	int *totdirs;		/* total removed */
-	int ignore;
+rmdirtree(lev, files, dirs, fname, dname, totfiles, totdirs, ignore) int lev;
+int files;
+int dirs;
+char *fname;
+char *dname;
+int *totfiles; /* total removed */
+int *totdirs;  /* total removed */
+int ignore;
 {
 	int f, d;
 	char name[MAXPATHLEN];
 
-	if (lev-- == 0) {
+	if(lev-- == 0) {
 		return;
 	}
-	for ( f = 0; f < files; f++) {
+	for(f = 0; f < files; f++) {
 		sprintf(name, "%s%d", fname, f);
-		if (unlink(name) < 0 && !ignore) {
+		if(unlink(name) < 0 && !ignore) {
 			error("unlink %s failed", name);
 			exit(1);
 		}
 		(*totfiles)++;
 	}
-	for ( d = 0; d < dirs; d++) {
+	for(d = 0; d < dirs; d++) {
 		sprintf(name, "%s%d", dname, d);
-		if (chdir(name) < 0) {
-			if (ignore)
+		if(chdir(name) < 0) {
+			if(ignore)
 				continue;
 			error("chdir %s failed", name);
 			exit(1);
 		}
 		rmdirtree(lev, files, dirs, fname, dname, totfiles, totdirs, ignore);
-		if (chdir("..") < 0) {
+		if(chdir("..") < 0) {
 			error("chdir .. failed");
 			exit(1);
 		}
-		if (rmdir(name) < 0) {
+		if(rmdir(name) < 0) {
 			error("rmdir %s failed", name);
 			exit(1);
 		}
@@ -132,8 +130,7 @@ rmdirtree(lev, files, dirs, fname, dname, totfiles, totdirs, ignore)
 }
 
 /* VARARGS */
-error(str, ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9)
-	char *str;
+error(str, ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9) char *str;
 {
 #ifdef SVR3
 	char *ret, *getcwd(), path[MAXPATHLEN];
@@ -142,24 +139,24 @@ error(str, ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9)
 #endif
 
 #ifdef SVR3
-	if ((ret = getcwd(path, sizeof(path))) == NULL)
+	if((ret = getcwd(path, sizeof(path))) == NULL)
 		fprintf(stderr, "%s: getcwd failed\n", Myname);
 	else
 		fprintf(stderr, "\t%s: (%s) ", Myname, path);
 #else
-	if ((ret = getwd(path)) == NULL)
+	if((ret = getwd(path)) == NULL)
 		fprintf(stderr, "%s: getwd failed\n", Myname);
 	else
 		fprintf(stderr, "\t%s: (%s) ", Myname, path);
 #endif
 
 	fprintf(stderr, str, ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9);
-	if (errno)
+	if(errno)
 		perror(" ");
 	else
 		fprintf(stderr, "\n");
 	fflush(stderr);
-	if (ret == NULL)
+	if(ret == NULL)
 		exit(1);
 }
 
@@ -168,34 +165,31 @@ static struct timeval ts, te;
 /*
  * save current time in struct ts
  */
-starttime()
-{
+starttime() {
 
-	gettimeofday(&ts, (struct timezone *)0);
+	gettimeofday(&ts, (struct timezone *) 0);
 }
 
 /*
  * sets the struct tv to the difference in time between
  * current time and the time in struct ts.
  */
-endtime(tv)
-	struct timeval *tv;
+endtime(tv) struct timeval *tv;
 {
 
-	gettimeofday(&te, (struct timezone *)0);
-	if (te.tv_usec < ts.tv_usec) {
+	gettimeofday(&te, (struct timezone *) 0);
+	if(te.tv_usec < ts.tv_usec) {
 		te.tv_sec--;
 		te.tv_usec += 1000000;
 	}
 	tv->tv_usec = te.tv_usec - ts.tv_usec;
-	tv->tv_sec = te.tv_sec - ts.tv_sec;
+	tv->tv_sec  = te.tv_sec - ts.tv_sec;
 }
 
 /*
  * Set up and move to a test directory
  */
-testdir(dir)
-	char *dir;
+testdir(dir) char *dir;
 {
 	struct stat statb;
 	char str[MAXPATHLEN];
@@ -206,23 +200,23 @@ testdir(dir)
 	 *  check for env variable NFSTESTDIR.  If that is not
 	 *  set, use the compiled-in TESTDIR.
 	 */
-	if (dir == NULL)
-		if ((dir = getenv("NFSTESTDIR")) == NULL)
+	if(dir == NULL)
+		if((dir = getenv("NFSTESTDIR")) == NULL)
 			dir = TESTDIR;
 
-	if (stat(dir, &statb) == 0) {
+	if(stat(dir, &statb) == 0) {
 		sprintf(str, "rm -r %s", dir);
-		if (system(str) != 0) {
+		if(system(str) != 0) {
 			error("can't remove old test directory %s", dir);
 			exit(1);
 		}
 	}
 
-	if (mkdir(dir, 0777) < 0) {
+	if(mkdir(dir, 0777) < 0) {
 		error("can't create test directory %s", dir);
 		exit(1);
 	}
-	if (chdir(dir) < 0) {
+	if(chdir(dir) < 0) {
 		error("can't chdir to test directory %s", dir);
 		exit(1);
 	}
@@ -231,8 +225,7 @@ testdir(dir)
 /*
  * Move to a test directory
  */
-mtestdir(dir)
-	char *dir;
+mtestdir(dir) char *dir;
 {
 	struct stat statb;
 	char str[MAXPATHLEN];
@@ -243,41 +236,39 @@ mtestdir(dir)
 	 *  check for env variable NFSTESTDIR.  If that is not
 	 *  set, use the compiled-in TESTDIR.
 	 */
-	if (dir == NULL)
-		if ((dir = getenv("NFSTESTDIR")) == NULL)
+	if(dir == NULL)
+		if((dir = getenv("NFSTESTDIR")) == NULL)
 			dir = TESTDIR;
 
-	if (chdir(dir) < 0) {
+	if(chdir(dir) < 0) {
 		error("can't chdir to test directory %s", dir);
-		return(-1);
+		return (-1);
 	}
-	return(0);
+	return (0);
 }
 
 /*
  *  get parameter at parm, convert to int, and make sure that
  *  it is at least min.
  */
-getparm(parm, minimum, label)
-	char *parm, *label;
-	int minimum;
+getparm(parm, minimum, label) char *parm, *label;
+int minimum;
 {
 	int val;
-	
+
 	val = atoi(parm);
-	if (val < minimum) {
+	if(val < minimum) {
 		error("Illegal %s parameter %d, must be at least %d",
 		      label, val, minimum);
 		exit(1);
 	}
-	return(val);
+	return (val);
 }
 
 /*
  *  exit point for successful test
  */
-complete()
-{
+complete() {
 
 	fprintf(stdout, "\t%s ok.\n", Myname);
 	exit(0);

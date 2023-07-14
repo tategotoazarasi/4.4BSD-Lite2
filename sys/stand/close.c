@@ -64,25 +64,24 @@
 
 #include <stand/stand.h>
 
-close(fd)
-	int fd;
+close(fd) int fd;
 {
 	register struct open_file *f = &files[fd];
 	int err1, err2;
 
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if((unsigned) fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return (-1);
 	}
-	if (!(f->f_flags & F_RAW))
+	if(!(f->f_flags & F_RAW))
 		err1 = (f->f_ops->close)(f);
-	err2 = (f->f_dev->dv_close)(f);
+	err2       = (f->f_dev->dv_close)(f);
 	f->f_flags = 0;
-	if (err1) {
+	if(err1) {
 		errno = err1;
 		return (-1);
 	}
-	if (err2) {
+	if(err2) {
 		errno = err2;
 		return (-1);
 	}

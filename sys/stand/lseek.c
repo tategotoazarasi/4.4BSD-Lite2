@@ -64,22 +64,21 @@
 
 #include <stand/stand.h>
 
-off_t
-lseek(fd, offset, where)
-	int fd;
-	off_t offset;
-	int where;
+off_t lseek(fd, offset, where)
+int fd;
+off_t offset;
+int where;
 {
 	register struct open_file *f = &files[fd];
 
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if((unsigned) fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return (-1);
 	}
 
 	/* seek is not supported on raw devices */
-	if (f->f_flags & F_RAW)
-		return ((off_t)-1);
+	if(f->f_flags & F_RAW)
+		return ((off_t) -1);
 
 	return (f->f_ops->seek)(f, offset, where);
 }

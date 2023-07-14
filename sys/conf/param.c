@@ -67,54 +67,53 @@
  */
 
 #ifndef HZ
-#define	HZ 100
+#define HZ 100
 #endif
-int	hz = HZ;
-int	tick = 1000000 / HZ;
-int	tickadj = 30000 / (60 * HZ);		/* can adjust 30ms in 60s */
-struct	timezone tz = { TIMEZONE, DST };
-#define	NPROC (20 + 16 * MAXUSERS)
-int	maxproc = NPROC;
-#define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
-#define	NVNODE (NPROC + NTEXT + 100)
-int	desiredvnodes = NVNODE;
-int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
-int	ncallout = 16 + NPROC;
-int	nclist = 60 + 12 * MAXUSERS;
-int	nmbclusters = NMBCLUSTERS;
-int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
+int hz             = HZ;
+int tick           = 1000000 / HZ;
+int tickadj        = 30000 / (60 * HZ); /* can adjust 30ms in 60s */
+struct timezone tz = {TIMEZONE, DST};
+#define NPROC (20 + 16 * MAXUSERS)
+int maxproc = NPROC;
+#define NTEXT (80 + NPROC / 8) /* actually the object cache */
+#define NVNODE (NPROC + NTEXT + 100)
+int desiredvnodes = NVNODE;
+int maxfiles      = 3 * (NPROC + MAXUSERS) + 80;
+int ncallout      = 16 + NPROC;
+int nclist        = 60 + 12 * MAXUSERS;
+int nmbclusters   = NMBCLUSTERS;
+int fscale        = FSCALE; /* kernel uses `FSCALE', user uses `fscale' */
 
 /*
  * Values in support of System V compatible shared memory.	XXX
  */
 #ifdef SYSVSHM
-#define	SHMMAX	(SHMMAXPGS*NBPG)
-#define	SHMMIN	1
-#define	SHMMNI	32			/* <= SHMMMNI in shm.h */
-#define	SHMSEG	8
-#define	SHMALL	(SHMMAXPGS/CLSIZE)
+#define SHMMAX (SHMMAXPGS * NBPG)
+#define SHMMIN 1
+#define SHMMNI 32 /* <= SHMMMNI in shm.h */
+#define SHMSEG 8
+#define SHMALL (SHMMAXPGS / CLSIZE)
 
-struct	shminfo shminfo = {
-	SHMMAX,
-	SHMMIN,
-	SHMMNI,
-	SHMSEG,
-	SHMALL
-};
+struct shminfo shminfo = {
+        SHMMAX,
+        SHMMIN,
+        SHMMNI,
+        SHMSEG,
+        SHMALL};
 #endif
 
 /*
  * These are initialized at bootstrap time
  * to values dependent on memory size
  */
-int	nbuf, nswbuf;
+int nbuf, nswbuf;
 
 /*
  * These have to be allocated somewhere; allocating
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
-struct 	callout *callout;
-struct	cblock *cfree;
-struct	buf *buf, *swbuf;
-char	*buffers;
+struct callout *callout;
+struct cblock *cfree;
+struct buf *buf, *swbuf;
+char *buffers;

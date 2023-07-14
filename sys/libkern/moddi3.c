@@ -49,19 +49,19 @@ static char sccsid[] = "@(#)moddi3.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __moddi3(a, b)
-	quad_t a, b;
+quad_t a, b;
 {
 	u_quad_t ua, ub, ur;
 	int neg;
 
-	if (a < 0)
-		ua = -(u_quad_t)a, neg = 1;
+	if(a < 0)
+		ua = -(u_quad_t) a, neg = 1;
 	else
 		ua = a, neg = 0;
-	if (b < 0)
-		ub = -(u_quad_t)b, neg ^= 1;
+	if(b < 0)
+		ub = -(u_quad_t) b, neg ^= 1;
 	else
 		ub = b;
-	(void)__qdivrem(ua, ub, &ur);
+	(void) __qdivrem(ua, ub, &ur);
 	return (neg ? -ur : ur);
 }

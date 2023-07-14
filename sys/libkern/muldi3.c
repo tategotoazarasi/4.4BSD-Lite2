@@ -102,31 +102,31 @@ static quad_t __lmulq(u_long, u_long);
 
 quad_t
 __muldi3(a, b)
-	quad_t a, b;
+quad_t a, b;
 {
 	union uu u, v, low, prod;
 	register u_long high, mid, udiff, vdiff;
 	register int negall, negmid;
-#define	u1	u.ul[H]
-#define	u0	u.ul[L]
-#define	v1	v.ul[H]
-#define	v0	v.ul[L]
+#define u1 u.ul[H]
+#define u0 u.ul[L]
+#define v1 v.ul[H]
+#define v0 v.ul[L]
 
 	/*
 	 * Get u and v such that u, v >= 0.  When this is finished,
 	 * u1, u0, v1, and v0 will be directly accessible through the
 	 * longword fields.
 	 */
-	if (a >= 0)
+	if(a >= 0)
 		u.q = a, negall = 0;
 	else
 		u.q = -a, negall = 1;
-	if (b >= 0)
+	if(b >= 0)
 		v.q = b;
 	else
 		v.q = -b, negall ^= 1;
 
-	if (u1 == 0 && v1 == 0) {
+	if(u1 == 0 && v1 == 0) {
 		/*
 		 * An (I hope) important optimization occurs when u1 and v1
 		 * are both 0.  This should be common since most numbers
@@ -142,11 +142,11 @@ __muldi3(a, b)
 		 */
 		low.q = __lmulq(u0, v0);
 
-		if (u1 >= u0)
+		if(u1 >= u0)
 			negmid = 0, udiff = u1 - u0;
 		else
 			negmid = 1, udiff = u0 - u1;
-		if (v0 >= v1)
+		if(v0 >= v1)
 			vdiff = v0 - v1;
 		else
 			vdiff = v1 - v0, negmid ^= 1;
@@ -158,7 +158,7 @@ __muldi3(a, b)
 		 * Assemble the final product.
 		 */
 		prod.ul[H] = high + (negmid ? -mid : mid) + low.ul[L] +
-		    low.ul[H];
+		             low.ul[H];
 		prod.ul[L] = low.ul[L];
 	}
 	return (negall ? -prod.q : prod.q);
@@ -186,8 +186,7 @@ __muldi3(a, b)
  * splits into high and low longs as HHALF(l) and LHUP(l) respectively.
  */
 static quad_t
-__lmulq(u_long u, u_long v)
-{
+__lmulq(u_long u, u_long v) {
 	u_long u1, u0, v1, v0, udiff, vdiff, high, mid, low;
 	u_long prodh, prodl, was;
 	union uu prod;
@@ -201,14 +200,14 @@ __lmulq(u_long u, u_long v)
 	low = u0 * v0;
 
 	/* This is the same small-number optimization as before. */
-	if (u1 == 0 && v1 == 0)
+	if(u1 == 0 && v1 == 0)
 		return (low);
 
-	if (u1 >= u0)
+	if(u1 >= u0)
 		udiff = u1 - u0, neg = 0;
 	else
 		udiff = u0 - u1, neg = 1;
-	if (v0 >= v1)
+	if(v0 >= v1)
 		vdiff = v0 - v1;
 	else
 		vdiff = v1 - v0, neg ^= 1;
@@ -221,7 +220,7 @@ __lmulq(u_long u, u_long v)
 	prodl = LHUP(high);
 
 	/* if (neg) prod -= mid << N; else prod += mid << N; */
-	if (neg) {
+	if(neg) {
 		was = prodl;
 		prodl -= LHUP(mid);
 		prodh -= HHALF(mid) + (prodl > was);
@@ -236,7 +235,7 @@ __lmulq(u_long u, u_long v)
 	prodl += LHUP(low);
 	prodh += HHALF(low) + (prodl < was);
 	/* ... + low; */
-	if ((prodl += low) < low)
+	if((prodl += low) < low)
 		prodh++;
 
 	/* return 4N-bit product */

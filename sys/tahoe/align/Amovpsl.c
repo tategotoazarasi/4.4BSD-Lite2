@@ -36,12 +36,12 @@
  *	@(#)Amovpsl.c	7.1 (Berkeley) 12/6/90
  */
 
-#include "align.h" 
-movpsl(infop)	process_info *infop;
+#include "align.h"
+movpsl(infop) process_info *infop;
 /*
 /*	Move PSL to some place.
 /*
 /************************************/
 {
-	write_back (infop, psl, operand(infop,0));
+	write_back(infop, psl, operand(infop, 0));
 }

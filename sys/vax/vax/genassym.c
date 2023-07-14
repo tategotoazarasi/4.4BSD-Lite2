@@ -33,7 +33,7 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1982, 1986 The Regents of the University of California.\n\
+        "@(#) Copyright (c) 1982, 1986 The Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
@@ -42,11 +42,11 @@ static char sccsid[] = "@(#)genassym.c	7.12 (Berkeley) 9/23/93";
 #endif /* not lint */
 
 #define KERNEL
-#define	VAX780	1
-#define	VAX750	1
-#define	VAX730	1
-#define	VAX630	1
-#define	VAX650	1
+#define VAX780 1
+#define VAX750 1
+#define VAX730 1
+#define VAX630 1
+#define VAX650 1
 
 #include "../include/pte.h"
 
@@ -67,16 +67,15 @@ static char sccsid[] = "@(#)genassym.c	7.12 (Berkeley) 9/23/93";
 
 struct uba_hd uba_hd[1];
 
-main()
-{
-	register struct proc *p = (struct proc *)0;
-	register struct uba_regs *uba = (struct uba_regs *)0;
-	register struct uba_hd *uh = (struct uba_hd *)0;
-	register struct vmmeter *vm = (struct vmmeter *)0;
-	register struct user *up = (struct user *)0;
-	register struct rusage *rup = (struct rusage *)0;
-	struct rpb *rp = (struct rpb *)0;
-	struct text *tp = (struct text *)0;
+main() {
+	register struct proc *p       = (struct proc *) 0;
+	register struct uba_regs *uba = (struct uba_regs *) 0;
+	register struct uba_hd *uh    = (struct uba_hd *) 0;
+	register struct vmmeter *vm   = (struct vmmeter *) 0;
+	register struct user *up      = (struct user *) 0;
+	register struct rusage *rup   = (struct rusage *) 0;
+	struct rpb *rp                = (struct rpb *) 0;
+	struct text *tp               = (struct text *) 0;
 
 	printf("#define\tP_FORW %d\n", &p->p_forw);
 	printf("#define\tP_BACK %d\n", &p->p_back);
@@ -97,7 +96,7 @@ main()
 	printf("#define\tUBA_BRRVR %d\n", uba->uba_brrvr);
 	printf("#define\tUH_UBA %d\n", &uh->uh_uba);
 	printf("#define\tUH_VEC %d\n", &uh->uh_vec);
-	printf("#define\tUH_SIZE %d\n", sizeof (struct uba_hd));
+	printf("#define\tUH_SIZE %d\n", sizeof(struct uba_hd));
 	printf("#define\tRP_FLAG %d\n", &rp->rp_flag);
 	printf("#define\tX_CADDR %d\n", &tp->x_caddr);
 	printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
@@ -114,7 +113,7 @@ main()
 	printf("#define\tMAXPHYS %d\n", MAXPHYS);
 	printf("#define\tSYSPTSIZE %d\n", SYSPTSIZE);
 	printf("#define\tUSRPTSIZE %d\n", USRPTSIZE);
-	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
+	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof(struct msgbuf)));
 	printf("#define\tMCLBYTES %d\n", MCLBYTES);
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tNKMEMCLUSTERS %d\n", NKMEMCLUSTERS);

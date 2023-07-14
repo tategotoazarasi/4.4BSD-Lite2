@@ -45,66 +45,63 @@
 #include <hp/dev/cons.h>
 
 #ifdef ITECONSOLE
-int	iteprobe(), iteinit(), itegetchar(), iteputchar();
+int iteprobe(), iteinit(), itegetchar(), iteputchar();
 #endif
 #ifdef DCACONSOLE
-int	dcaprobe(), dcainit(), dcagetchar(), dcaputchar();
+int dcaprobe(), dcainit(), dcagetchar(), dcaputchar();
 #endif
 #ifdef DCMCONSOLE
-int	dcmprobe(), dcminit(), dcmgetchar(), dcmputchar();
+int dcmprobe(), dcminit(), dcmgetchar(), dcmputchar();
 #endif
 
 struct consdev constab[] = {
 #ifdef ITECONSOLE
-	{ iteprobe,	iteinit,	itegetchar,	iteputchar },
+        {iteprobe, iteinit, itegetchar, iteputchar},
 #endif
 #ifdef DCACONSOLE
-	{ dcaprobe,	dcainit,	dcagetchar,	dcaputchar },
+        {dcaprobe, dcainit, dcagetchar, dcaputchar},
 #endif
 #ifdef DCMCONSOLE
-	{ dcmprobe,	dcminit,	dcmgetchar,	dcmputchar },
+        {dcmprobe, dcminit, dcmgetchar, dcmputchar},
 #endif
-	{ 0 },
+        {0},
 };
 
 struct consdev *cn_tab;
 int noconsole;
 
-cninit()
-{
+cninit() {
 	register struct consdev *cp;
 
-	cn_tab = NULL;
+	cn_tab    = NULL;
 	noconsole = 1;
-	for (cp = constab; cp->cn_probe; cp++) {
+	for(cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
-		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
+		if(cp->cn_pri > CN_DEAD &&
+		   (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
 			cn_tab = cp;
 	}
-	if (cn_tab) {
+	if(cn_tab) {
 		(*cn_tab->cn_init)(cn_tab);
 		noconsole = 0;
 	}
 }
 
-cngetc()
-{
-	if (cn_tab)
-		return((*cn_tab->cn_getc)());
-	return(0);
+cngetc() {
+	if(cn_tab)
+		return ((*cn_tab->cn_getc)());
+	return (0);
 }
 
-cnputc(c)
-	int c;
+cnputc(c) int c;
 {
 #ifdef ROMPRF
 	extern int userom;
 
-	if (userom)
+	if(userom)
 		romputchar(c);
 	else
 #endif
-	if (cn_tab)
+	        if(cn_tab)
 		(*cn_tab->cn_putc)(c);
 }

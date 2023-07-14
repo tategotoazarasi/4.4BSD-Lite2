@@ -65,21 +65,20 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-__dead void cpu_exit __P((struct proc *));
-__dead void exit1 __P((struct proc *, int));
+__dead void cpu_exit __P((struct proc *) );
+__dead void exit1 __P((struct proc *, int) );
 
 /*
  * exit --
  *	Death of process.
  */
 struct rexit_args {
-	int	rval;
+	int rval;
 };
 __dead void
-exit(p, uap, retval)
-	struct proc *p;
-	struct rexit_args *uap;
-	int *retval;
+        exit(p, uap, retval) struct proc *p;
+struct rexit_args *uap;
+int *retval;
 {
 
 	exit1(p, W_EXITCODE(uap->rval, 0));
@@ -92,24 +91,23 @@ exit(p, uap, retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 __dead void
-exit1(p, rv)
-	register struct proc *p;
-	int rv;
+        exit1(p, rv) register struct proc *p;
+int rv;
 {
 	register struct proc *q, *nq;
 	register struct proc **pp;
 	register struct vmspace *vm;
 
-	if (p->p_pid == 1)
+	if(p->p_pid == 1)
 		panic("init died (signal %d, exit %d)",
-		    WTERMSIG(rv), WEXITSTATUS(rv));
+		      WTERMSIG(rv), WEXITSTATUS(rv));
 #ifdef PGINPROF
 	vmsizmon();
 #endif
-	if (p->p_flag & P_PROFIL)
+	if(p->p_flag & P_PROFIL)
 		stopprofclock(p);
 	MALLOC(p->p_ru, struct rusage *, sizeof(struct rusage),
-		M_ZOMBIE, M_WAITOK);
+	       M_ZOMBIE, M_WAITOK);
 	/*
 	 * If parent is waiting for us to exit or exec,
 	 * P_PPWAIT is set; we will wakeup the parent below.
@@ -117,8 +115,8 @@ exit1(p, rv)
 	p->p_flag &= ~(P_TRACED | P_PPWAIT);
 	p->p_flag |= P_WEXIT;
 	p->p_sigignore = ~0;
-	p->p_siglist = 0;
-	untimeout(realitexpire, (caddr_t)p);
+	p->p_siglist   = 0;
+	untimeout(realitexpire, (caddr_t) p);
 
 	/*
 	 * Close open files and release open-file table.
@@ -129,7 +127,7 @@ exit1(p, rv)
 	/* The next two chunks should probably be moved to vmspace_exit. */
 	vm = p->p_vmspace;
 #ifdef SYSVSHM
-	if (vm->vm_shm)
+	if(vm->vm_shm)
 		shmexit(p);
 #endif
 	/*
@@ -140,32 +138,32 @@ exit1(p, rv)
 	 * Can't free the entire vmspace as the kernel stack
 	 * may be mapped within that space also.
 	 */
-	if (vm->vm_refcnt == 1)
+	if(vm->vm_refcnt == 1)
 		(void) vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS,
-		    VM_MAXUSER_ADDRESS);
+		                     VM_MAXUSER_ADDRESS);
 
-	if (SESS_LEADER(p)) {
+	if(SESS_LEADER(p)) {
 		register struct session *sp = p->p_session;
 
-		if (sp->s_ttyvp) {
+		if(sp->s_ttyvp) {
 			/*
 			 * Controlling process.
 			 * Signal foreground pgrp,
 			 * drain controlling terminal
 			 * and revoke access to controlling terminal.
 			 */
-			if (sp->s_ttyp->t_session == sp) {
-				if (sp->s_ttyp->t_pgrp)
+			if(sp->s_ttyp->t_session == sp) {
+				if(sp->s_ttyp->t_pgrp)
 					pgsignal(sp->s_ttyp->t_pgrp, SIGHUP, 1);
 				(void) ttywait(sp->s_ttyp);
 				/*
 				 * The tty could have been revoked
 				 * if we blocked.
 				 */
-				if (sp->s_ttyvp)
+				if(sp->s_ttyvp)
 					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
 			}
-			if (sp->s_ttyvp)
+			if(sp->s_ttyvp)
 				vrele(sp->s_ttyvp);
 			sp->s_ttyvp = NULL;
 			/*
@@ -178,13 +176,13 @@ exit1(p, rv)
 	}
 	fixjobc(p, p->p_pgrp, 0);
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
-	(void)acct_process(p);
+	(void) acct_process(p);
 #ifdef KTRACE
 	/* 
 	 * release trace file
 	 */
-	p->p_traceflag = 0;	/* don't trace the vrele() */
-	if (p->p_tracep)
+	p->p_traceflag = 0; /* don't trace the vrele() */
+	if(p->p_tracep)
 		vrele(p->p_tracep);
 #endif
 	/*
@@ -198,9 +196,9 @@ exit1(p, rv)
 	LIST_REMOVE(p, p_hash);
 
 	q = p->p_children.lh_first;
-	if (q)		/* only need this if any child is S_ZOMB */
+	if(q) /* only need this if any child is S_ZOMB */
 		wakeup((caddr_t) initproc);
-	for (; q != 0; q = nq) {
+	for(; q != 0; q = nq) {
 		nq = q->p_sibling.le_next;
 		LIST_REMOVE(q, p_sibling);
 		LIST_INSERT_HEAD(&initproc->p_children, q, p_sibling);
@@ -209,7 +207,7 @@ exit1(p, rv)
 		 * Traced processes are killed
 		 * since their existence means someone is screwing up.
 		 */
-		if (q->p_flag & P_TRACED) {
+		if(q->p_flag & P_TRACED) {
 			q->p_flag &= ~P_TRACED;
 			psignal(q, SIGKILL);
 		}
@@ -220,7 +218,7 @@ exit1(p, rv)
 	 * info and self times.
 	 */
 	p->p_xstat = rv;
-	*p->p_ru = p->p_stats->p_ru;
+	*p->p_ru   = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
@@ -228,10 +226,10 @@ exit1(p, rv)
 	 * Notify parent that we're gone.
 	 */
 	psignal(p->p_pptr, SIGCHLD);
-	wakeup((caddr_t)p->p_pptr);
+	wakeup((caddr_t) p->p_pptr);
 #if defined(tahoe)
 	/* move this to cpu_exit */
-	p->p_addr->u_pcb.pcb_savacc.faddr = (float *)NULL;
+	p->p_addr->u_pcb.pcb_savacc.faddr = (float *) NULL;
 #endif
 	/*
 	 * Clear curproc after we've done all operations
@@ -244,7 +242,7 @@ exit1(p, rv)
 	 * Other substructures are freed from wait().
 	 */
 	curproc = NULL;
-	if (--p->p_limit->p_refcnt == 0)
+	if(--p->p_limit->p_refcnt == 0)
 		FREE(p->p_limit, M_SUBPROC);
 
 	/*
@@ -260,108 +258,105 @@ exit1(p, rv)
 }
 
 struct wait_args {
-	int	pid;
-	int	*status;
-	int	options;
-	struct	rusage *rusage;
+	int pid;
+	int *status;
+	int options;
+	struct rusage *rusage;
 #ifdef COMPAT_43
-	int	compat;		/* pseudo */
+	int compat; /* pseudo */
 #endif
 };
 
 #ifdef COMPAT_43
 #if defined(hp300) || defined(luna68k)
 #include <machine/frame.h>
-#define GETPS(rp)	((struct frame *)(rp))->f_sr
+#define GETPS(rp) ((struct frame *) (rp))->f_sr
 #else
-#define GETPS(rp)	(rp)[PS]
+#define GETPS(rp) (rp)[PS]
 #endif
 
-compat_43_wait(p, uap, retval)
-	struct proc *p;
-	register struct wait_args *uap;
-	int *retval;
+compat_43_wait(p, uap, retval) struct proc *p;
+register struct wait_args *uap;
+int *retval;
 {
 
 #ifdef PSL_ALLCC
-	if ((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
+	if((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
 		uap->options = 0;
-		uap->rusage = NULL;
+		uap->rusage  = NULL;
 	} else {
 		uap->options = p->p_md.md_regs[R0];
-		uap->rusage = (struct rusage *)p->p_md.md_regs[R1];
+		uap->rusage  = (struct rusage *) p->p_md.md_regs[R1];
 	}
 #else
 	uap->options = 0;
-	uap->rusage = NULL;
+	uap->rusage  = NULL;
 #endif
-	uap->pid = WAIT_ANY;
+	uap->pid    = WAIT_ANY;
 	uap->status = NULL;
 	uap->compat = 1;
 	return (wait1(p, uap, retval));
 }
 
-wait4(p, uap, retval)
-	struct proc *p;
-	struct wait_args *uap;
-	int *retval;
+wait4(p, uap, retval) struct proc *p;
+struct wait_args *uap;
+int *retval;
 {
 
 	uap->compat = 0;
 	return (wait1(p, uap, retval));
 }
 #else
-#define	wait1	wait4
+#define wait1 wait4
 #endif
 
-int
-wait1(q, uap, retval)
-	register struct proc *q;
-	register struct wait_args *uap;
-	int retval[];
+int wait1(q, uap, retval)
+register struct proc *q;
+register struct wait_args *uap;
+int retval[];
 {
 	register int nfound;
 	register struct proc *p, *t;
 	int status, error;
 
-	if (uap->pid == 0)
+	if(uap->pid == 0)
 		uap->pid = -q->p_pgid;
 #ifdef notyet
-	if (uap->options &~ (WUNTRACED|WNOHANG))
+	if(uap->options & ~(WUNTRACED | WNOHANG))
 		return (EINVAL);
 #endif
 loop:
 	nfound = 0;
-	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
-		if (uap->pid != WAIT_ANY &&
-		    p->p_pid != uap->pid && p->p_pgid != -uap->pid)
+	for(p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+		if(uap->pid != WAIT_ANY &&
+		   p->p_pid != uap->pid && p->p_pgid != -uap->pid)
 			continue;
 		nfound++;
-		if (p->p_stat == SZOMB) {
+		if(p->p_stat == SZOMB) {
 			retval[0] = p->p_pid;
 #ifdef COMPAT_43
-			if (uap->compat)
+			if(uap->compat)
 				retval[1] = p->p_xstat;
 			else
 #endif
-			if (uap->status) {
-				status = p->p_xstat;	/* convert to int */
-				if (error = copyout((caddr_t)&status,
-				    (caddr_t)uap->status, sizeof(status)))
+			        if(uap->status) {
+				status = p->p_xstat; /* convert to int */
+				if(error = copyout((caddr_t) &status,
+				                   (caddr_t) uap->status, sizeof(status)))
 					return (error);
 			}
-			if (uap->rusage && (error = copyout((caddr_t)p->p_ru,
-			    (caddr_t)uap->rusage, sizeof (struct rusage))))
+			if(uap->rusage && (error = copyout((caddr_t) p->p_ru,
+			                                   (caddr_t) uap->rusage, sizeof(struct rusage))))
 				return (error);
 			/*
 			 * If we got the child via a ptrace 'attach',
 			 * we need to give it back to the old parent.
 			 */
-			if (p->p_oppid && (t = pfind(p->p_oppid))) {
+			if(p->p_oppid && (t = pfind(p->p_oppid))) {
 				p->p_oppid = 0;
 				proc_reparent(p, t);
 				psignal(t, SIGCHLD);
-				wakeup((caddr_t)t);
+				wakeup((caddr_t) t);
 				return (0);
 			}
 			p->p_xstat = 0;
@@ -371,12 +366,12 @@ loop:
 			/*
 			 * Decrement the count of procs running with this uid.
 			 */
-			(void)chgproccnt(p->p_cred->p_ruid, -1);
+			(void) chgproccnt(p->p_cred->p_ruid, -1);
 
 			/*
 			 * Free up credentials.
 			 */
-			if (--p->p_cred->p_refcnt == 0) {
+			if(--p->p_cred->p_refcnt == 0) {
 				crfree(p->p_cred->pc_ucred);
 				FREE(p->p_cred, M_SUBPROC);
 			}
@@ -384,7 +379,7 @@ loop:
 			/*
 			 * Release reference to text vnode
 			 */
-			if (p->p_textvp)
+			if(p->p_textvp)
 				vrele(p->p_textvp);
 
 			/*
@@ -392,7 +387,7 @@ loop:
 			 * Unlink it from its process group and free it.
 			 */
 			leavepgrp(p);
-			LIST_REMOVE(p, p_list);	/* off zombproc */
+			LIST_REMOVE(p, p_list); /* off zombproc */
 			LIST_REMOVE(p, p_sibling);
 
 			/*
@@ -405,32 +400,32 @@ loop:
 			nprocs--;
 			return (0);
 		}
-		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
-		    (p->p_flag & P_TRACED || uap->options & WUNTRACED)) {
+		if(p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
+		   (p->p_flag & P_TRACED || uap->options & WUNTRACED)) {
 			p->p_flag |= P_WAITED;
 			retval[0] = p->p_pid;
 #ifdef COMPAT_43
-			if (uap->compat) {
+			if(uap->compat) {
 				retval[1] = W_STOPCODE(p->p_xstat);
-				error = 0;
+				error     = 0;
 			} else
 #endif
-			if (uap->status) {
+			        if(uap->status) {
 				status = W_STOPCODE(p->p_xstat);
-				error = copyout((caddr_t)&status,
-					(caddr_t)uap->status, sizeof(status));
+				error  = copyout((caddr_t) &status,
+				                 (caddr_t) uap->status, sizeof(status));
 			} else
 				error = 0;
 			return (error);
 		}
 	}
-	if (nfound == 0)
+	if(nfound == 0)
 		return (ECHILD);
-	if (uap->options & WNOHANG) {
+	if(uap->options & WNOHANG) {
 		retval[0] = 0;
 		return (0);
 	}
-	if (error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0))
+	if(error = tsleep((caddr_t) q, PWAIT | PCATCH, "wait", 0))
 		return (error);
 	goto loop;
 }
@@ -439,12 +434,11 @@ loop:
  * make process 'parent' the new parent of process 'child'.
  */
 void
-proc_reparent(child, parent)
-	register struct proc *child;
-	register struct proc *parent;
+        proc_reparent(child, parent) register struct proc *child;
+register struct proc *parent;
 {
 
-	if (child->p_pptr == parent)
+	if(child->p_pptr == parent)
 		return;
 
 	LIST_REMOVE(child, p_sibling);

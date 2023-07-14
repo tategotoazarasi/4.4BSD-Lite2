@@ -36,17 +36,15 @@
 #include <stand/stand.h>
 
 /* ARGSUSED */
-nodev(io)
-	struct iob *io;
+nodev(io) struct iob *io;
 {
 	return (ENXIO);
 }
 
 /* ARGSUSED */
-noioctl(io, cmd, arg)
-	struct iob *io;
-	int cmd;
-	caddr_t arg;
+noioctl(io, cmd, arg) struct iob *io;
+int cmd;
+caddr_t arg;
 {
 	return (EINVAL);
 }

@@ -44,13 +44,12 @@
 #include <sys/conf.h>
 #include <sys/proc.h>
 
-physio(a1, a2, a3, a4, a5, a6)
-	int (*a1)(); 
-	struct buf *a2;
-	dev_t a3;
-	int a4;
-	u_int (*a5)();
-	struct uio *a6;
+physio(a1, a2, a3, a4, a5, a6) int (*a1)();
+struct buf *a2;
+dev_t a3;
+int a4;
+u_int (*a5)();
+struct uio *a6;
 {
 
 	/*
@@ -59,9 +58,8 @@ physio(a1, a2, a3, a4, a5, a6)
 	return (EIO);
 }
 
-u_int
-minphys(a1)
-	struct buf *a1;
+u_int minphys(a1)
+struct buf *a1;
 {
 
 	/*
@@ -74,20 +72,20 @@ minphys(a1)
  * Do a read on a device for a user process.
  */
 rawread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+        dev_t dev;
+struct uio *uio;
 {
-	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_READ, minphys, uio));
+	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *) NULL,
+	               dev, B_READ, minphys, uio));
 }
 
 /*
  * Do a write on a device for a user process.
  */
 rawwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+        dev_t dev;
+struct uio *uio;
 {
-	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_WRITE, minphys, uio));
+	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *) NULL,
+	               dev, B_WRITE, minphys, uio));
 }

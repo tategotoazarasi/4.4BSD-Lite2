@@ -45,9 +45,7 @@
 /*
  * Unsupported device function (e.g. writing to read-only device).
  */
-int
-enodev()
-{
+int enodev() {
 
 	return (ENODEV);
 }
@@ -55,9 +53,7 @@ enodev()
 /*
  * Unconfigured device function; driver not configured.
  */
-int
-enxio()
-{
+int enxio() {
 
 	return (ENXIO);
 }
@@ -65,9 +61,7 @@ enxio()
 /*
  * Unsupported ioctl function.
  */
-int
-enoioctl()
-{
+int enoioctl() {
 
 	return (ENOTTY);
 }
@@ -77,9 +71,7 @@ enoioctl()
  * This is used for an otherwise-reasonable operation
  * that is not supported by the current system binary.
  */
-int
-enosys()
-{
+int enosys() {
 
 	return (ENOSYS);
 }
@@ -88,9 +80,7 @@ enosys()
  * Return error for operation not supported
  * on a specific object or file type.
  */
-int
-eopnotsupp()
-{
+int eopnotsupp() {
 
 	return (EOPNOTSUPP);
 }
@@ -99,9 +89,7 @@ eopnotsupp()
  * Return error for an inval operation
  * on a specific object or file type.
  */
-int
-einval()
-{
+int einval() {
 
 	return (EINVAL);
 }
@@ -109,9 +97,7 @@ einval()
 /*
  * Generic null operation, always returns success.
  */
-int
-nullop()
-{
+int nullop() {
 
 	return (0);
 }

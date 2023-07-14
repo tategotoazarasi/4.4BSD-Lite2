@@ -59,7 +59,7 @@
 
 struct fpn *
 fpu_add(fe)
-	register struct fpemu *fe;
+register struct fpemu *fe;
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
 	register u_int r0, r1, r2, r3;
@@ -86,22 +86,22 @@ fpu_add(fe)
 	 *	Do addition a la Hennessey & Patterson.
 	 */
 	ORDER(x, y);
-	if (ISNAN(y))
+	if(ISNAN(y))
 		return (y);
-	if (ISINF(y)) {
-		if (ISINF(x) && x->fp_sign != y->fp_sign)
+	if(ISINF(y)) {
+		if(ISINF(x) && x->fp_sign != y->fp_sign)
 			return (fpu_newnan(fe));
 		return (y);
 	}
 	rd = ((fe->fe_fsr >> FSR_RD_SHIFT) & FSR_RD_MASK);
-	if (ISZERO(y)) {
-		if (rd != FSR_RD_RM)	/* only -0 + -0 gives -0 */
+	if(ISZERO(y)) {
+		if(rd != FSR_RD_RM) /* only -0 + -0 gives -0 */
 			y->fp_sign &= x->fp_sign;
-		else			/* any -0 operand gives -0 */
+		else /* any -0 operand gives -0 */
 			y->fp_sign |= x->fp_sign;
 		return (y);
 	}
-	if (ISZERO(x))
+	if(ISZERO(x))
 		return (y);
 	/*
 	 * We really have two numbers to add, although their signs may
@@ -110,13 +110,13 @@ fpu_add(fe)
 	 * exponent (2^3 => 2^4).  Note that we do not alter the exponents
 	 * of x and y here.
 	 */
-	r = &fe->fe_f3;
+	r           = &fe->fe_f3;
 	r->fp_class = FPC_NUM;
-	if (x->fp_exp == y->fp_exp) {
-		r->fp_exp = x->fp_exp;
+	if(x->fp_exp == y->fp_exp) {
+		r->fp_exp    = x->fp_exp;
 		r->fp_sticky = 0;
 	} else {
-		if (x->fp_exp < y->fp_exp) {
+		if(x->fp_exp < y->fp_exp) {
 			/*
 			 * Try to avoid subtract case iii (see below).
 			 * This also guarantees that x->fp_sticky = 0.
@@ -124,11 +124,11 @@ fpu_add(fe)
 			SWAP(x, y);
 		}
 		/* now x->fp_exp > y->fp_exp */
-		r->fp_exp = x->fp_exp;
+		r->fp_exp    = x->fp_exp;
 		r->fp_sticky = fpu_shr(y, x->fp_exp - y->fp_exp);
 	}
 	r->fp_sign = x->fp_sign;
-	if (x->fp_sign == y->fp_sign) {
+	if(x->fp_sign == y->fp_sign) {
 		FPU_DECL_CARRY
 
 		/*
@@ -142,7 +142,7 @@ fpu_add(fe)
 		FPU_ADDCS(r->fp_mant[2], x->fp_mant[2], y->fp_mant[2]);
 		FPU_ADDCS(r->fp_mant[1], x->fp_mant[1], y->fp_mant[1]);
 		FPU_ADDC(r0, x->fp_mant[0], y->fp_mant[0]);
-		if ((r->fp_mant[0] = r0) >= FP_2) {
+		if((r->fp_mant[0] = r0) >= FP_2) {
 			(void) fpu_shr(r, 1);
 			r->fp_exp++;
 		}
@@ -175,12 +175,12 @@ fpu_add(fe)
 		FPU_SUBCS(r2, x->fp_mant[2], y->fp_mant[2]);
 		FPU_SUBCS(r1, x->fp_mant[1], y->fp_mant[1]);
 		FPU_SUBC(r0, x->fp_mant[0], y->fp_mant[0]);
-		if (r0 < FP_2) {
+		if(r0 < FP_2) {
 			/* cases i and ii */
-			if ((r0 | r1 | r2 | r3) == 0) {
+			if((r0 | r1 | r2 | r3) == 0) {
 				/* case ii */
 				r->fp_class = FPC_ZERO;
-				r->fp_sign = rd == FSR_RD_RM;
+				r->fp_sign  = rd == FSR_RD_RM;
 				return (r);
 			}
 		} else {
@@ -191,7 +191,7 @@ fpu_add(fe)
 			 * (to y's sign) and negate the result to get y - x.
 			 */
 #ifdef DIAGNOSTIC
-			if (x->fp_exp != y->fp_exp || r->fp_sticky)
+			if(x->fp_exp != y->fp_exp || r->fp_sticky)
 				panic("fpu_add");
 #endif
 			r->fp_sign = y->fp_sign;
@@ -204,7 +204,7 @@ fpu_add(fe)
 		r->fp_mant[2] = r2;
 		r->fp_mant[1] = r1;
 		r->fp_mant[0] = r0;
-		if (r0 < FP_1)
+		if(r0 < FP_1)
 			fpu_norm(r);
 	}
 	return (r);

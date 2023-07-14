@@ -49,7 +49,7 @@
  */
 
 #ifndef MROUTING
-int	ip_mrtproto;				/* for netstat only */
+int ip_mrtproto; /* for netstat only */
 #else
 
 #include <sys/param.h>
@@ -78,111 +78,111 @@ int	ip_mrtproto;				/* for netstat only */
 #include <netinet/ip_mroute.h>
 
 /* Static forwards */
-static	int ip_mrouter_init __P((struct socket *));
-static	int add_vif __P((struct vifctl *));
-static	int del_vif __P((vifi_t *vifip));
-static	int add_lgrp __P((struct lgrplctl *));
-static	int del_lgrp __P((struct lgrplctl *));
-static	int grplst_member __P((struct vif *, struct in_addr));
-static	u_long nethash __P((struct in_addr in));
-static	int add_mrt __P((struct mrtctl *));
-static	int del_mrt __P((struct in_addr *));
-static	struct mrt *mrtfind __P((struct in_addr));
-static	void phyint_send __P((struct mbuf *, struct vif *));
-static	void tunnel_send __P((struct mbuf *, struct vif *));
+static int ip_mrouter_init __P((struct socket *) );
+static int add_vif __P((struct vifctl *) );
+static int del_vif __P((vifi_t * vifip));
+static int add_lgrp __P((struct lgrplctl *) );
+static int del_lgrp __P((struct lgrplctl *) );
+static int grplst_member __P((struct vif *, struct in_addr));
+static u_long nethash __P((struct in_addr in));
+static int add_mrt __P((struct mrtctl *) );
+static int del_mrt __P((struct in_addr *) );
+static struct mrt *mrtfind __P((struct in_addr));
+static void phyint_send __P((struct mbuf *, struct vif *) );
+static void tunnel_send __P((struct mbuf *, struct vif *) );
 
 #define INSIZ sizeof(struct in_addr)
-#define	same(a1, a2) (bcmp((caddr_t)(a1), (caddr_t)(a2), INSIZ) == 0)
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
+#define same(a1, a2) (bcmp((caddr_t) (a1), (caddr_t) (a2), INSIZ) == 0)
+#define satosin(sa) ((struct sockaddr_in *) (sa))
 
 /*
  * Globals.  All but ip_mrouter and ip_mrtproto could be static,
  * except for netstat or debugging purposes.
  */
-struct	socket *ip_mrouter = NULL;
-int	ip_mrtproto = IGMP_DVMRP;		/* for netstat only */
+struct socket *ip_mrouter = NULL;
+int ip_mrtproto           = IGMP_DVMRP; /* for netstat only */
 
-struct	mrt *mrttable[MRTHASHSIZ];
-struct	vif viftable[MAXVIFS];
-struct	mrtstat	mrtstat;
+struct mrt *mrttable[MRTHASHSIZ];
+struct vif viftable[MAXVIFS];
+struct mrtstat mrtstat;
 
 /*
  * Private variables.
  */
-static	vifi_t numvifs = 0;
-static	struct mrt *cached_mrt = NULL;
-static	u_long cached_origin;
-static	u_long cached_originmask;
+static vifi_t numvifs         = 0;
+static struct mrt *cached_mrt = NULL;
+static u_long cached_origin;
+static u_long cached_originmask;
 
 /*
  * Handle DVMRP setsockopt commands to modify the multicast routing tables.
  */
-int
-ip_mrouter_cmd(cmd, so, m)
-	register int cmd;
-	register struct socket *so;
-	register struct mbuf *m;
+int ip_mrouter_cmd(cmd, so, m)
+register int cmd;
+register struct socket *so;
+register struct mbuf *m;
 {
 	register int error = 0;
 
-	if (cmd != DVMRP_INIT && so != ip_mrouter)
+	if(cmd != DVMRP_INIT && so != ip_mrouter)
 		error = EACCES;
-	else switch (cmd) {
+	else
+		switch(cmd) {
 
-	case DVMRP_INIT:
-		error = ip_mrouter_init(so);
-		break;
+			case DVMRP_INIT:
+				error = ip_mrouter_init(so);
+				break;
 
-	case DVMRP_DONE:
-		error = ip_mrouter_done();
-		break;
+			case DVMRP_DONE:
+				error = ip_mrouter_done();
+				break;
 
-	case DVMRP_ADD_VIF:
-		if (m == NULL || m->m_len < sizeof(struct vifctl))
-			error = EINVAL;
-		else
-			error = add_vif(mtod(m, struct vifctl *));
-		break;
+			case DVMRP_ADD_VIF:
+				if(m == NULL || m->m_len < sizeof(struct vifctl))
+					error = EINVAL;
+				else
+					error = add_vif(mtod(m, struct vifctl *));
+				break;
 
-	case DVMRP_DEL_VIF:
-		if (m == NULL || m->m_len < sizeof(short))
-			error = EINVAL;
-		else
-			error = del_vif(mtod(m, vifi_t *));
-		break;
+			case DVMRP_DEL_VIF:
+				if(m == NULL || m->m_len < sizeof(short))
+					error = EINVAL;
+				else
+					error = del_vif(mtod(m, vifi_t *));
+				break;
 
-	case DVMRP_ADD_LGRP:
-		if (m == NULL || m->m_len < sizeof(struct lgrplctl))
-			error = EINVAL;
-		else
-			error = add_lgrp(mtod(m, struct lgrplctl *));
-		break;
+			case DVMRP_ADD_LGRP:
+				if(m == NULL || m->m_len < sizeof(struct lgrplctl))
+					error = EINVAL;
+				else
+					error = add_lgrp(mtod(m, struct lgrplctl *));
+				break;
 
-	case DVMRP_DEL_LGRP:
-		if (m == NULL || m->m_len < sizeof(struct lgrplctl))
-			error = EINVAL;
-		else
-			error = del_lgrp(mtod(m, struct lgrplctl *));
-		break;
+			case DVMRP_DEL_LGRP:
+				if(m == NULL || m->m_len < sizeof(struct lgrplctl))
+					error = EINVAL;
+				else
+					error = del_lgrp(mtod(m, struct lgrplctl *));
+				break;
 
-	case DVMRP_ADD_MRT:
-		if (m == NULL || m->m_len < sizeof(struct mrtctl))
-			error = EINVAL;
-		else
-			error = add_mrt(mtod(m, struct mrtctl *));
-		break;
+			case DVMRP_ADD_MRT:
+				if(m == NULL || m->m_len < sizeof(struct mrtctl))
+					error = EINVAL;
+				else
+					error = add_mrt(mtod(m, struct mrtctl *));
+				break;
 
-	case DVMRP_DEL_MRT:
-		if (m == NULL || m->m_len < sizeof(struct in_addr))
-			error = EINVAL;
-		else
-			error = del_mrt(mtod(m, struct in_addr *));
-		break;
+			case DVMRP_DEL_MRT:
+				if(m == NULL || m->m_len < sizeof(struct in_addr))
+					error = EINVAL;
+				else
+					error = del_mrt(mtod(m, struct in_addr *));
+				break;
 
-	default:
-		error = EOPNOTSUPP;
-		break;
-	}
+			default:
+				error = EOPNOTSUPP;
+				break;
+		}
 	return (error);
 }
 
@@ -191,13 +191,13 @@ ip_mrouter_cmd(cmd, so, m)
  */
 static int
 ip_mrouter_init(so)
-	register struct socket *so;
+register struct socket *so;
 {
-	if (so->so_type != SOCK_RAW ||
-	    so->so_proto->pr_protocol != IPPROTO_IGMP)
+	if(so->so_type != SOCK_RAW ||
+	   so->so_proto->pr_protocol != IPPROTO_IGMP)
 		return (EOPNOTSUPP);
 
-	if (ip_mrouter != NULL)
+	if(ip_mrouter != NULL)
 		return (EADDRINUSE);
 
 	ip_mrouter = so;
@@ -208,9 +208,7 @@ ip_mrouter_init(so)
 /*
  * Disable multicast routing
  */
-int
-ip_mrouter_done()
-{
+int ip_mrouter_done() {
 	register vifi_t vifi;
 	register int i;
 	register struct ifnet *ifp;
@@ -223,27 +221,27 @@ ip_mrouter_done()
 	 * For each phyint in use, free its local group list and
 	 * disable promiscuous reception of all IP multicasts.
 	 */
-	for (vifi = 0; vifi < numvifs; vifi++) {
-		if (viftable[vifi].v_lcl_addr.s_addr != 0 &&
-		    !(viftable[vifi].v_flags & VIFF_TUNNEL)) {
-			if (viftable[vifi].v_lcl_grps)
+	for(vifi = 0; vifi < numvifs; vifi++) {
+		if(viftable[vifi].v_lcl_addr.s_addr != 0 &&
+		   !(viftable[vifi].v_flags & VIFF_TUNNEL)) {
+			if(viftable[vifi].v_lcl_grps)
 				free(viftable[vifi].v_lcl_grps, M_MRTABLE);
-			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+			satosin(&ifr.ifr_addr)->sin_family      = AF_INET;
 			satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
-			ifp = viftable[vifi].v_ifp;
-			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+			ifp                                     = viftable[vifi].v_ifp;
+			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t) &ifr);
 		}
 	}
-	bzero((caddr_t)viftable, sizeof(viftable));
+	bzero((caddr_t) viftable, sizeof(viftable));
 	numvifs = 0;
 
 	/*
 	 * Free any multicast route entries.
 	 */
-	for (i = 0; i < MRTHASHSIZ; i++)
-		if (mrttable[i])
+	for(i = 0; i < MRTHASHSIZ; i++)
+		if(mrttable[i])
 			free(mrttable[i], M_MRTABLE);
-	bzero((caddr_t)mrttable, sizeof(mrttable));
+	bzero((caddr_t) mrttable, sizeof(mrttable));
 	cached_mrt = NULL;
 
 	ip_mrouter = NULL;
@@ -257,34 +255,34 @@ ip_mrouter_done()
  */
 static int
 add_vif(vifcp)
-	register struct vifctl *vifcp;
+register struct vifctl *vifcp;
 {
 	register struct vif *vifp = viftable + vifcp->vifc_vifi;
 	register struct ifaddr *ifa;
 	register struct ifnet *ifp;
 	struct ifreq ifr;
 	register int error, s;
-	static struct sockaddr_in sin = { sizeof(sin), AF_INET };
+	static struct sockaddr_in sin = {sizeof(sin), AF_INET};
 
-	if (vifcp->vifc_vifi >= MAXVIFS)
+	if(vifcp->vifc_vifi >= MAXVIFS)
 		return (EINVAL);
-	if (vifp->v_lcl_addr.s_addr != 0)
+	if(vifp->v_lcl_addr.s_addr != 0)
 		return (EADDRINUSE);
 
 	/* Find the interface with an address in AF_INET family */
 	sin.sin_addr = vifcp->vifc_lcl_addr;
-	ifa = ifa_ifwithaddr((struct sockaddr *)&sin);
-	if (ifa == 0)
+	ifa          = ifa_ifwithaddr((struct sockaddr *) &sin);
+	if(ifa == 0)
 		return (EADDRNOTAVAIL);
 
 	s = splnet();
 
-	if (vifcp->vifc_flags & VIFF_TUNNEL)
+	if(vifcp->vifc_flags & VIFF_TUNNEL)
 		vifp->v_rmt_addr = vifcp->vifc_rmt_addr;
 	else {
 		/* Make sure the interface supports multicast */
 		ifp = ifa->ifa_ifp;
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+		if((ifp->if_flags & IFF_MULTICAST) == 0) {
 			splx(s);
 			return (EOPNOTSUPP);
 		}
@@ -292,22 +290,22 @@ add_vif(vifcp)
 		 * Enable promiscuous reception of all IP multicasts
 		 * from the interface.
 		 */
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_family      = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
-		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
-		if (error) {
+		error                                   = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t) &ifr);
+		if(error) {
 			splx(s);
 			return (error);
 		}
 	}
 
-	vifp->v_flags = vifcp->vifc_flags;
+	vifp->v_flags     = vifcp->vifc_flags;
 	vifp->v_threshold = vifcp->vifc_threshold;
-	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
-	vifp->v_ifp = ifa->ifa_ifp;
+	vifp->v_lcl_addr  = vifcp->vifc_lcl_addr;
+	vifp->v_ifp       = ifa->ifa_ifp;
 
 	/* Adjust numvifs up if the vifi is higher than numvifs */
-	if (numvifs <= vifcp->vifc_vifi)
+	if(numvifs <= vifcp->vifc_vifi)
 		numvifs = vifcp->vifc_vifi + 1;
 
 	splx(s);
@@ -319,34 +317,34 @@ add_vif(vifcp)
  */
 static int
 del_vif(vifip)
-	register vifi_t *vifip;
+register vifi_t *vifip;
 {
 	register struct vif *vifp = viftable + *vifip;
 	register struct ifnet *ifp;
 	register int i, s;
 	struct ifreq ifr;
 
-	if (*vifip >= numvifs)
+	if(*vifip >= numvifs)
 		return (EINVAL);
-	if (vifp->v_lcl_addr.s_addr == 0)
+	if(vifp->v_lcl_addr.s_addr == 0)
 		return (EADDRNOTAVAIL);
 
 	s = splnet();
 
-	if (!(vifp->v_flags & VIFF_TUNNEL)) {
-		if (vifp->v_lcl_grps)
+	if(!(vifp->v_flags & VIFF_TUNNEL)) {
+		if(vifp->v_lcl_grps)
 			free(vifp->v_lcl_grps, M_MRTABLE);
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_family      = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
-		ifp = vifp->v_ifp;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+		ifp                                     = vifp->v_ifp;
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t) &ifr);
 	}
 
-	bzero((caddr_t)vifp, sizeof (*vifp));
+	bzero((caddr_t) vifp, sizeof(*vifp));
 
 	/* Adjust numvifs down */
-	for (i = numvifs - 1; i >= 0; i--)
-		if (viftable[i].v_lcl_addr.s_addr != 0)
+	for(i = numvifs - 1; i >= 0; i--)
+		if(viftable[i].v_lcl_addr.s_addr != 0)
 			break;
 	numvifs = i + 1;
 
@@ -360,42 +358,42 @@ del_vif(vifip)
  */
 static int
 add_lgrp(gcp)
-	register struct lgrplctl *gcp;
+register struct lgrplctl *gcp;
 {
 	register struct vif *vifp;
 	register int s;
 
-	if (gcp->lgc_vifi >= numvifs)
+	if(gcp->lgc_vifi >= numvifs)
 		return (EINVAL);
 
 	vifp = viftable + gcp->lgc_vifi;
-	if (vifp->v_lcl_addr.s_addr == 0 || (vifp->v_flags & VIFF_TUNNEL))
+	if(vifp->v_lcl_addr.s_addr == 0 || (vifp->v_flags & VIFF_TUNNEL))
 		return (EADDRNOTAVAIL);
 
 	/* If not enough space in existing list, allocate a larger one */
 	s = splnet();
-	if (vifp->v_lcl_grps_n + 1 >= vifp->v_lcl_grps_max) {
+	if(vifp->v_lcl_grps_n + 1 >= vifp->v_lcl_grps_max) {
 		register int num;
 		register struct in_addr *ip;
 
 		num = vifp->v_lcl_grps_max;
-		if (num <= 0)
-			num = 32;	/* initial number */
+		if(num <= 0)
+			num = 32; /* initial number */
 		else
-			num += num;	/* double last number */
-		ip = (struct in_addr *)malloc(num * sizeof(*ip),
-		    M_MRTABLE, M_NOWAIT);
-		if (ip == NULL) {
+			num += num; /* double last number */
+		ip = (struct in_addr *) malloc(num * sizeof(*ip),
+		                               M_MRTABLE, M_NOWAIT);
+		if(ip == NULL) {
 			splx(s);
 			return (ENOBUFS);
 		}
 
-		bzero((caddr_t)ip, num * sizeof(*ip));	/* XXX paranoid */
-		bcopy((caddr_t)vifp->v_lcl_grps, (caddr_t)ip,
-		    vifp->v_lcl_grps_n * sizeof(*ip));
+		bzero((caddr_t) ip, num * sizeof(*ip)); /* XXX paranoid */
+		bcopy((caddr_t) vifp->v_lcl_grps, (caddr_t) ip,
+		      vifp->v_lcl_grps_n * sizeof(*ip));
 
 		vifp->v_lcl_grps_max = num;
-		if (vifp->v_lcl_grps)
+		if(vifp->v_lcl_grps)
 			free(vifp->v_lcl_grps, M_MRTABLE);
 		vifp->v_lcl_grps = ip;
 
@@ -404,7 +402,7 @@ add_lgrp(gcp)
 
 	vifp->v_lcl_grps[vifp->v_lcl_grps_n++] = gcp->lgc_gaddr;
 
-	if (gcp->lgc_gaddr.s_addr == vifp->v_cached_group)
+	if(gcp->lgc_gaddr.s_addr == vifp->v_cached_group)
 		vifp->v_cached_result = 1;
 
 	splx(s);
@@ -418,30 +416,30 @@ add_lgrp(gcp)
 
 static int
 del_lgrp(gcp)
-	register struct lgrplctl *gcp;
+register struct lgrplctl *gcp;
 {
 	register struct vif *vifp;
 	register int i, error, s;
 
-	if (gcp->lgc_vifi >= numvifs)
+	if(gcp->lgc_vifi >= numvifs)
 		return (EINVAL);
 	vifp = viftable + gcp->lgc_vifi;
-	if (vifp->v_lcl_addr.s_addr == 0 || (vifp->v_flags & VIFF_TUNNEL))
+	if(vifp->v_lcl_addr.s_addr == 0 || (vifp->v_flags & VIFF_TUNNEL))
 		return (EADDRNOTAVAIL);
 
 	s = splnet();
 
-	if (gcp->lgc_gaddr.s_addr == vifp->v_cached_group)
+	if(gcp->lgc_gaddr.s_addr == vifp->v_cached_group)
 		vifp->v_cached_result = 0;
 
 	error = EADDRNOTAVAIL;
-	for (i = 0; i < vifp->v_lcl_grps_n; ++i)
-		if (same(&gcp->lgc_gaddr, &vifp->v_lcl_grps[i])) {
+	for(i = 0; i < vifp->v_lcl_grps_n; ++i)
+		if(same(&gcp->lgc_gaddr, &vifp->v_lcl_grps[i])) {
 			error = 0;
 			vifp->v_lcl_grps_n--;
-			bcopy((caddr_t)&vifp->v_lcl_grps[i + 1],
-			    (caddr_t)&vifp->v_lcl_grps[i],
-			    (vifp->v_lcl_grps_n - i) * sizeof(struct in_addr));
+			bcopy((caddr_t) &vifp->v_lcl_grps[i + 1],
+			      (caddr_t) &vifp->v_lcl_grps[i],
+			      (vifp->v_lcl_grps_n - i) * sizeof(struct in_addr));
 			error = 0;
 			break;
 		}
@@ -455,8 +453,8 @@ del_lgrp(gcp)
  */
 static int
 grplst_member(vifp, gaddr)
-	register struct vif *vifp;
-	struct in_addr gaddr;
+register struct vif *vifp;
+struct in_addr gaddr;
 {
 	register int i, s;
 	register u_long addr;
@@ -464,21 +462,21 @@ grplst_member(vifp, gaddr)
 	mrtstat.mrts_grp_lookups++;
 
 	addr = gaddr.s_addr;
-	if (addr == vifp->v_cached_group)
+	if(addr == vifp->v_cached_group)
 		return (vifp->v_cached_result);
 
 	mrtstat.mrts_grp_misses++;
 
-	for (i = 0; i < vifp->v_lcl_grps_n; ++i)
-		if (addr == vifp->v_lcl_grps[i].s_addr) {
-			s = splnet();
-			vifp->v_cached_group = addr;
+	for(i = 0; i < vifp->v_lcl_grps_n; ++i)
+		if(addr == vifp->v_lcl_grps[i].s_addr) {
+			s                     = splnet();
+			vifp->v_cached_group  = addr;
 			vifp->v_cached_result = 1;
 			splx(s);
 			return (1);
 		}
-	s = splnet();
-	vifp->v_cached_group = addr;
+	s                     = splnet();
+	vifp->v_cached_group  = addr;
 	vifp->v_cached_result = 0;
 	splx(s);
 	return (0);
@@ -490,12 +488,12 @@ grplst_member(vifp, gaddr)
  */
 static u_long
 nethash(in)
-	struct in_addr in;
+struct in_addr in;
 {
 	register u_long n;
 
 	n = in_netof(in);
-	while ((n & 0xff) == 0)
+	while((n & 0xff) == 0)
 		n >>= 8;
 	return (MRTHASHMOD(n));
 }
@@ -505,15 +503,15 @@ nethash(in)
  */
 static int
 add_mrt(mrtcp)
-	register struct mrtctl *mrtcp;
+register struct mrtctl *mrtcp;
 {
 	struct mrt *rt;
 	u_long hash;
 	int s;
 
-	if (rt = mrtfind(mrtcp->mrtc_origin)) {
+	if(rt = mrtfind(mrtcp->mrtc_origin)) {
 		/* Just update the route */
-		s = splnet();
+		s              = splnet();
 		rt->mrt_parent = mrtcp->mrtc_parent;
 		VIFM_COPY(mrtcp->mrtc_children, rt->mrt_children);
 		VIFM_COPY(mrtcp->mrtc_leaves, rt->mrt_leaves);
@@ -523,8 +521,8 @@ add_mrt(mrtcp)
 
 	s = splnet();
 
-	rt = (struct mrt *)malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
-	if (rt == NULL) {
+	rt = (struct mrt *) malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
+	if(rt == NULL) {
 		splx(s);
 		return (ENOBUFS);
 	}
@@ -532,14 +530,14 @@ add_mrt(mrtcp)
 	/*
 	 * insert new entry at head of hash chain
 	 */
-	rt->mrt_origin = mrtcp->mrtc_origin;
+	rt->mrt_origin     = mrtcp->mrtc_origin;
 	rt->mrt_originmask = mrtcp->mrtc_originmask;
-	rt->mrt_parent = mrtcp->mrtc_parent;
+	rt->mrt_parent     = mrtcp->mrtc_parent;
 	VIFM_COPY(mrtcp->mrtc_children, rt->mrt_children);
 	VIFM_COPY(mrtcp->mrtc_leaves, rt->mrt_leaves);
 	/* link into table */
-	hash = nethash(mrtcp->mrtc_origin);
-	rt->mrt_next = mrttable[hash];
+	hash           = nethash(mrtcp->mrtc_origin);
+	rt->mrt_next   = mrttable[hash];
 	mrttable[hash] = rt;
 
 	splx(s);
@@ -551,24 +549,24 @@ add_mrt(mrtcp)
  */
 static int
 del_mrt(origin)
-	register struct in_addr *origin;
+register struct in_addr *origin;
 {
 	register struct mrt *rt, *prev_rt;
 	register u_long hash = nethash(*origin);
 	register int s;
 
-	for (prev_rt = rt = mrttable[hash]; rt; prev_rt = rt, rt = rt->mrt_next)
-		if (origin->s_addr == rt->mrt_origin.s_addr)
+	for(prev_rt = rt = mrttable[hash]; rt; prev_rt = rt, rt = rt->mrt_next)
+		if(origin->s_addr == rt->mrt_origin.s_addr)
 			break;
-	if (!rt)
+	if(!rt)
 		return (ESRCH);
 
 	s = splnet();
 
-	if (rt == cached_mrt)
+	if(rt == cached_mrt)
 		cached_mrt = NULL;
 
-	if (prev_rt == rt)
+	if(prev_rt == rt)
 		mrttable[hash] = rt->mrt_next;
 	else
 		prev_rt->mrt_next = rt->mrt_next;
@@ -583,7 +581,7 @@ del_mrt(origin)
  */
 static struct mrt *
 mrtfind(origin)
-	struct in_addr origin;
+struct in_addr origin;
 {
 	register struct mrt *rt;
 	register u_int hash;
@@ -591,19 +589,19 @@ mrtfind(origin)
 
 	mrtstat.mrts_mrt_lookups++;
 
-	if (cached_mrt != NULL &&
-	    (origin.s_addr & cached_originmask) == cached_origin)
+	if(cached_mrt != NULL &&
+	   (origin.s_addr & cached_originmask) == cached_origin)
 		return (cached_mrt);
 
 	mrtstat.mrts_mrt_misses++;
 
 	hash = nethash(origin);
-	for (rt = mrttable[hash]; rt; rt = rt->mrt_next)
-		if ((origin.s_addr & rt->mrt_originmask.s_addr) ==
-		    rt->mrt_origin.s_addr) {
-			s = splnet();
-			cached_mrt = rt;
-			cached_origin = rt->mrt_origin.s_addr;
+	for(rt = mrttable[hash]; rt; rt = rt->mrt_next)
+		if((origin.s_addr & rt->mrt_originmask.s_addr) ==
+		   rt->mrt_origin.s_addr) {
+			s                 = splnet();
+			cached_mrt        = rt;
+			cached_origin     = rt->mrt_origin.s_addr;
 			cached_originmask = rt->mrt_originmask.s_addr;
 			splx(s);
 			return (rt);
@@ -622,13 +620,12 @@ mrtfind(origin)
  * discard it.
  */
 
-#define IP_HDR_LEN  20	/* # bytes of fixed IP header (excluding options) */
-#define TUNNEL_LEN  12  /* # bytes of IP option for tunnel encapsulation  */
+#define IP_HDR_LEN 20 /* # bytes of fixed IP header (excluding options) */
+#define TUNNEL_LEN 12 /* # bytes of IP option for tunnel encapsulation  */
 
-int
-ip_mforward(m, ifp)
-	register struct mbuf *m;
-	register struct ifnet *ifp;
+int ip_mforward(m, ifp)
+register struct mbuf *m;
+register struct ifnet *ifp;
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct mrt *rt;
@@ -637,8 +634,8 @@ ip_mforward(m, ifp)
 	register u_char *ipoptions;
 	u_long tunnel_src;
 
-	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
-	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR ) {
+	if(ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
+	   (ipoptions = (u_char *) (ip + 1))[1] != IPOPT_LSRR) {
 		/*
 		 * Packet arrived via a physical interface.
 		 */
@@ -668,10 +665,10 @@ ip_mforward(m, ifp)
 		/*
 		 * Verify that the tunnel options are well-formed.
 		 */
-		if (ipoptions[0] != IPOPT_NOP ||
-		    ipoptions[2] != 11 ||	/* LSRR option length   */
-		    ipoptions[3] != 12 ||	/* LSRR address pointer */
-		    (tunnel_src = *(u_long *)(&ipoptions[4])) == 0) {
+		if(ipoptions[0] != IPOPT_NOP ||
+		   ipoptions[2] != 11 || /* LSRR option length   */
+		   ipoptions[3] != 12 || /* LSRR address pointer */
+		   (tunnel_src = *(u_long *) (&ipoptions[4])) == 0) {
 			mrtstat.mrts_bad_tunnel++;
 			return (1);
 		}
@@ -679,8 +676,8 @@ ip_mforward(m, ifp)
 		/*
 		 * Delete the tunnel options from the packet.
 		 */
-		ovbcopy((caddr_t)(ipoptions + TUNNEL_LEN), (caddr_t)ipoptions,
-		    (unsigned)(m->m_len - (IP_HDR_LEN + TUNNEL_LEN)));
+		ovbcopy((caddr_t) (ipoptions + TUNNEL_LEN), (caddr_t) ipoptions,
+		        (unsigned) (m->m_len - (IP_HDR_LEN + TUNNEL_LEN)));
 		m->m_len -= TUNNEL_LEN;
 		ip->ip_len -= TUNNEL_LEN;
 		ip->ip_hl -= TUNNEL_LEN >> 2;
@@ -690,30 +687,30 @@ ip_mforward(m, ifp)
 	 * Don't forward a packet with time-to-live of zero or one,
 	 * or a packet destined to a local-only group.
 	 */
-	if (ip->ip_ttl <= 1 ||
-	    ntohl(ip->ip_dst.s_addr) <= INADDR_MAX_LOCAL_GROUP)
-		return ((int)tunnel_src);
+	if(ip->ip_ttl <= 1 ||
+	   ntohl(ip->ip_dst.s_addr) <= INADDR_MAX_LOCAL_GROUP)
+		return ((int) tunnel_src);
 
 	/*
 	 * Don't forward if we don't have a route for the packet's origin.
 	 */
-	if (!(rt = mrtfind(ip->ip_src))) {
+	if(!(rt = mrtfind(ip->ip_src))) {
 		mrtstat.mrts_no_route++;
-		return ((int)tunnel_src);
+		return ((int) tunnel_src);
 	}
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
 	 */
 	vifi = rt->mrt_parent;
-	if (tunnel_src == 0 ) {
-		if ((viftable[vifi].v_flags & VIFF_TUNNEL) ||
-		    viftable[vifi].v_ifp != ifp )
-			return ((int)tunnel_src);
+	if(tunnel_src == 0) {
+		if((viftable[vifi].v_flags & VIFF_TUNNEL) ||
+		   viftable[vifi].v_ifp != ifp)
+			return ((int) tunnel_src);
 	} else {
-		if (!(viftable[vifi].v_flags & VIFF_TUNNEL) ||
-		    viftable[vifi].v_rmt_addr.s_addr != tunnel_src )
-			return ((int)tunnel_src);
+		if(!(viftable[vifi].v_flags & VIFF_TUNNEL) ||
+		   viftable[vifi].v_rmt_addr.s_addr != tunnel_src)
+			return ((int) tunnel_src);
 	}
 
 	/*
@@ -726,25 +723,24 @@ ip_mforward(m, ifp)
 	 *
 	 * (This might be speeded up with some sort of cache -- someday.)
 	 */
-	for (vifp = viftable, vifi = 0; vifi < numvifs; vifp++, vifi++) {
-		if (ip->ip_ttl > vifp->v_threshold &&
-		    VIFM_ISSET(vifi, rt->mrt_children) &&
-		    (!VIFM_ISSET(vifi, rt->mrt_leaves) ||
+	for(vifp = viftable, vifi = 0; vifi < numvifs; vifp++, vifi++) {
+		if(ip->ip_ttl > vifp->v_threshold &&
+		   VIFM_ISSET(vifi, rt->mrt_children) &&
+		   (!VIFM_ISSET(vifi, rt->mrt_leaves) ||
 		    grplst_member(vifp, ip->ip_dst))) {
-			if (vifp->v_flags & VIFF_TUNNEL)
+			if(vifp->v_flags & VIFF_TUNNEL)
 				tunnel_send(m, vifp);
 			else
 				phyint_send(m, vifp);
 		}
 	}
 
-	return ((int)tunnel_src);
+	return ((int) tunnel_src);
 }
 
 static void
-phyint_send(m, vifp)
-	register struct mbuf *m;
-	register struct vif *vifp;
+        phyint_send(m, vifp) register struct mbuf *m;
+register struct vif *vifp;
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct mbuf *mb_copy;
@@ -753,21 +749,20 @@ phyint_send(m, vifp)
 	struct ip_moptions simo;
 
 	mb_copy = m_copy(m, 0, M_COPYALL);
-	if (mb_copy == NULL)
+	if(mb_copy == NULL)
 		return;
 
-	imo = &simo;
-	imo->imo_multicast_ifp = vifp->v_ifp;
-	imo->imo_multicast_ttl = ip->ip_ttl - 1;
+	imo                     = &simo;
+	imo->imo_multicast_ifp  = vifp->v_ifp;
+	imo->imo_multicast_ttl  = ip->ip_ttl - 1;
 	imo->imo_multicast_loop = 1;
 
 	error = ip_output(mb_copy, NULL, NULL, IP_FORWARDING, imo);
 }
 
 static void
-tunnel_send(m, vifp)
-	register struct mbuf *m;
-	register struct vif *vifp;
+        tunnel_send(m, vifp) register struct mbuf *m;
+register struct vif *vifp;
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct mbuf *mb_copy, *mb_opts;
@@ -779,7 +774,7 @@ tunnel_send(m, vifp)
 	 * Make sure that adding the tunnel options won't exceed the
 	 * maximum allowed number of option bytes.
 	 */
-	if (ip->ip_hl > (60 - TUNNEL_LEN) >> 2) {
+	if(ip->ip_hl > (60 - TUNNEL_LEN) >> 2) {
 		mrtstat.mrts_cant_tunnel++;
 		return;
 	}
@@ -790,10 +785,10 @@ tunnel_send(m, vifp)
 	 * examined later in ip_input.c.
 	 */
 	mb_copy = m_copy(m, IP_HDR_LEN, M_COPYALL);
-	if (mb_copy == NULL)
+	if(mb_copy == NULL)
 		return;
 	MGETHDR(mb_opts, M_DONTWAIT, MT_HEADER);
-	if (mb_opts == NULL) {
+	if(mb_opts == NULL) {
 		m_freem(mb_copy);
 		return;
 	}
@@ -802,7 +797,7 @@ tunnel_send(m, vifp)
 	 * Any options of the packet were left in the old packet chain head
 	 */
 	mb_opts->m_next = mb_copy;
-	mb_opts->m_len = IP_HDR_LEN + TUNNEL_LEN;
+	mb_opts->m_len  = IP_HDR_LEN + TUNNEL_LEN;
 	mb_opts->m_data += MSIZE - mb_opts->m_len;
 
 	ip_copy = mtod(mb_opts, struct ip *);
@@ -811,7 +806,7 @@ tunnel_send(m, vifp)
 	 */
 	*ip_copy = *ip;
 	ip_copy->ip_ttl--;
-	ip_copy->ip_dst = vifp->v_rmt_addr;	/* remote tunnel end-point */
+	ip_copy->ip_dst = vifp->v_rmt_addr; /* remote tunnel end-point */
 	/*
 	 * Adjust the ip header length to account for the tunnel options.
 	 */
@@ -820,14 +815,14 @@ tunnel_send(m, vifp)
 	/*
 	 * Add the NOP and LSRR after the base ip header
 	 */
-	cp = (u_char *)(ip_copy + 1);
-	*cp++ = IPOPT_NOP;
-	*cp++ = IPOPT_LSRR;
-	*cp++ = 11;		/* LSRR option length */
-	*cp++ = 8;		/* LSSR pointer to second element */
-	*(u_long*)cp = vifp->v_lcl_addr.s_addr;	/* local tunnel end-point */
+	cp             = (u_char *) (ip_copy + 1);
+	*cp++          = IPOPT_NOP;
+	*cp++          = IPOPT_LSRR;
+	*cp++          = 11;                      /* LSRR option length */
+	*cp++          = 8;                       /* LSSR pointer to second element */
+	*(u_long *) cp = vifp->v_lcl_addr.s_addr; /* local tunnel end-point */
 	cp += 4;
-	*(u_long*)cp = ip->ip_dst.s_addr;		/* destination group */
+	*(u_long *) cp = ip->ip_dst.s_addr; /* destination group */
 
 	error = ip_output(mb_opts, NULL, NULL, IP_FORWARDING, NULL);
 }

@@ -73,25 +73,23 @@ int fsrestore();
 
 int screen();
 
-int
-check_args(argc, argv)
-	int   argc;
-	char *argv[];
+int check_args(argc, argv)
+int argc;
+char *argv[];
 {
 	register int i;
 
-	for ( i = 0; i < argc; i++)
+	for(i = 0; i < argc; i++)
 		printf("argv[%d] = \"%s\"\n", i, argv[i]);
 
-	return(ST_NORMAL);
+	return (ST_NORMAL);
 }
 
-int
-exit_program(argc, argv)
-	int   argc;
-	char *argv[];
+int exit_program(argc, argv)
+int argc;
+char *argv[];
 {
-	return(ST_EXIT);
+	return (ST_EXIT);
 }
 
 struct command_entry {
@@ -100,64 +98,60 @@ struct command_entry {
 };
 
 struct command_entry entries[] = {
-{ "b",		boot         },
-{ "boot",	boot         },
-{ "chkargs",	check_args   },
-{ "disklabel",	disklabel    },
-{ "exit",	exit_program },
-{ "fsdump",	fsdump       },
-{ "fsrestore",	fsrestore    },
-{ "howto",	how_to_boot  },
-{ "load",       load         },
-{ "screen",	screen	     },
-{ "tape",	tape	     },
-{ "tp",		tape	     },
-{ "scsi",	scsi         },
-{ "quit",	exit_program },
-{ 0, 0 }
-};
+        {"b", boot},
+        {"boot", boot},
+        {"chkargs", check_args},
+        {"disklabel", disklabel},
+        {"exit", exit_program},
+        {"fsdump", fsdump},
+        {"fsrestore", fsrestore},
+        {"howto", how_to_boot},
+        {"load", load},
+        {"screen", screen},
+        {"tape", tape},
+        {"tp", tape},
+        {"scsi", scsi},
+        {"quit", exit_program},
+        {0, 0}};
 
 
-int 
-parse(argc, argv)
-	int   argc;
-	char *argv[];
+int parse(argc, argv)
+int argc;
+char *argv[];
 {
 	register int i, status = ST_NOTFOUND;
 
-	for (i = 0; entries[i].name != (char *) 0; i++) {
-		if (!strcmp(argv[0], entries[i].name)) {
+	for(i = 0; entries[i].name != (char *) 0; i++) {
+		if(!strcmp(argv[0], entries[i].name)) {
 			status = (*entries[i].func)(argc, argv);
 			break;
 		}
 	}
 
-	return(status);
+	return (status);
 }
-
 
 
 /*
  * getargs -- make argument arrays
  */
 
-getargs(buffer, argv, maxargs)
-	char buffer[], *argv[];
-	int  maxargs;
+getargs(buffer, argv, maxargs) char buffer[], *argv[];
+int maxargs;
 {
-	register int   n = 0;
+	register int n   = 0;
 	register char *p = buffer;
 
 	argv[n++] = p;
-	while (*p != '\0') {
-		if ( *p == ' ' ) {
+	while(*p != '\0') {
+		if(*p == ' ') {
 			*p = '\0';
-		} else if (p != buffer && *(p-1) == '\0') {
-			if ( n < maxargs )
+		} else if(p != buffer && *(p - 1) == '\0') {
+			if(n < maxargs)
 				argv[n++] = p;
 		}
 		p++;
 	}
 
-	return(n);
+	return (n);
 }

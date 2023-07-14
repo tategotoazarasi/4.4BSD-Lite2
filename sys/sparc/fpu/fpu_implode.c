@@ -71,8 +71,7 @@
  * responsibility to fix this if necessary.
  */
 static int
-round(register struct fpemu *fe, register struct fpn *fp)
-{
+round(register struct fpemu *fe, register struct fpn *fp) {
 	register u_int m0, m1, m2, m3;
 	register int gr, s, ret;
 
@@ -81,7 +80,7 @@ round(register struct fpemu *fe, register struct fpn *fp)
 	m2 = fp->fp_mant[2];
 	m3 = fp->fp_mant[3];
 	gr = m3 & 3;
-	s = fp->fp_sticky;
+	s  = fp->fp_sticky;
 
 	/* mant >>= FP_NG */
 	m3 = (m3 >> FP_NG) | (m2 << (32 - FP_NG));
@@ -89,52 +88,52 @@ round(register struct fpemu *fe, register struct fpn *fp)
 	m1 = (m1 >> FP_NG) | (m0 << (32 - FP_NG));
 	m0 >>= FP_NG;
 
-	if ((gr | s) == 0)	/* result is exact: no rounding needed */
+	if((gr | s) == 0) /* result is exact: no rounding needed */
 		goto rounddown;
 
-	fe->fe_cx |= FSR_NX;	/* inexact */
+	fe->fe_cx |= FSR_NX; /* inexact */
 
 	/* Go to rounddown to round down; break to round up. */
-	switch ((fe->fe_fsr >> FSR_RD_SHIFT) & FSR_RD_MASK) {
+	switch((fe->fe_fsr >> FSR_RD_SHIFT) & FSR_RD_MASK) {
 
-	case FSR_RD_RN:
-	default:
-		/*
+		case FSR_RD_RN:
+		default:
+			/*
 		 * Round only if guard is set (gr & 2).  If guard is set,
 		 * but round & sticky both clear, then we want to round
 		 * but have a tie, so round to even, i.e., add 1 iff odd.
 		 */
-		if ((gr & 2) == 0)
+			if((gr & 2) == 0)
+				goto rounddown;
+			if((gr & 1) || fp->fp_sticky || (m3 & 1))
+				break;
 			goto rounddown;
-		if ((gr & 1) || fp->fp_sticky || (m3 & 1))
-			break;
-		goto rounddown;
 
-	case FSR_RD_RZ:
-		/* Round towards zero, i.e., down. */
-		goto rounddown;
+		case FSR_RD_RZ:
+			/* Round towards zero, i.e., down. */
+			goto rounddown;
 
-	case FSR_RD_RM:
-		/* Round towards -Inf: up if negative, down if positive. */
-		if (fp->fp_sign)
-			break;
-		goto rounddown;
+		case FSR_RD_RM:
+			/* Round towards -Inf: up if negative, down if positive. */
+			if(fp->fp_sign)
+				break;
+			goto rounddown;
 
-	case FSR_RD_RP:
-		/* Round towards +Inf: up if positive, down otherwise. */
-		if (!fp->fp_sign)
-			break;
-		goto rounddown;
+		case FSR_RD_RP:
+			/* Round towards +Inf: up if positive, down otherwise. */
+			if(!fp->fp_sign)
+				break;
+			goto rounddown;
 	}
 
-	/* Bump low bit of mantissa, with carry. */
+		/* Bump low bit of mantissa, with carry. */
 #ifdef sparc /* ``cheating'' (left out FPU_DECL_CARRY; know this is faster) */
 	FPU_ADDS(m3, m3, 1);
 	FPU_ADDCS(m2, m2, 0);
 	FPU_ADDCS(m1, m1, 0);
 	FPU_ADDC(m0, m0, 0);
 #else
-	if (++m3 == 0 && ++m2 == 0 && ++m1 == 0)
+	if(++m3 == 0 && ++m2 == 0 && ++m1 == 0)
 		m0++;
 #endif
 	fp->fp_mant[0] = m0;
@@ -157,29 +156,28 @@ rounddown:
  * to the largest magnitude value instead.
  */
 static int
-toinf(struct fpemu *fe, int sign)
-{
+toinf(struct fpemu *fe, int sign) {
 	int inf;
 
 	/* look at rounding direction */
-	switch ((fe->fe_fsr >> FSR_RD_SHIFT) & FSR_RD_MASK) {
+	switch((fe->fe_fsr >> FSR_RD_SHIFT) & FSR_RD_MASK) {
 
-	default:
-	case FSR_RD_RN:		/* the nearest value is always Inf */
-		inf = 1;
-		break;
+		default:
+		case FSR_RD_RN: /* the nearest value is always Inf */
+			inf = 1;
+			break;
 
-	case FSR_RD_RZ:		/* toward 0 => never towards Inf */
-		inf = 0;
-		break;
+		case FSR_RD_RZ: /* toward 0 => never towards Inf */
+			inf = 0;
+			break;
 
-	case FSR_RD_RP:		/* toward +Inf iff positive */
-		inf = sign == 0;
-		break;
+		case FSR_RD_RP: /* toward +Inf iff positive */
+			inf = sign == 0;
+			break;
 
-	case FSR_RD_RM:		/* toward -Inf iff negative */
-		inf = sign;
-		break;
+		case FSR_RD_RM: /* toward -Inf iff negative */
+			inf = sign;
+			break;
 	}
 	return (inf);
 }
@@ -190,22 +188,21 @@ toinf(struct fpemu *fe, int sign)
  * N.B.: this conversion always rounds towards zero (this is a peculiarity
  * of the SPARC instruction set).
  */
-u_int
-fpu_ftoi(fe, fp)
-	struct fpemu *fe;
-	register struct fpn *fp;
+u_int fpu_ftoi(fe, fp)
+struct fpemu *fe;
+register struct fpn *fp;
 {
 	register u_int i;
 	register int sign, exp;
 
 	sign = fp->fp_sign;
-	switch (fp->fp_class) {
+	switch(fp->fp_class) {
 
-	case FPC_ZERO:
-		return (0);
+		case FPC_ZERO:
+			return (0);
 
-	case FPC_NUM:
-		/*
+		case FPC_NUM:
+			/*
 		 * If exp >= 2^32, overflow.  Otherwise shift value right
 		 * into last mantissa word (this will not exceed 0xffffffff),
 		 * shifting any guard and round bits out into the sticky
@@ -215,18 +212,18 @@ fpu_ftoi(fe, fp)
 		 * 0x80000000, overflow; otherwise the last fraction word
 		 * is the result.
 		 */
-		if ((exp = fp->fp_exp) >= 32)
-			break;
-		/* NB: the following includes exp < 0 cases */
-		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
-			fe->fe_cx |= FSR_NX;
-		i = fp->fp_mant[3];
-		if (i >= ((u_int)0x80000000 + sign))
-			break;
-		return (sign ? -i : i);
+			if((exp = fp->fp_exp) >= 32)
+				break;
+			/* NB: the following includes exp < 0 cases */
+			if(fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
+				fe->fe_cx |= FSR_NX;
+			i = fp->fp_mant[3];
+			if(i >= ((u_int) 0x80000000 + sign))
+				break;
+			return (sign ? -i : i);
 
-	default:		/* Inf, qNaN, sNaN */
-		break;
+		default: /* Inf, qNaN, sNaN */
+			break;
 	}
 	/* overflow: replace any inexact exception with invalid */
 	fe->fe_cx = (fe->fe_cx & ~FSR_NX) | FSR_NV;
@@ -237,19 +234,18 @@ fpu_ftoi(fe, fp)
  * fpn -> single (32 bit single returned as return value).
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
-u_int
-fpu_ftos(fe, fp)
-	struct fpemu *fe;
-	register struct fpn *fp;
+u_int fpu_ftos(fe, fp)
+struct fpemu *fe;
+register struct fpn *fp;
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
 
-#define	SNG_EXP(e)	((e) << SNG_FRACBITS)	/* makes e an exponent */
-#define	SNG_MASK	(SNG_EXP(1) - 1)	/* mask for fraction */
+#define SNG_EXP(e) ((e) << SNG_FRACBITS) /* makes e an exponent */
+#define SNG_MASK (SNG_EXP(1) - 1)        /* mask for fraction */
 
 	/* Take care of non-numbers first. */
-	if (ISNAN(fp)) {
+	if(ISNAN(fp)) {
 		/*
 		 * Preserve upper bits of NaN, per SPARC V8 appendix N.
 		 * Note that fp->fp_mant[0] has the quiet bit set,
@@ -259,9 +255,9 @@ fpu_ftos(fe, fp)
 		exp = SNG_EXP_INFNAN;
 		goto done;
 	}
-	if (ISINF(fp))
+	if(ISINF(fp))
 		return (sign | SNG_EXP(SNG_EXP_INFNAN));
-	if (ISZERO(fp))
+	if(ISZERO(fp))
 		return (sign);
 
 	/*
@@ -285,28 +281,28 @@ fpu_ftos(fe, fp)
 	 * Note that the guard and round bits vanish from the number after
 	 * rounding.
 	 */
-	if ((exp = fp->fp_exp + SNG_EXP_BIAS) <= 0) {	/* subnormal */
+	if((exp = fp->fp_exp + SNG_EXP_BIAS) <= 0) { /* subnormal */
 		/* -NG for g,r; -SNG_FRACBITS-exp for fraction */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - SNG_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1))
+		if(round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1))
 			return (sign | SNG_EXP(1) | 0);
-		if ((fe->fe_cx & FSR_NX) ||
-		    (fe->fe_fsr & (FSR_UF << FSR_TEM_SHIFT)))
+		if((fe->fe_cx & FSR_NX) ||
+		   (fe->fe_fsr & (FSR_UF << FSR_TEM_SHIFT)))
 			fe->fe_cx |= FSR_UF;
 		return (sign | SNG_EXP(0) | fp->fp_mant[3]);
 	}
 	/* -FP_NG for g,r; -1 for implied 1; -SNG_FRACBITS for fraction */
 	(void) fpu_shr(fp, FP_NMANT - FP_NG - 1 - SNG_FRACBITS);
 #ifdef DIAGNOSTIC
-	if ((fp->fp_mant[3] & SNG_EXP(1 << FP_NG)) == 0)
+	if((fp->fp_mant[3] & SNG_EXP(1 << FP_NG)) == 0)
 		panic("fpu_ftos");
 #endif
-	if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(2))
+	if(round(fe, fp) && fp->fp_mant[3] == SNG_EXP(2))
 		exp++;
-	if (exp >= SNG_EXP_INFNAN) {
+	if(exp >= SNG_EXP_INFNAN) {
 		/* overflow to inf or to max single */
 		fe->fe_cx |= FSR_OF | FSR_NX;
-		if (toinf(fe, sign))
+		if(toinf(fe, sign))
 			return (sign | SNG_EXP(SNG_EXP_INFNAN));
 		return (sign | SNG_EXP(SNG_EXP_INFNAN - 1) | SNG_MASK);
 	}
@@ -321,50 +317,50 @@ done:
  *
  * This code mimics fpu_ftos; see it for comments.
  */
-u_int
-fpu_ftod(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+u_int fpu_ftod(fe, fp, res)
+struct fpemu *fe;
+register struct fpn *fp;
+u_int *res;
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
 
-#define	DBL_EXP(e)	((e) << (DBL_FRACBITS & 31))
-#define	DBL_MASK	(DBL_EXP(1) - 1)
+#define DBL_EXP(e) ((e) << (DBL_FRACBITS & 31))
+#define DBL_MASK (DBL_EXP(1) - 1)
 
-	if (ISNAN(fp)) {
+	if(ISNAN(fp)) {
 		(void) fpu_shr(fp, FP_NMANT - 1 - DBL_FRACBITS);
 		exp = DBL_EXP_INFNAN;
 		goto done;
 	}
-	if (ISINF(fp)) {
+	if(ISINF(fp)) {
 		sign |= DBL_EXP(DBL_EXP_INFNAN);
 		goto zero;
 	}
-	if (ISZERO(fp)) {
-zero:		res[1] = 0;
+	if(ISZERO(fp)) {
+	zero:
+		res[1] = 0;
 		return (sign);
 	}
 
-	if ((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
+	if((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - DBL_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(1)) {
+		if(round(fe, fp) && fp->fp_mant[2] == DBL_EXP(1)) {
 			res[1] = 0;
 			return (sign | DBL_EXP(1) | 0);
 		}
-		if ((fe->fe_cx & FSR_NX) ||
-		    (fe->fe_fsr & (FSR_UF << FSR_TEM_SHIFT)))
+		if((fe->fe_cx & FSR_NX) ||
+		   (fe->fe_fsr & (FSR_UF << FSR_TEM_SHIFT)))
 			fe->fe_cx |= FSR_UF;
 		exp = 0;
 		goto done;
 	}
 	(void) fpu_shr(fp, FP_NMANT - FP_NG - 1 - DBL_FRACBITS);
-	if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(2))
+	if(round(fe, fp) && fp->fp_mant[2] == DBL_EXP(2))
 		exp++;
-	if (exp >= DBL_EXP_INFNAN) {
+	if(exp >= DBL_EXP_INFNAN) {
 		fe->fe_cx |= FSR_OF | FSR_NX;
-		if (toinf(fe, sign)) {
+		if(toinf(fe, sign)) {
 			res[1] = 0;
 			return (sign | DBL_EXP(DBL_EXP_INFNAN) | 0);
 		}
@@ -382,50 +378,50 @@ done:
  * our internal format *is* extended precision, plus 2 bits for guard/round,
  * so we can avoid a small bit of work.
  */
-u_int
-fpu_ftox(fe, fp, res)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	u_int *res;
+u_int fpu_ftox(fe, fp, res)
+struct fpemu *fe;
+register struct fpn *fp;
+u_int *res;
 {
 	register u_int sign = fp->fp_sign << 31;
 	register int exp;
 
-#define	EXT_EXP(e)	((e) << (EXT_FRACBITS & 31))
-#define	EXT_MASK	(EXT_EXP(1) - 1)
+#define EXT_EXP(e) ((e) << (EXT_FRACBITS & 31))
+#define EXT_MASK (EXT_EXP(1) - 1)
 
-	if (ISNAN(fp)) {
-		(void) fpu_shr(fp, 2);	/* since we are not rounding */
+	if(ISNAN(fp)) {
+		(void) fpu_shr(fp, 2); /* since we are not rounding */
 		exp = EXT_EXP_INFNAN;
 		goto done;
 	}
-	if (ISINF(fp)) {
+	if(ISINF(fp)) {
 		sign |= EXT_EXP(EXT_EXP_INFNAN);
 		goto zero;
 	}
-	if (ISZERO(fp)) {
-zero:		res[1] = res[2] = res[3] = 0;
+	if(ISZERO(fp)) {
+	zero:
+		res[1] = res[2] = res[3] = 0;
 		return (sign);
 	}
 
-	if ((exp = fp->fp_exp + EXT_EXP_BIAS) <= 0) {
+	if((exp = fp->fp_exp + EXT_EXP_BIAS) <= 0) {
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[0] == EXT_EXP(1)) {
+		if(round(fe, fp) && fp->fp_mant[0] == EXT_EXP(1)) {
 			res[1] = res[2] = res[3] = 0;
 			return (sign | EXT_EXP(1) | 0);
 		}
-		if ((fe->fe_cx & FSR_NX) ||
-		    (fe->fe_fsr & (FSR_UF << FSR_TEM_SHIFT)))
+		if((fe->fe_cx & FSR_NX) ||
+		   (fe->fe_fsr & (FSR_UF << FSR_TEM_SHIFT)))
 			fe->fe_cx |= FSR_UF;
 		exp = 0;
 		goto done;
 	}
 	/* Since internal == extended, no need to shift here. */
-	if (round(fe, fp) && fp->fp_mant[0] == EXT_EXP(2))
+	if(round(fe, fp) && fp->fp_mant[0] == EXT_EXP(2))
 		exp++;
-	if (exp >= EXT_EXP_INFNAN) {
+	if(exp >= EXT_EXP_INFNAN) {
 		fe->fe_cx |= FSR_OF | FSR_NX;
-		if (toinf(fe, sign)) {
+		if(toinf(fe, sign)) {
 			res[1] = res[2] = res[3] = 0;
 			return (sign | EXT_EXP(EXT_EXP_INFNAN) | 0);
 		}
@@ -443,33 +439,32 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-fpu_implode(fe, fp, type, space)
-	struct fpemu *fe;
-	register struct fpn *fp;
-	int type;
-	register u_int *space;
+        fpu_implode(fe, fp, type, space) struct fpemu *fe;
+register struct fpn *fp;
+int type;
+register u_int *space;
 {
 
-	switch (type) {
+	switch(type) {
 
-	case FTYPE_INT:
-		space[0] = fpu_ftoi(fe, fp);
-		break;
+		case FTYPE_INT:
+			space[0] = fpu_ftoi(fe, fp);
+			break;
 
-	case FTYPE_SNG:
-		space[0] = fpu_ftos(fe, fp);
-		break;
+		case FTYPE_SNG:
+			space[0] = fpu_ftos(fe, fp);
+			break;
 
-	case FTYPE_DBL:
-		space[0] = fpu_ftod(fe, fp, space);
-		break;
+		case FTYPE_DBL:
+			space[0] = fpu_ftod(fe, fp, space);
+			break;
 
-	case FTYPE_EXT:
-		/* funky rounding precision options ?? */
-		space[0] = fpu_ftox(fe, fp, space);
-		break;
+		case FTYPE_EXT:
+			/* funky rounding precision options ?? */
+			space[0] = fpu_ftox(fe, fp, space);
+			break;
 
-	default:
-		panic("fpu_implode");
+		default:
+			panic("fpu_implode");
 	}
 }

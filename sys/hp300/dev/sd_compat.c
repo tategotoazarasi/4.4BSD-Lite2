@@ -62,38 +62,36 @@
  * H starts after D and is what ever is left (i.e. combo of E and F).
  */
 struct partition sddefaultpart[] = {
-	{  16384,   1024, 1024, FS_BSDFFS, 8 },
-	{  65536,  17408,    0, FS_SWAP,   0 },
-	{      0,      0,    0, FS_BOOT,   0 },
-	{  98304,  17408,    0, FS_SWAP,   0 },
-	{ 102400, 115712, 1024, FS_BSDFFS, 8 },
-	{      0, 218112, 1024, FS_BSDFFS, 8 },
-	{      0,  82944, 1024, FS_BSDFFS, 8 },
-	{      0, 115712, 1024, FS_BSDFFS, 8 }
-};
-int sdnumdefaultpart = sizeof(sddefaultpart)/sizeof(sddefaultpart[0]);
+        {16384, 1024, 1024, FS_BSDFFS, 8},
+        {65536, 17408, 0, FS_SWAP, 0},
+        {0, 0, 0, FS_BOOT, 0},
+        {98304, 17408, 0, FS_SWAP, 0},
+        {102400, 115712, 1024, FS_BSDFFS, 8},
+        {0, 218112, 1024, FS_BSDFFS, 8},
+        {0, 82944, 1024, FS_BSDFFS, 8},
+        {0, 115712, 1024, FS_BSDFFS, 8}};
+int sdnumdefaultpart = sizeof(sddefaultpart) / sizeof(sddefaultpart[0]);
 
 extern struct sd_softc sd_softc[];
 
-sdmakedisklabel(unit, lp)
-	int unit;
-	register struct disklabel *lp;
+sdmakedisklabel(unit, lp) int unit;
+register struct disklabel *lp;
 {
 	register struct sd_softc *sc = &sd_softc[unit];
 	register struct partition *pi, *dpi;
 	register int dcount;
-	
+
 	lp->d_secperunit = sc->sc_blks;
-	lp->d_rpm = 3600;
+	lp->d_rpm        = 3600;
 	lp->d_interleave = 1;
-	if (sc->sc_flags & SDF_RMEDIA)
+	if(sc->sc_flags & SDF_RMEDIA)
 		lp->d_flags |= D_REMOVABLE;
 	lp->d_npartitions = sdnumdefaultpart;
 
-	pi = lp->d_partitions;
-	dpi = sddefaultpart;
+	pi     = lp->d_partitions;
+	dpi    = sddefaultpart;
 	dcount = sdnumdefaultpart;
-	while (dcount-- > 0)
+	while(dcount-- > 0)
 		*pi++ = *dpi++;
 
 	pi = lp->d_partitions;
@@ -113,7 +111,7 @@ sdmakedisklabel(unit, lp)
 	/*
 	 * If disk is big enough, define E and F
 	 */
-	if (sc->sc_blks > pi[5].p_offset)
+	if(sc->sc_blks > pi[5].p_offset)
 		pi[5].p_size = sc->sc_blks - pi[5].p_offset;
 	else {
 		pi[4].p_offset = pi[4].p_size = 0;

@@ -43,13 +43,12 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 
-main()
-{
-	register struct proc *p = (struct proc *)0;
-	register struct vmmeter *vm = (struct vmmeter *)0;
-	register struct user *up = (struct user *)0;
-	register struct rusage *rup = (struct rusage *)0;
-	register struct pcb *pcb = (struct pcb *)0;
+main() {
+	register struct proc *p     = (struct proc *) 0;
+	register struct vmmeter *vm = (struct vmmeter *) 0;
+	register struct user *up    = (struct user *) 0;
+	register struct rusage *rup = (struct rusage *) 0;
+	register struct pcb *pcb    = (struct pcb *) 0;
 
 	/*
 	 * struct proc

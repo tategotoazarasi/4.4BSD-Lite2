@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
+        "@(#) Copyright (c) 1990, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
@@ -52,16 +52,16 @@ static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #include <stdio.h>
 #include <ctype.h>
 
-#define LIF_NUMDIR	8
+#define LIF_NUMDIR 8
 
-#define LIF_VOLSTART	0
-#define LIF_VOLSIZE	sizeof(struct lifvol)
-#define LIF_DIRSTART	512
-#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct lifdir))
-#define LIF_FILESTART	8192
+#define LIF_VOLSTART 0
+#define LIF_VOLSIZE sizeof(struct lifvol)
+#define LIF_DIRSTART 512
+#define LIF_DIRSIZE (LIF_NUMDIR * sizeof(struct lifdir))
+#define LIF_FILESTART 8192
 
-#define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
-#define lifstob(s)	((s) * SECTSIZE)
+#define btolifs(b) (((b) + (SECTSIZE - 1)) / SECTSIZE)
+#define lifstob(s) ((s) *SECTSIZE)
 
 int lpflag;
 int loadpoint;
@@ -87,8 +87,7 @@ char buf[10240];
  *	sector 4-31:	disklabel (~300 bytes right now)
  *	sector 32-:	LIF file 0, LIF file 1, etc.
  */
-main(argc, argv)
-	char **argv;
+main(argc, argv) char **argv;
 {
 	int ac;
 	char **av;
@@ -98,42 +97,42 @@ main(argc, argv)
 
 	ac = --argc;
 	av = ++argv;
-	if (ac == 0)
+	if(ac == 0)
 		usage();
-	if (!strcmp(av[0], "-l")) {
+	if(!strcmp(av[0], "-l")) {
 		av++;
 		ac--;
-		if (ac == 0)
+		if(ac == 0)
 			usage();
 		sscanf(av[0], "0x%x", &loadpoint);
 		lpflag++;
 		av++;
 		ac--;
 	}
-	if (ac == 0)
+	if(ac == 0)
 		usage();
 	from1 = open(av[0], O_RDONLY, 0);
-	if (from1 < 0) {
+	if(from1 < 0) {
 		perror("open");
 		exit(1);
 	}
 	n1 = av[0];
 	av++;
 	ac--;
-	if (ac == 0)
+	if(ac == 0)
 		usage();
-	if (ac > 1) {
+	if(ac > 1) {
 		from2 = open(av[0], O_RDONLY, 0);
-		if (from2 < 0) {
+		if(from2 < 0) {
 			perror("open");
 			exit(1);
 		}
 		n2 = av[0];
 		av++;
 		ac--;
-		if (ac > 1) {
+		if(ac > 1) {
 			from3 = open(av[0], O_RDONLY, 0);
-			if (from3 < 0) {
+			if(from3 < 0) {
 				perror("open");
 				exit(1);
 			}
@@ -145,23 +144,23 @@ main(argc, argv)
 	} else
 		from2 = from3 = -1;
 	to = open(av[0], O_WRONLY | O_TRUNC | O_CREAT, 0644);
-	if (to < 0) {
+	if(to < 0) {
 		perror("open");
 		exit(1);
 	}
 	/* clear possibly unused directory entries */
 	strncpy(lifd[1].dir_name, "          ", 10);
-	lifd[1].dir_type = -1;
-	lifd[1].dir_addr = 0;
+	lifd[1].dir_type   = -1;
+	lifd[1].dir_addr   = 0;
 	lifd[1].dir_length = 0;
-	lifd[1].dir_flag = 0xFF;
-	lifd[1].dir_exec = 0;
+	lifd[1].dir_flag   = 0xFF;
+	lifd[1].dir_exec   = 0;
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 	/* record volume info */
 	lifv.vol_id = VOL_ID;
 	strncpy(lifv.vol_label, "BOOT43", 6);
-	lifv.vol_addr = btolifs(LIF_DIRSTART);
-	lifv.vol_oct = VOL_OCT;
+	lifv.vol_addr    = btolifs(LIF_DIRSTART);
+	lifv.vol_oct     = VOL_OCT;
 	lifv.vol_dirsize = btolifs(LIF_DIRSIZE);
 	lifv.vol_version = 1;
 	/* output bootfile one */
@@ -169,40 +168,40 @@ main(argc, argv)
 	putfile(from1, to);
 	n = btolifs(ld.count + sizeof(ld));
 	strcpy(lifd[0].dir_name, lifname(n1));
-	lifd[0].dir_type = DIR_TYPE;
-	lifd[0].dir_addr = btolifs(LIF_FILESTART);
+	lifd[0].dir_type   = DIR_TYPE;
+	lifd[0].dir_addr   = btolifs(LIF_FILESTART);
 	lifd[0].dir_length = n;
 	bcddate(from1, lifd[0].dir_toc);
 	lifd[0].dir_flag = DIR_FLAG;
-	lifd[0].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
-	lifv.vol_length = lifd[0].dir_addr + lifd[0].dir_length;
+	lifd[0].dir_exec = lpflag ? loadpoint + ex.a_entry : ex.a_entry;
+	lifv.vol_length  = lifd[0].dir_addr + lifd[0].dir_length;
 	/* if there is an optional second boot program, output it */
-	if (from2 >= 0) {
-		lseek(to, LIF_FILESTART+lifstob(n), 0);
+	if(from2 >= 0) {
+		lseek(to, LIF_FILESTART + lifstob(n), 0);
 		putfile(from2, to);
 		n = btolifs(ld.count + sizeof(ld));
 		strcpy(lifd[1].dir_name, lifname(n2));
-		lifd[1].dir_type = DIR_TYPE;
-		lifd[1].dir_addr = lifv.vol_length;
+		lifd[1].dir_type   = DIR_TYPE;
+		lifd[1].dir_addr   = lifv.vol_length;
 		lifd[1].dir_length = n;
 		bcddate(from2, lifd[1].dir_toc);
 		lifd[1].dir_flag = DIR_FLAG;
-		lifd[1].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
-		lifv.vol_length = lifd[1].dir_addr + lifd[1].dir_length;
+		lifd[1].dir_exec = lpflag ? loadpoint + ex.a_entry : ex.a_entry;
+		lifv.vol_length  = lifd[1].dir_addr + lifd[1].dir_length;
 	}
 	/* ditto for three */
-	if (from3 >= 0) {
-		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n), 0);
+	if(from3 >= 0) {
+		lseek(to, LIF_FILESTART + lifstob(lifd[0].dir_length + n), 0);
 		putfile(from3, to);
 		n = btolifs(ld.count + sizeof(ld));
 		strcpy(lifd[2].dir_name, lifname(n3));
-		lifd[2].dir_type = DIR_TYPE;
-		lifd[2].dir_addr = lifv.vol_length;
+		lifd[2].dir_type   = DIR_TYPE;
+		lifd[2].dir_addr   = lifv.vol_length;
 		lifd[2].dir_length = n;
 		bcddate(from3, lifd[2].dir_toc);
 		lifd[2].dir_flag = DIR_FLAG;
-		lifd[2].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
-		lifv.vol_length = lifd[2].dir_addr + lifd[2].dir_length;
+		lifd[2].dir_exec = lpflag ? loadpoint + ex.a_entry : ex.a_entry;
+		lifv.vol_length  = lifd[2].dir_addr + lifd[2].dir_length;
 	}
 	/* output volume/directory header info */
 	lseek(to, LIF_VOLSTART, 0);
@@ -212,63 +211,60 @@ main(argc, argv)
 	exit(0);
 }
 
-putfile(from, to)
-{
+putfile(from, to) {
 	register int n, tcnt, dcnt;
 
 	n = read(from, &ex, sizeof(ex));
-	if (n != sizeof(ex)) {
+	if(n != sizeof(ex)) {
 		fprintf(stderr, "error reading file header\n");
 		exit(1);
 	}
-	if (ex.a_magic == OMAGIC) {
+	if(ex.a_magic == OMAGIC) {
 		tcnt = ex.a_text;
 		dcnt = ex.a_data;
-	}
-	else if (ex.a_magic == NMAGIC) {
+	} else if(ex.a_magic == NMAGIC) {
 		tcnt = (ex.a_text + PGOFSET) & ~PGOFSET;
 		dcnt = ex.a_data;
-	}
-	else {
+	} else {
 		fprintf(stderr, "bad magic number\n");
 		exit(1);
 	}
 	ld.address = lpflag ? loadpoint : ex.a_entry;
-	ld.count = tcnt + dcnt;
+	ld.count   = tcnt + dcnt;
 	write(to, &ld, sizeof(ld));
-	while (tcnt) {
+	while(tcnt) {
 		n = sizeof(buf);
-		if (n > tcnt)
+		if(n > tcnt)
 			n = tcnt;
 		n = read(from, buf, n);
-		if (n < 0) {
+		if(n < 0) {
 			perror("read");
 			exit(1);
 		}
-		if (n == 0) {
+		if(n == 0) {
 			fprintf(stderr, "short read\n");
 			exit(1);
 		}
-		if (write(to, buf, n) < 0) {
+		if(write(to, buf, n) < 0) {
 			perror("write");
 			exit(1);
 		}
 		tcnt -= n;
 	}
-	while (dcnt) {
+	while(dcnt) {
 		n = sizeof(buf);
-		if (n > dcnt)
+		if(n > dcnt)
 			n = dcnt;
 		n = read(from, buf, n);
-		if (n < 0) {
+		if(n < 0) {
 			perror("read");
 			exit(1);
 		}
-		if (n == 0) {
+		if(n == 0) {
 			fprintf(stderr, "short read\n");
 			exit(1);
 		}
-		if (write(to, buf, n) < 0) {
+		if(write(to, buf, n) < 0) {
 			perror("write");
 			exit(1);
 		}
@@ -276,48 +272,46 @@ putfile(from, to)
 	}
 }
 
-usage()
-{
+usage() {
 	fprintf(stderr,
-		"usage:  mkboot [-l loadpoint] prog1 [ prog2 ] outfile\n");
+	        "usage:  mkboot [-l loadpoint] prog1 [ prog2 ] outfile\n");
 	exit(1);
 }
 
 char *
 lifname(str)
- char *str;
+char *str;
 {
 	static char lname[10] = "SYS_XXXXX";
 	register int i;
 
-	for (i = 4; i < 9; i++) {
-		if (islower(*str))
+	for(i = 4; i < 9; i++) {
+		if(islower(*str))
 			lname[i] = toupper(*str);
-		else if (isalnum(*str) || *str == '_')
+		else if(isalnum(*str) || *str == '_')
 			lname[i] = *str;
 		else
 			break;
 		str++;
 	}
-	for ( ; i < 10; i++)
+	for(; i < 10; i++)
 		lname[i] = '\0';
-	return(lname);
+	return (lname);
 }
 
 #include <sys/stat.h>
-#include <time.h>	/* XXX */
+#include <time.h> /* XXX */
 
-bcddate(fd, toc)
-	int fd;
-	char *toc;
+bcddate(fd, toc) int fd;
+char *toc;
 {
 	struct stat statb;
 	struct tm *tm;
 
 	fstat(fd, &statb);
-	tm = localtime(&statb.st_ctime);
-	*toc = ((tm->tm_mon+1) / 10) << 4;
-	*toc++ |= (tm->tm_mon+1) % 10;
+	tm   = localtime(&statb.st_ctime);
+	*toc = ((tm->tm_mon + 1) / 10) << 4;
+	*toc++ |= (tm->tm_mon + 1) % 10;
 	*toc = (tm->tm_mday / 10) << 4;
 	*toc++ |= tm->tm_mday % 10;
 	*toc = (tm->tm_year / 10) << 4;

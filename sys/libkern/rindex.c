@@ -44,16 +44,16 @@ strrchr(p, ch)
 #else
 rindex(p, ch)
 #endif
-	register const char *p;
-	register int ch;
+register const char *p;
+register int ch;
 {
 	register char *save;
 
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
+	for(save = NULL;; ++p) {
+		if(*p == ch)
+			save = (char *) p;
+		if(!*p)
+			return (save);
 	}
 	/* NOTREACHED */
 }

@@ -38,25 +38,25 @@
 
 #include <stand/stand.h>
 
-const	struct callback *callv;
-int	errno;
+const struct callback *callv;
+int errno;
 
-extern int	nullsys(), nodev(), noioctl();
+extern int nullsys(), nodev(), noioctl();
 
-int	rzstrategy(), rzopen(), rzclose();
-#define	rzioctl		noioctl
+int rzstrategy(), rzopen(), rzclose();
+#define rzioctl noioctl
 
 #ifndef BOOT
-int	tzstrategy(), tzopen(), tzclose();
+int tzstrategy(), tzopen(), tzclose();
 #endif
-#define	tzioctl		noioctl
+#define tzioctl noioctl
 
 
 struct devsw devsw[] = {
-	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/
+        {"rz", rzstrategy, rzopen, rzclose, rzioctl}, /*0*/
 #ifndef BOOT
-	{ "tz",	tzstrategy,	tzopen,	tzclose,	tzioctl }, /*1*/
+        {"tz", tzstrategy, tzopen, tzclose, tzioctl}, /*1*/
 #endif
 };
 
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int ndevs = (sizeof(devsw) / sizeof(devsw[0]));

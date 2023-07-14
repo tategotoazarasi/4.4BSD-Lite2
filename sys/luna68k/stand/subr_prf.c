@@ -40,19 +40,19 @@
 #include <sys/param.h>
 #include <luna68k/stand/romvec.h>
 
-#define TOCONS	0x1
-#define TOTTY	0x2
-#define TOLOG	0x4
+#define TOCONS 0x1
+#define TOTTY 0x2
+#define TOLOG 0x4
 
 /*
  * In case console is off,
  * panicstr contains argument to last
  * call to panic.
  */
-char	*panicstr;
+char *panicstr;
 
-extern	cnputc();			/* standard console putc */
-int	(*v_putc)() = cnputc;		/* routine to putc on virtual console */
+extern cnputc();          /* standard console putc */
+int (*v_putc)() = cnputc; /* routine to putc on virtual console */
 
 /*
  * Scaled down version of C Library printf.
@@ -82,113 +82,114 @@ int	(*v_putc)() = cnputc;		/* routine to putc on virtual console */
  *	printf("prefix: %r, other stuff\n", fmt, &arg1);
  */
 #if defined(tahoe)
-int	consintr;
+int consintr;
 #endif
 
 /*VARARGS1*/
-printf(fmt, x1)
-	char *fmt;
-	unsigned x1;
+printf(fmt, x1) char *fmt;
+unsigned x1;
 {
 #if defined(tahoe)
 	register int savintr;
 
-	savintr = consintr, consintr = 0;	/* disable interrupts */
+	savintr = consintr, consintr = 0; /* disable interrupts */
 #endif
-	prf(fmt, &x1, TOCONS        , (struct tty *)NULL);
+	prf(fmt, &x1, TOCONS, (struct tty *) NULL);
 
 
 #if defined(tahoe)
-	consintr = savintr;			/* reenable interrupts */
+	consintr = savintr; /* reenable interrupts */
 #endif
 }
 
-prf(fmt, adx, flags, ttyp)
-	register char *fmt;
-	register u_int *adx;
-	struct tty *ttyp;
+prf(fmt, adx, flags, ttyp) register char *fmt;
+register u_int *adx;
+struct tty *ttyp;
 {
 	register int b, c, i;
 	char *s;
 	int any;
 
 loop:
-	while ((c = *fmt++) != '%') {
-		if (c == '\0')
+	while((c = *fmt++) != '%') {
+		if(c == '\0')
 			return;
 		putchar(c, flags, ttyp);
 	}
 again:
 	c = *fmt++;
 	/* THIS CODE IS MACHINE DEPENDENT IN HANDLING %l? AND %c */
-	switch (c) {
+	switch(c) {
 
-	case 'l':
-		goto again;
-	case 'x': case 'X':
-		b = 16;
-		goto number;
-	case 'd': case 'D':
-		b = -10;
-		goto number;
-	case 'u':
-		b = 10;
-		goto number;
-	case 'o': case 'O':
-		b = 8;
-number:
-		printn((u_long)*adx, b, flags, ttyp);
-		break;
-	case 'c':
-		b = *adx;
+		case 'l':
+			goto again;
+		case 'x':
+		case 'X':
+			b = 16;
+			goto number;
+		case 'd':
+		case 'D':
+			b = -10;
+			goto number;
+		case 'u':
+			b = 10;
+			goto number;
+		case 'o':
+		case 'O':
+			b = 8;
+		number:
+			printn((u_long) *adx, b, flags, ttyp);
+			break;
+		case 'c':
+			b = *adx;
 #if BYTE_ORDER == LITTLE_ENDIAN
-		for (i = 24; i >= 0; i -= 8)
-			if (c = (b >> i) & 0x7f)
-				putchar(c, flags, ttyp);
+			for(i = 24; i >= 0; i -= 8)
+				if(c = (b >> i) & 0x7f)
+					putchar(c, flags, ttyp);
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-		if (c = (b & 0x7f))
-			putchar(c, flags, ttyp);
+			if(c = (b & 0x7f))
+				putchar(c, flags, ttyp);
 #endif
-		break;
-	case 'b':
-		b = *adx++;
-		s = (char *)*adx;
-		printn((u_long)b, *s++, flags, ttyp);
-		any = 0;
-		if (b) {
-			while (i = *s++) {
-				if (b & (1 << (i-1))) {
-					putchar(any ? ',' : '<', flags, ttyp);
-					any = 1;
-					for (; (c = *s) > 32; s++)
-						putchar(c, flags, ttyp);
-				} else
-					for (; *s > 32; s++)
-						;
+			break;
+		case 'b':
+			b = *adx++;
+			s = (char *) *adx;
+			printn((u_long) b, *s++, flags, ttyp);
+			any = 0;
+			if(b) {
+				while(i = *s++) {
+					if(b & (1 << (i - 1))) {
+						putchar(any ? ',' : '<', flags, ttyp);
+						any = 1;
+						for(; (c = *s) > 32; s++)
+							putchar(c, flags, ttyp);
+					} else
+						for(; *s > 32; s++)
+							;
+				}
+				if(any)
+					putchar('>', flags, ttyp);
 			}
-			if (any)
-				putchar('>', flags, ttyp);
-		}
-		break;
+			break;
 
-	case 's':
-		s = (char *)*adx;
-		while (c = *s++)
-			putchar(c, flags, ttyp);
-		break;
+		case 's':
+			s = (char *) *adx;
+			while(c = *s++)
+				putchar(c, flags, ttyp);
+			break;
 
-	case 'r':
-		s = (char *)*adx++;
-		prf(s, (u_int *)*adx, flags, ttyp);
-		break;
+		case 'r':
+			s = (char *) *adx++;
+			prf(s, (u_int *) *adx, flags, ttyp);
+			break;
 
-	case '%':
-		putchar('%', flags, ttyp);
-		break;
+		case '%':
+			putchar('%', flags, ttyp);
+			break;
 
-	default:
-		break;
+		default:
+			break;
 	}
 	adx++;
 	goto loop;
@@ -199,27 +200,27 @@ number:
  * We don't use recursion to avoid deep kernel stacks.
  */
 printn(n, b, flags, ttyp)
-	u_long n;
-	struct tty *ttyp;
+        u_long n;
+struct tty *ttyp;
 {
 	char prbuf[11];
 	register char *cp;
 
-	if (b == -10) {
-		if ((int)n < 0) {
+	if(b == -10) {
+		if((int) n < 0) {
 			putchar('-', flags, ttyp);
-			n = (unsigned)(-(int)n);
+			n = (unsigned) (-(int) n);
 		}
 		b = -b;
 	}
 	cp = prbuf;
 	do {
-		*cp++ = "0123456789abcdef"[n%b];
+		*cp++ = "0123456789abcdef"[n % b];
 		n /= b;
-	} while (n);
+	} while(n);
 	do
 		putchar(*--cp, flags, ttyp);
-	while (cp > prbuf);
+	while(cp > prbuf);
 }
 
 /*
@@ -228,10 +229,9 @@ printn(n, b, flags, ttyp)
  * If we are called twice, then we avoid trying to
  * sync the disks as this often leads to recursive panics.
  */
-panic(s)
-	char *s;
+panic(s) char *s;
 {
-	if (!panicstr) {
+	if(!panicstr) {
 		panicstr = s;
 	}
 	printf("panic: %s\n", s);
@@ -245,35 +245,10 @@ panic(s)
  * are saved in msgbuf for inspection later.
  */
 /*ARGSUSED*/
-putchar(c, flags, ttyp)
-	register int c;
-	struct tty *ttyp;
+putchar(c, flags, ttyp) register int c;
+struct tty *ttyp;
 {
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		(*v_putc)(c);
+	(*v_putc)(c);
 }

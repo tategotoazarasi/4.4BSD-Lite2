@@ -55,30 +55,27 @@
 
 dev_t rrootdev = NODEV;
 
-kernfs_init(vfsp)
-	struct vfsconf *vfsp;
+kernfs_init(vfsp) struct vfsconf *vfsp;
 {
 
 	return (0);
 }
 
-void
-kernfs_get_rrootdev()
-{
+void kernfs_get_rrootdev() {
 	static int tried = 0;
 	int cmaj;
 
-	if (tried) {
+	if(tried) {
 		/* Already did it once. */
 		return;
 	}
 	tried = 1;
 
-	if (rootdev == NODEV)
+	if(rootdev == NODEV)
 		return;
-	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
+	for(cmaj = 0; cmaj < nchrdev; cmaj++) {
 		rrootdev = makedev(cmaj, minor(rootdev));
-		if (chrtoblk(rrootdev) == rootdev)
+		if(chrtoblk(rrootdev) == rootdev)
 			return;
 	}
 	rrootdev = NODEV;
@@ -88,12 +85,11 @@ kernfs_get_rrootdev()
 /*
  * Mount the Kernel params filesystem
  */
-kernfs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	char *path;
-	caddr_t data;
-	struct nameidata *ndp;
-	struct proc *p;
+kernfs_mount(mp, path, data, ndp, p) struct mount *mp;
+char *path;
+caddr_t data;
+struct nameidata *ndp;
+struct proc *p;
 {
 	int error = 0;
 	u_int size;
@@ -107,15 +103,15 @@ kernfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Update is a no-op
 	 */
-	if (mp->mnt_flag & MNT_UPDATE)
+	if(mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = getnewvnode(VT_KERNFS, mp, kernfs_vnodeop_p, &rvp);	/* XXX */
-	if (error)
+	error = getnewvnode(VT_KERNFS, mp, kernfs_vnodeop_p, &rvp); /* XXX */
+	if(error)
 		return (error);
 
 	MALLOC(fmp, struct kernfs_mount *, sizeof(struct kernfs_mount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
+	       M_UFSMNT, M_WAITOK); /* XXX */
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 #ifdef KERNFS_DIAGNOSTIC
@@ -138,28 +134,26 @@ kernfs_mount(mp, path, data, ndp, p)
 	return (0);
 }
 
-kernfs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+kernfs_start(mp, flags, p) struct mount *mp;
+int flags;
+struct proc *p;
 {
 	return (0);
 }
 
-kernfs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+kernfs_unmount(mp, mntflags, p) struct mount *mp;
+int mntflags;
+struct proc *p;
 {
 	int error;
-	int flags = 0;
+	int flags            = 0;
 	struct vnode *rootvp = VFSTOKERNFS(mp)->kf_root;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_unmount(mp = %x)\n", mp);
 #endif
 
-	if (mntflags & MNT_FORCE)
+	if(mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
 	/*
@@ -167,12 +161,12 @@ kernfs_unmount(mp, mntflags, p)
 	 * ever get anything cached at this level at the
 	 * moment, but who knows...
 	 */
-	if (rootvp->v_usecount > 1)
+	if(rootvp->v_usecount > 1)
 		return (EBUSY);
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_unmount: calling vflush\n");
 #endif
-	if (error = vflush(mp, rootvp, flags))
+	if(error = vflush(mp, rootvp, flags))
 		return (error);
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -189,16 +183,15 @@ kernfs_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the kernfs_mount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_UFSMNT); /* XXX */
 	mp->mnt_data = 0;
 	return 0;
 }
 
-kernfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+kernfs_root(mp, vpp) struct mount *mp;
+struct vnode **vpp;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc; /* XXX */
 	struct vnode *vp;
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -215,24 +208,23 @@ kernfs_root(mp, vpp)
 	return (0);
 }
 
-kernfs_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+kernfs_statfs(mp, sbp, p) struct mount *mp;
+struct statfs *sbp;
+struct proc *p;
 {
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_statfs(mp = %x)\n", mp);
 #endif
 
-	sbp->f_flags = 0;
-	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_flags  = 0;
+	sbp->f_bsize  = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
-	sbp->f_blocks = 2;		/* 1K to keep df happy */
-	sbp->f_bfree = 0;
+	sbp->f_blocks = 2; /* 1K to keep df happy */
+	sbp->f_bfree  = 0;
 	sbp->f_bavail = 0;
-	sbp->f_files = 0;
-	sbp->f_ffree = 0;
-	if (sbp != &mp->mnt_stat) {
+	sbp->f_files  = 0;
+	sbp->f_ffree  = 0;
+	if(sbp != &mp->mnt_stat) {
 		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -242,16 +234,16 @@ kernfs_statfs(mp, sbp, p)
 }
 
 struct vfsops kernfs_vfsops = {
-	kernfs_mount,
-	kernfs_start,
-	kernfs_unmount,
-	kernfs_root,
-	kernfs_quotactl,
-	kernfs_statfs,
-	kernfs_sync,
-	kernfs_vget,
-	kernfs_fhtovp,
-	kernfs_vptofh,
-	kernfs_init,
-	kernfs_sysctl,
+        kernfs_mount,
+        kernfs_start,
+        kernfs_unmount,
+        kernfs_root,
+        kernfs_quotactl,
+        kernfs_statfs,
+        kernfs_sync,
+        kernfs_vget,
+        kernfs_fhtovp,
+        kernfs_vptofh,
+        kernfs_init,
+        kernfs_sysctl,
 };

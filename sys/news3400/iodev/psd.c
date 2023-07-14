@@ -82,30 +82,30 @@
 #include <news3400/iodev/ioptohb.h>
 
 
-#define	PROBE_MAXRETRY	100
-#define	NRETRY		10
-#define	MAXHRDERR	100
-#define	NSCSICHAN	7
+#define PROBE_MAXRETRY 100
+#define NRETRY 10
+#define MAXHRDERR 100
+#define NSCSICHAN 7
 
-#define	NOSUCHDEV	0x7f
+#define NOSUCHDEV 0x7f
 
 #ifdef news3400
-#define	MAXCTLR		8
+#define MAXCTLR 8
 #endif
 
 #ifdef news3800
-#define	MAXCTLR		16
+#define MAXCTLR 16
 #endif
 
-#define	MAXSLAVE	8
+#define MAXSLAVE 8
 
 struct scsi scsi[MAXCTLR];
 struct sc_map scmap[MAXCTLR];
 struct sc_inq scinq[MAXCTLR];
 
 #ifdef IPC_MRX
-extern int port_scsi;		/* UNIX port of SCSI */
-extern int iop_scsi[];		/* IOP port of SCSI process */
+extern int port_scsi;  /* UNIX port of SCSI */
+extern int iop_scsi[]; /* IOP port of SCSI process */
 #endif
 
 #ifdef CPU_DOUBLE
@@ -116,8 +116,7 @@ extern struct scintsw scintsw[];
  * Universal SCSI probe routine
  *	for mass storage controller.
  */
-psdprobe(im)
-	register struct iop/**/_ctlr *im;
+psdprobe(im) register struct iop /**/ _ctlr *im;
 {
 	register int intr = im->im_intr;
 	struct scintsw *sci;
@@ -129,7 +128,7 @@ psdprobe(im)
 #ifdef IPC_MRX
 	int scintr();
 
-	if (port_scsi == 0) {
+	if(port_scsi == 0) {
 		port_scsi = port_create("@scsi", scintr, -1);
 		for(j = 0; j < MAXCTLR; j++) {
 			if(j == 7 || j == 15)
@@ -139,7 +138,7 @@ psdprobe(im)
 	}
 #endif /* IPC_MRX */
 	sci = &scintsw[intr];
-	if (sci->sci_inthandler) {
+	if(sci->sci_inthandler) {
 		/*
 		 * already probed.
 		 */
@@ -150,7 +149,7 @@ psdprobe(im)
 	 * probe device product ID
 	 *	& set driver interrupt handler
 	 */
-	if (probe_inq(im, inq) == 0) {
+	if(probe_inq(im, inq) == 0) {
 		/*
 		 * inquiry command terminate with bad status
 		 *	set 0x7f(Specified device is nonexistent) to devtype
@@ -160,40 +159,38 @@ psdprobe(im)
 	return (inq->sci_devtype);
 }
 
-set_inthandler(im, handler)
-	register struct iop/**/_ctlr *im;
-	int (*handler)();
+set_inthandler(im, handler) register struct iop /**/ _ctlr *im;
+int (*handler)();
 {
 	struct scintsw *sci;
 
 	sci = &scintsw[im->im_intr];
-	if (sci->sci_inthandler)
-		return (0);	/* already probed. */
+	if(sci->sci_inthandler)
+		return (0); /* already probed. */
 
 	sci->sci_inthandler = handler;
-	sci->sci_ctlr = im->im_ctlr;
+	sci->sci_ctlr       = im->im_ctlr;
 	return (1);
 }
 
-probe_inq(im, inq)
-	register struct iop/**/_ctlr *im;
-	register struct sc_inq *inq;
+probe_inq(im, inq) register struct iop /**/ _ctlr *im;
+register struct sc_inq *inq;
 {
-	register int intr = im->im_intr;
+	register int intr        = im->im_intr;
 	register struct scsi *sc = &scsi[intr];
-	register int retry = 0;
-	
+	register int retry       = 0;
+
 	bzero(inq, sizeof(struct sc_inq));
 
 psdprobe_loop:
 
 	scop_inquiry(intr, sc, 0, SCSI_INTDIS, sizeof(struct sc_inq), inq);
 
-	if (sc->sc_istatus != INST_EP) {
+	if(sc->sc_istatus != INST_EP) {
 		/*
 		 * probe fault.
 		 */
-		if (sc->sc_istatus == (INST_EP|INST_HE)) {
+		if(sc->sc_istatus == (INST_EP | INST_HE)) {
 			/*
 			 * bus reset, retry
 			 */
@@ -204,11 +201,11 @@ psdprobe_loop:
 #ifndef NO_STATUS_BYTE_MASK
 	sc->sc_tstatus &= TGSTMASK;
 #endif
-	if (sc->sc_tstatus != TGST_GOOD) {
-		if (sc->sc_tstatus == TGST_CC)
+	if(sc->sc_tstatus != TGST_GOOD) {
+		if(sc->sc_tstatus == TGST_CC)
 			scop_rsense(intr, sc, 0, SCSI_INTDIS, 18, 0);
-		if (retry++ < PROBE_MAXRETRY) {
-			DELAY(600000);		/* XXX  1 sec */
+		if(retry++ < PROBE_MAXRETRY) {
+			DELAY(600000); /* XXX  1 sec */
 			goto psdprobe_loop;
 		}
 		/*
@@ -221,21 +218,21 @@ psdprobe_loop:
 
 struct scsi *
 get_scsi(intr)
-	int	intr;
+int intr;
 {
 	return (&scsi[intr]);
 }
 
 struct sc_map *
 get_sc_map(intr)
-	int	intr;
+int intr;
 {
 	return (&scmap[intr]);
 }
 
 struct sc_inq *
 get_sc_inq(intr)
-	int	intr;
+int intr;
 {
 	return (&scinq[intr]);
 }

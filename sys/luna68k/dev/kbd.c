@@ -42,7 +42,7 @@
  *	remade by A.Fujita, DEC-21-1992
  */
 
-#define NKBD	2
+#define NKBD 2
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,25 +60,25 @@
 #include <luna68k/dev/siovar.h>
 #include <luna68k/dev/kbio.h>
 
-extern	struct sio_portc *sio_port_assign();
-extern	struct sio_portc *sio_port_get();
+extern struct sio_portc *sio_port_assign();
+extern struct sio_portc *sio_port_get();
 
-struct	sio_softc kbd_softc[NKBD];
-struct	sio_portc kbd_sport;
-struct	sio_portc *kbd_pc;
+struct sio_softc kbd_softc[NKBD];
+struct sio_portc kbd_sport;
+struct sio_portc *kbd_pc;
 
-int     kbdopen();
-void    kbdstart();
-int     kbdparam();
-int     kbdintr();
+int kbdopen();
+void kbdstart();
+int kbdparam();
+int kbdintr();
 
-struct	tty kbd_tty[NKBD];
+struct tty kbd_tty[NKBD];
 
-int	kbddefaultrate = B9600;				/* speed of console line is fixed */
-int	kbdmajor = 14;
-int	kbd_state = 0;
+int kbddefaultrate = B9600; /* speed of console line is fixed */
+int kbdmajor       = 14;
+int kbd_state      = 0;
 
-#define	kbdunit(x)		minor(x)
+#define kbdunit(x) minor(x)
 
 /*
  *  entry routines
@@ -89,9 +89,9 @@ int	kbd_state = 0;
 kbdopen(dev_t dev, int flag, int mode, struct proc *p)
 #else
 kbdopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 #endif
 {
 	register struct tty *tp;
@@ -101,28 +101,28 @@ kbdopen(dev, flag, mode, p)
 
 	unit = kbdunit(dev);
 
-	if (unit != 0)
+	if(unit != 0)
 		return (ENXIO);
 
-	if (kbd_state == 0) {
-		s = splhigh();
-		pc = sio_port_get(1);
+	if(kbd_state == 0) {
+		s         = splhigh();
+		pc        = sio_port_get(1);
 		kbd_sport = *pc;
-		kbd_pc = sio_port_assign(1, kbdmajor, unit, kbdintr);
+		kbd_pc    = sio_port_assign(1, kbdmajor, unit, kbdintr);
 		splx(s);
 	}
 	kbd_softc[unit].sc_pc = kbd_pc;
 	kbd_state |= 1 << unit;
 
-	tp = &kbd_tty[unit];
+	tp          = &kbd_tty[unit];
 	tp->t_oproc = kbdstart;
 	tp->t_param = kbdparam;
-	tp->t_dev = dev;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	tp->t_dev   = dev;
+	if((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-/*
+		if(tp->t_ispeed == 0) {
+			/*
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
 			tp->t_cflag = TTYDEF_CFLAG;
@@ -136,12 +136,12 @@ kbdopen(dev, flag, mode, p)
 			tp->t_ispeed = tp->t_ospeed = kbddefaultrate;
 		}
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if(tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	tp->t_state |= TS_CARR_ON;
 
-	if (error == 0)
+	if(error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
 
 	return (error);
@@ -149,15 +149,15 @@ kbdopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 kbdclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+        dev_t dev;
+int flag, mode;
+struct proc *p;
 {
 	register struct siodevice *sio = kbd_pc->pc_addr;
-	register struct	sio_portc *pc;
+	register struct sio_portc *pc;
 	register struct tty *tp;
 	register int unit, s;
-	int  code, rr;
+	int code, rr;
 
 	unit = kbdunit(dev);
 
@@ -167,7 +167,7 @@ kbdclose(dev, flag, mode, p)
 
 	kbd_state &= ~(1 << unit);
 
-	if (kbd_state == 0) {
+	if(kbd_state == 0) {
 		s = splhigh();
 
 		while((rr = siogetreg(sio)) & RR_RXRDY) {
@@ -182,29 +182,28 @@ kbdclose(dev, flag, mode, p)
 
 	return (0);
 }
- 
+
 kbdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
+        dev_t dev;
+struct uio *uio;
 {
 	register struct tty *tp = &kbd_tty[kbdunit(dev)];
- 
+
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
-int
-kbdparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+int kbdparam(tp, t)
+register struct tty *tp;
+register struct termios *t;
 {
-	int unit = kbdunit(tp->t_dev);
+	int unit                      = kbdunit(tp->t_dev);
 	register struct sio_softc *sc = &kbd_softc[unit];
-	register int cflag = t->c_cflag;
- 
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
+	register int cflag            = t->c_cflag;
+
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag  = cflag;
 
 	/*
 	 * change line speed
@@ -222,11 +221,11 @@ kbdparam(tp, t)
 }
 
 kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+        dev_t dev;
+int cmd;
+caddr_t data;
+int flag;
+struct proc *p;
 {
 	register struct siodevice *sio = kbd_pc->pc_addr;
 	register struct tty *tp;
@@ -234,32 +233,32 @@ kbdioctl(dev, cmd, data, flag, p)
 	register int error;
 	int code, rr, s;
 
-	tp = &kbd_tty[unit];
+	tp    = &kbd_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 
-	switch (cmd) {
+	switch(cmd) {
 
-	case KIOCMOUSE:
-		if (*((int *) data)) {
-			sio->sio_data = 0x60;	/* enable  mouse tracking */
-		} else {
-			s = splhigh();
-			sio->sio_data = 0x20;	/* disable mouse tracking */
-			while((rr = siogetreg(sio)) & RR_RXRDY) {
-				code = sio->sio_data;
-				DELAY(100);
+		case KIOCMOUSE:
+			if(*((int *) data)) {
+				sio->sio_data = 0x60; /* enable  mouse tracking */
+			} else {
+				s             = splhigh();
+				sio->sio_data = 0x20; /* disable mouse tracking */
+				while((rr = siogetreg(sio)) & RR_RXRDY) {
+					code = sio->sio_data;
+					DELAY(100);
+				}
+				splx(s);
 			}
-			splx(s);
-		}
-		break;
+			break;
 
-	default:
-		return (ENOTTY);
+		default:
+			return (ENOTTY);
 	}
 	return (0);
 }
@@ -268,28 +267,27 @@ kbdioctl(dev, cmd, data, flag, p)
  *
  */
 void
-kbdstart(tp)
-	register struct tty *tp;
+        kbdstart(tp) register struct tty *tp;
 {
 	register int unit;
 	register struct siodevice *sio = kbd_pc->pc_addr;
 	register int rr;
 	int s, c;
- 
+
 	s = spltty();
 
-	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
+	if(tp->t_state & (TS_TIMEOUT | TS_TTSTOP))
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
+	if(tp->t_outq.c_cc <= tp->t_lowat) {
+		if(tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((caddr_t) &tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
 
-	if (tp->t_outq.c_cc != 0)
+	if(tp->t_outq.c_cc != 0)
 		c = getc(&tp->t_outq);
 
 out:
@@ -300,30 +298,29 @@ out:
  *  interrupt handling 
  */
 
-kbdintr(unit)
-	register int unit;
+kbdintr(unit) register int unit;
 {
 	register struct siodevice *sio = kbd_pc->pc_addr;
 	register struct tty *tp;
 	register u_char code;
 	int s, rr;
 
-	tp = &kbd_tty[0];		/* Keyboard */
+	tp = &kbd_tty[0]; /* Keyboard */
 	rr = siogetreg(sio);
 
-	if (rr & RR_RXRDY) {
+	if(rr & RR_RXRDY) {
 		code = sio->sio_data;
-		if ((tp->t_state & TS_ISOPEN) != 0)
+		if((tp->t_state & TS_ISOPEN) != 0)
 			(*linesw[tp->t_line].l_rint)(code, tp);
 
-		while ((rr = siogetreg(sio)) & RR_RXRDY) {
+		while((rr = siogetreg(sio)) & RR_RXRDY) {
 			code = sio->sio_data;
-			if ((tp->t_state & TS_ISOPEN) != 0)
+			if((tp->t_state & TS_ISOPEN) != 0)
 				(*linesw[tp->t_line].l_rint)(code, tp);
 		}
 	}
 
-	if (rr & RR_TXRDY) {
+	if(rr & RR_TXRDY) {
 		sio->sio_cmd = WR0_RSTPEND;
 	}
 }

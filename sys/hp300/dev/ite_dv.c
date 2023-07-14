@@ -60,24 +60,23 @@
 #include <hp/dev/grfioctl.h>
 #include <hp/dev/grfvar.h>
 
-#define REGBASE		((struct dvboxfb *)(ip->regbase))
-#define WINDOWMOVER	dvbox_windowmove
+#define REGBASE ((struct dvboxfb *) (ip->regbase))
+#define WINDOWMOVER dvbox_windowmove
 
-dvbox_init(ip)
-	register struct ite_softc *ip;
+dvbox_init(ip) register struct ite_softc *ip;
 {
 	int i;
-	
+
 	/* XXX */
-	if (ip->regbase == 0) {
+	if(ip->regbase == 0) {
 		struct grf_softc *gp = ip->grf;
 
-		ip->regbase = gp->g_regkva;
-		ip->fbbase = gp->g_fbkva;
-		ip->fbwidth = gp->g_display.gd_fbwidth;
+		ip->regbase  = gp->g_regkva;
+		ip->fbbase   = gp->g_fbkva;
+		ip->fbwidth  = gp->g_display.gd_fbwidth;
 		ip->fbheight = gp->g_display.gd_fbheight;
-		ip->dwidth = gp->g_display.gd_dwidth;
-		ip->dheight = gp->g_display.gd_dheight;
+		ip->dwidth   = gp->g_display.gd_dwidth;
+		ip->dheight  = gp->g_display.gd_dheight;
 		/*
 		 * XXX some displays (e.g. the davinci) appear
 		 * to return a display height greater than the
@@ -85,9 +84,9 @@ dvbox_init(ip)
 		 * to getting the display dimensions from the
 		 * fontrom...
 		 */
-		if (ip->dwidth > ip->fbwidth)
+		if(ip->dwidth > ip->fbwidth)
 			ip->dwidth = ip->fbwidth;
-		if (ip->dheight > ip->fbheight)
+		if(ip->dheight > ip->fbheight)
 			ip->dheight = ip->fbheight;
 	}
 
@@ -100,8 +99,8 @@ dvbox_init(ip)
 	 * Lastly, turn on the box.
 	 */
 	REGBASE->interrupt = 0x04;
-	REGBASE->drive     = 0x10;		
- 	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
+	REGBASE->drive     = 0x10;
+	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
 	REGBASE->opwen     = 0x01;
 	REGBASE->fbwen     = 0x0;
 	REGBASE->fold      = 0x01;
@@ -129,8 +128,8 @@ dvbox_init(ip)
 	 * color for both banks.
 	 */
 
-	for (i = 0; i <= 1; i++) {
-		REGBASE->cmapbank = i;
+	for(i = 0; i <= 1; i++) {
+		REGBASE->cmapbank     = i;
 		REGBASE->rgb[0].red   = 0x00;
 		REGBASE->rgb[0].green = 0x00;
 		REGBASE->rgb[0].blue  = 0x00;
@@ -139,7 +138,7 @@ dvbox_init(ip)
 		REGBASE->rgb[1].blue  = 0xFF;
 	}
 	REGBASE->cmapbank = 0;
-	
+
 	db_waitbusy(ip->regbase);
 
 	ite_fontinfo(ip);
@@ -155,98 +154,88 @@ dvbox_init(ip)
 	 * Stash the inverted cursor.
 	 */
 	dvbox_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
-			 ip->cblanky, ip->cblankx, ip->ftheight,
-			 ip->ftwidth, RR_COPYINVERTED);
+	                 ip->cblanky, ip->cblankx, ip->ftheight,
+	                 ip->ftwidth, RR_COPYINVERTED);
 }
 
-dvbox_deinit(ip)
-	register struct ite_softc *ip;
+dvbox_deinit(ip) register struct ite_softc *ip;
 {
 	dvbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	db_waitbusy(ip->regbase);
 
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
-dvbox_putc(ip, c, dy, dx, mode)
-	register struct ite_softc *ip;
-        register int dy, dx;
-	int c, mode;
+dvbox_putc(ip, c, dy, dx, mode) register struct ite_softc *ip;
+register int dy, dx;
+int c, mode;
 {
-        register int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
-	
+	register int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
-			 dy * ip->ftheight, dx * ip->ftwidth,
-			 ip->ftheight, ip->ftwidth, wrr);
+	                 dy * ip->ftheight, dx * ip->ftwidth,
+	                 ip->ftheight, ip->ftwidth, wrr);
 }
 
-dvbox_cursor(ip, flag)
-	register struct ite_softc *ip;
-        register int flag;
+dvbox_cursor(ip, flag) register struct ite_softc *ip;
+register int flag;
 {
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	}
+	if(flag == DRAW_CURSOR)
+		draw_cursor(ip) else if(flag == MOVE_CURSOR) {
+			erase_cursor(ip)
+			        draw_cursor(ip)
+		}
 	else
 		erase_cursor(ip)
 }
 
-dvbox_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
-	register int sy, sx, h, w;
+dvbox_clear(ip, sy, sx, h, w) struct ite_softc *ip;
+register int sy, sx, h, w;
 {
 	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 sy * ip->ftheight, sx * ip->ftwidth, 
-			 h  * ip->ftheight, w  * ip->ftwidth,
-			 RR_CLEAR);
+	                 sy * ip->ftheight, sx * ip->ftwidth,
+	                 h * ip->ftheight, w * ip->ftwidth,
+	                 RR_CLEAR);
 }
 
-dvbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
-        register int sy, count;
-        int dir, sx;
+dvbox_scroll(ip, sy, sx, count, dir) register struct ite_softc *ip;
+register int sy, count;
+int dir, sx;
 {
 	register int dy;
-	register int dx = sx;
+	register int dx     = sx;
 	register int height = 1;
-	register int width = ip->cols;
+	register int width  = ip->cols;
 
-	if (dir == SCROLL_UP) {
-		dy = sy - count;
+	if(dir == SCROLL_UP) {
+		dy     = sy - count;
 		height = ip->rows - sy;
-	}
-	else if (dir == SCROLL_DOWN) {
-		dy = sy + count;
+	} else if(dir == SCROLL_DOWN) {
+		dy     = sy + count;
 		height = ip->rows - dy - 1;
-	}
-	else if (dir == SCROLL_RIGHT) {
-		dy = sy;
-		dx = sx + count;
+	} else if(dir == SCROLL_RIGHT) {
+		dy    = sy;
+		dx    = sx + count;
 		width = ip->cols - dx;
-	}
-	else {
-		dy = sy;
-		dx = sx - count;
+	} else {
+		dy    = sy;
+		dx    = sx - count;
 		width = ip->cols - sx;
-	}		
+	}
 
 	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 dy * ip->ftheight, dx * ip->ftwidth,
-			 height * ip->ftheight,
-			 width  * ip->ftwidth, RR_COPY);
+	                 dy * ip->ftheight, dx * ip->ftwidth,
+	                 height * ip->ftheight,
+	                 width * ip->ftwidth, RR_COPY);
 }
 
-dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_softc *ip;
-	int sy, sx, dy, dx, h, w, func;
+dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func) struct ite_softc *ip;
+int sy, sx, dy, dx, h, w, func;
 {
 	register struct dvboxfb *dp = REGBASE;
-	if (h == 0 || w == 0)
+	if(h == 0 || w == 0)
 		return;
-	
+
 	db_waitbusy(ip->regbase);
 	dp->rep_rule = func << 4 | func;
 	dp->source_y = sy;

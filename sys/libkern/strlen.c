@@ -39,12 +39,12 @@ static char sccsid[] = "@(#)strlen.c	8.1 (Berkeley) 6/4/93";
 #include <string.h>
 
 size_t
-strlen(str)
-	const char *str;
+        strlen(str)
+                const char *str;
 {
 	register const char *s;
 
-	for (s = str; *s; ++s);
-	return(s - str);
+	for(s = str; *s; ++s)
+		;
+	return (s - str);
 }
-

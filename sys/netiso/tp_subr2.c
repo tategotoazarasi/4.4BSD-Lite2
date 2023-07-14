@@ -138,23 +138,21 @@ void tp_rsyset();
  *  debugging messages easily here.
  */
 void
-tp_local_credit(tpcb)
-	struct tp_pcb *tpcb;
+        tp_local_credit(tpcb) struct tp_pcb *tpcb;
 {
 	LOCAL_CREDIT(tpcb);
 	IFDEBUG(D_CREDIT)
-		printf("ref 0x%x lcdt 0x%x l_tpdusize 0x%x decbit 0x%x\n",
-			tpcb->tp_lref, 
-			tpcb->tp_lcredit, 
-			tpcb->tp_l_tpdusize, 
-			tpcb->tp_decbit, 
-			tpcb->tp_cong_win
-			);
+	printf("ref 0x%x lcdt 0x%x l_tpdusize 0x%x decbit 0x%x\n",
+	       tpcb->tp_lref,
+	       tpcb->tp_lcredit,
+	       tpcb->tp_l_tpdusize,
+	       tpcb->tp_decbit,
+	       tpcb->tp_cong_win);
 	ENDDEBUG
 	IFTRACE(D_CREDIT)
-		tptraceTPCB(TPPTmisc,
-			"lcdt tpdusz \n",
-			 tpcb->tp_lcredit, tpcb->tp_l_tpdusize, 0, 0);
+	tptraceTPCB(TPPTmisc,
+	            "lcdt tpdusz \n",
+	            tpcb->tp_lcredit, tpcb->tp_l_tpdusize, 0, 0);
 	ENDTRACE
 }
 
@@ -175,16 +173,15 @@ tp_local_credit(tpcb)
  *
  * NOTES:
  */
-int
-tp_protocol_error(e,tpcb)
-	struct tp_event	*e;
-	struct tp_pcb	*tpcb;
+int tp_protocol_error(e, tpcb)
+struct tp_event *e;
+struct tp_pcb *tpcb;
 {
 	printf("TP PROTOCOL ERROR! tpcb 0x%x event 0x%x, state 0x%x\n",
-		tpcb, e->ev_number, tpcb->tp_state);
+	       tpcb, e->ev_number, tpcb->tp_state);
 	IFTRACE(D_DRIVER)
-		tptraceTPCB(TPPTmisc, "PROTOCOL ERROR tpcb event state",
-			tpcb, e->ev_number, tpcb->tp_state, 0 );
+	tptraceTPCB(TPPTmisc, "PROTOCOL ERROR tpcb event state",
+	            tpcb, e->ev_number, tpcb->tp_state, 0);
 	ENDTRACE
 	return EIO; /* for lack of anything better */
 }
@@ -192,8 +189,7 @@ tp_protocol_error(e,tpcb)
 
 /* Not used at the moment */
 ProtoHook
-tp_drain()
-{
+tp_drain() {
 	return 0;
 }
 
@@ -219,41 +215,40 @@ tp_drain()
  * NOTES:
  */
 void
-tp_indicate(ind, tpcb, error)
-	int				ind; 
-	u_short			error;
-	register struct tp_pcb	*tpcb;
+        tp_indicate(ind, tpcb, error) int ind;
+u_short error;
+register struct tp_pcb *tpcb;
 {
 	register struct socket *so = tpcb->tp_sock;
 	IFTRACE(D_INDICATION)
-		tptraceTPCB(TPPTindicate, ind, *(u_short *)(tpcb->tp_lsuffix), 
-			*(u_short *)(tpcb->tp_fsuffix), error,so->so_pgid);
+	tptraceTPCB(TPPTindicate, ind, *(u_short *) (tpcb->tp_lsuffix),
+	            *(u_short *) (tpcb->tp_fsuffix), error, so->so_pgid);
 	ENDTRACE
 	IFDEBUG(D_INDICATION)
-		char *ls, *fs;
-		ls = tpcb->tp_lsuffix, 
-		fs = tpcb->tp_fsuffix, 
+	char *ls, *fs;
+	ls = tpcb->tp_lsuffix,
+	fs = tpcb->tp_fsuffix,
 
-		printf(
-"indicate 0x%x lsuf 0x%02x%02x fsuf 0x%02x%02x err 0x%x  noind 0x%x ref 0x%x\n",
-		ind, 
-		*ls, *(ls+1), *fs, *(fs+1),
-		error, /*so->so_pgrp,*/
-		tpcb->tp_no_disc_indications,
-		tpcb->tp_lref);
+	printf(
+	        "indicate 0x%x lsuf 0x%02x%02x fsuf 0x%02x%02x err 0x%x  noind 0x%x ref 0x%x\n",
+	        ind,
+	        *ls, *(ls + 1), *fs, *(fs + 1),
+	        error, /*so->so_pgrp,*/
+	        tpcb->tp_no_disc_indications,
+	        tpcb->tp_lref);
 	ENDDEBUG
 
-	if (ind == ER_TPDU) {
+	if(ind == ER_TPDU) {
 		register struct mbuf *m;
 		struct tp_disc_reason x;
 
-		if ((so->so_state & SS_CANTRCVMORE) == 0 &&
-				(m = m_get(M_DONTWAIT, MT_OOBDATA)) != 0) {
+		if((so->so_state & SS_CANTRCVMORE) == 0 &&
+		   (m = m_get(M_DONTWAIT, MT_OOBDATA)) != 0) {
 
-			x.dr_hdr.cmsg_len = m->m_len = sizeof(x);
-			x.dr_hdr.cmsg_level = SOL_TRANSPORT;
-			x.dr_hdr.cmsg_type= TPOPT_DISC_REASON;
-			x.dr_reason = error;
+			x.dr_hdr.cmsg_len = m->m_len      = sizeof(x);
+			x.dr_hdr.cmsg_level               = SOL_TRANSPORT;
+			x.dr_hdr.cmsg_type                = TPOPT_DISC_REASON;
+			x.dr_reason                       = error;
 			*mtod(m, struct tp_disc_reason *) = x;
 			sbappendrecord(&tpcb->tp_Xrcv, m);
 			error = 0;
@@ -262,14 +257,14 @@ tp_indicate(ind, tpcb, error)
 	}
 	so->so_error = error;
 
-	if (ind == T_DISCONNECT)  {
-		if (error == 0)
+	if(ind == T_DISCONNECT) {
+		if(error == 0)
 			so->so_error = ENOTCONN;
-		if ( tpcb->tp_no_disc_indications )
+		if(tpcb->tp_no_disc_indications)
 			return;
 	}
 	IFTRACE(D_INDICATION)
-		tptraceTPCB(TPPTmisc, "doing sohasoutofband(so)", so,0,0,0);
+	tptraceTPCB(TPPTmisc, "doing sohasoutofband(so)", so, 0, 0, 0);
 	ENDTRACE
 	sohasoutofband(so);
 }
@@ -292,18 +287,16 @@ tp_indicate(ind, tpcb, error)
  * NOTES:
  */
 void
-tp_getoptions(tpcb)
-struct tp_pcb *tpcb;
+        tp_getoptions(tpcb) struct tp_pcb *tpcb;
 {
-	tpcb->tp_seqmask = 
-		tpcb->tp_xtd_format ?	TP_XTD_FMT_MASK :	TP_NML_FMT_MASK ;
+	tpcb->tp_seqmask =
+	        tpcb->tp_xtd_format ? TP_XTD_FMT_MASK : TP_NML_FMT_MASK;
 	tpcb->tp_seqbit =
-		tpcb->tp_xtd_format ?	TP_XTD_FMT_BIT :	TP_NML_FMT_BIT ;
+	        tpcb->tp_xtd_format ? TP_XTD_FMT_BIT : TP_NML_FMT_BIT;
 	tpcb->tp_seqhalf = tpcb->tp_seqbit >> 1;
 	tpcb->tp_dt_ticks =
-		max(tpcb->tp_dt_ticks, (tpcb->tp_peer_acktime + 2));
+	        max(tpcb->tp_dt_ticks, (tpcb->tp_peer_acktime + 2));
 	tp_rsyset(tpcb);
-	
 }
 
 /*
@@ -322,11 +315,10 @@ struct tp_pcb *tpcb;
  * NOTES:
  */
 void
-tp_recycle_tsuffix(tpcb)
-	struct tp_pcb	*tpcb;
+        tp_recycle_tsuffix(tpcb) struct tp_pcb *tpcb;
 {
-	bzero((caddr_t)tpcb->tp_lsuffix, sizeof( tpcb->tp_lsuffix));
-	bzero((caddr_t)tpcb->tp_fsuffix, sizeof( tpcb->tp_fsuffix));
+	bzero((caddr_t) tpcb->tp_lsuffix, sizeof(tpcb->tp_lsuffix));
+	bzero((caddr_t) tpcb->tp_fsuffix, sizeof(tpcb->tp_fsuffix));
 	tpcb->tp_fsuffixlen = tpcb->tp_lsuffixlen = 0;
 
 	(tpcb->tp_nlproto->nlp_recycle_suffix)(tpcb->tp_npcb);
@@ -360,15 +352,14 @@ tp_recycle_tsuffix(tpcb)
  * NOTES:
  */
 void
-tp_quench( tpcb, cmd )
-	struct tp_pcb *tpcb;
-	int cmd;
+        tp_quench(tpcb, cmd) struct tp_pcb *tpcb;
+int cmd;
 {
 	IFDEBUG(D_QUENCH)
-		printf("tp_quench tpcb 0x%x ref 0x%x sufx 0x%x\n",
-			tpcb, tpcb->tp_lref, *(u_short *)(tpcb->tp_lsuffix));
-		printf("cong_win 0x%x decbit 0x%x \n",
-			tpcb->tp_cong_win, tpcb->tp_decbit);
+	printf("tp_quench tpcb 0x%x ref 0x%x sufx 0x%x\n",
+	       tpcb, tpcb->tp_lref, *(u_short *) (tpcb->tp_lsuffix));
+	printf("cong_win 0x%x decbit 0x%x \n",
+	       tpcb->tp_cong_win, tpcb->tp_decbit);
 	ENDDEBUG
 	switch(cmd) {
 		case PRC_QUENCH:
@@ -377,7 +368,7 @@ tp_quench( tpcb, cmd )
 			break;
 		case PRC_QUENCH2:
 			tpcb->tp_cong_win = tpcb->tp_l_tpdusize; /* might as well quench source also */
-			tpcb->tp_decbit = TP_DECBIT_CLEAR_COUNT;
+			tpcb->tp_decbit   = TP_DECBIT_CLEAR_COUNT;
 			IncStat(ts_rcvdecbit);
 			break;
 	}
@@ -397,38 +388,37 @@ tp_quench( tpcb, cmd )
  *
  * NOTES:			
  */
-tp_netcmd( tpcb, cmd )
-	struct tp_pcb *tpcb;
-	int cmd;
+tp_netcmd(tpcb, cmd) struct tp_pcb *tpcb;
+int cmd;
 {
 #ifdef TPCONS
 	struct isopcb *isop;
 	struct pklcd *lcp;
 
-	if (tpcb->tp_netservice != ISO_CONS)
+	if(tpcb->tp_netservice != ISO_CONS)
 		return;
-	isop = (struct isopcb *)tpcb->tp_npcb;
-	lcp = (struct pklcd *)isop->isop_chan;
-	switch (cmd) {
+	isop = (struct isopcb *) tpcb->tp_npcb;
+	lcp  = (struct pklcd *) isop->isop_chan;
+	switch(cmd) {
 
-	case CONN_CLOSE:
-	case CONN_REFUSE:
-		if (isop->isop_refcnt == 1) {
-			/* This is really superfluous, since it would happen
+		case CONN_CLOSE:
+		case CONN_REFUSE:
+			if(isop->isop_refcnt == 1) {
+				/* This is really superfluous, since it would happen
 			   anyway in iso_pcbdetach, although it is a courtesy
 			   to free up the x.25 channel before the refwait timer
 			   expires. */
-			lcp->lcd_upper = 0;
-			lcp->lcd_upnext = 0;
-			pk_disconnect(lcp);
-			isop->isop_chan = 0;
-			isop->isop_refcnt = 0;
-		}
-		break;
+				lcp->lcd_upper  = 0;
+				lcp->lcd_upnext = 0;
+				pk_disconnect(lcp);
+				isop->isop_chan   = 0;
+				isop->isop_refcnt = 0;
+			}
+			break;
 
-	default:
-		printf("tp_netcmd(0x%x, 0x%x) NOT IMPLEMENTED\n", tpcb, cmd);
-		break;
+		default:
+			printf("tp_netcmd(0x%x, 0x%x) NOT IMPLEMENTED\n", tpcb, cmd);
+			break;
 	}
 #else /* TPCONS */
 	printf("tp_netcmd(): X25 NOT CONFIGURED!!\n");
@@ -441,41 +431,38 @@ tp_netcmd( tpcb, cmd )
  * 	Convert a class mask to the highest numeric value it represents.
  */
 
-int
-tp_mask_to_num(x)
-	u_char x;
+int tp_mask_to_num(x)
+u_char x;
 {
 	register int j;
 
-	for(j = 4; j>=0 ;j--) {
-		if(x & (1<<j))
+	for(j = 4; j >= 0; j--) {
+		if(x & (1 << j))
 			break;
 	}
-	ASSERT( (j == 4) || (j == 0) ); /* for now */
-	if( (j != 4) && (j != 0) ) {
+	ASSERT((j == 4) || (j == 0)); /* for now */
+	if((j != 4) && (j != 0)) {
 		printf("ASSERTION ERROR: tp_mask_to_num: x 0x%x j %d\n",
-			x, j);
+		       x, j);
 	}
 	IFTRACE(D_TPINPUT)
-		tptrace(TPPTmisc, "tp_mask_to_num(x) returns j", x, j, 0, 0);
+	tptrace(TPPTmisc, "tp_mask_to_num(x) returns j", x, j, 0, 0);
 	ENDTRACE
 	IFDEBUG(D_TPINPUT)
-		printf("tp_mask_to_num(0x%x) returns 0x%x\n", x, j);
+	printf("tp_mask_to_num(0x%x) returns 0x%x\n", x, j);
 	ENDDEBUG
 	return j;
 }
 
-static 
-copyQOSparms(src, dst)
-	struct tp_conn_param *src, *dst;
+static copyQOSparms(src, dst) struct tp_conn_param *src, *dst;
 {
 	/* copy all but the bits stuff at the end */
 #define COPYSIZE (12 * sizeof(short))
 
-	bcopy((caddr_t)src, (caddr_t)dst, COPYSIZE);
-	dst->p_tpdusize = src->p_tpdusize;
+	bcopy((caddr_t) src, (caddr_t) dst, COPYSIZE);
+	dst->p_tpdusize  = src->p_tpdusize;
 	dst->p_ack_strat = src->p_ack_strat;
-	dst->p_rx_strat = src->p_rx_strat;
+	dst->p_rx_strat  = src->p_rx_strat;
 #undef COPYSIZE
 }
 /*
@@ -487,9 +474,8 @@ copyQOSparms(src, dst)
  * parameters from pre-set or cached values in the routing entry.
  */
 void
-tp_mss(tpcb, nhdr_size)
-	register struct tp_pcb *tpcb;
-	int nhdr_size;
+        tp_mss(tpcb, nhdr_size) register struct tp_pcb *tpcb;
+int nhdr_size;
 {
 	register struct rtentry *rt;
 	struct ifnet *ifp;
@@ -498,42 +484,41 @@ tp_mss(tpcb, nhdr_size)
 	int i, ssthresh = 0, rt_mss;
 	struct socket *so;
 
-	if (tpcb->tp_ptpdusize)
+	if(tpcb->tp_ptpdusize)
 		mss = tpcb->tp_ptpdusize << 7;
 	else
 		mss = 1 << tpcb->tp_tpdusize;
 	so = tpcb->tp_sock;
-	if ((rt = *(tpcb->tp_routep)) == 0) {
+	if((rt = *(tpcb->tp_routep)) == 0) {
 		bufsize = so->so_rcv.sb_hiwat;
 		goto punt_route;
 	}
 	ifp = rt->rt_ifp;
 
-#ifdef RTV_MTU	/* if route characteristics exist ... */
+#ifdef RTV_MTU /* if route characteristics exist ... */
 	/*
 	 * While we're here, check if there's an initial rtt
 	 * or rttvar.  Convert from the route-table units
 	 * to hz ticks for the smoothed timers and slow-timeout units
 	 * for other inital variables.
 	 */
-	if (tpcb->tp_rtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
+	if(tpcb->tp_rtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
 		tpcb->tp_rtt = rtt * hz / RTM_RTTUNIT;
-		if (rt->rt_rmx.rmx_rttvar)
-			tpcb->tp_rtv = rt->rt_rmx.rmx_rttvar
-						* hz / RTM_RTTUNIT;
+		if(rt->rt_rmx.rmx_rttvar)
+			tpcb->tp_rtv = rt->rt_rmx.rmx_rttvar * hz / RTM_RTTUNIT;
 		else
 			tpcb->tp_rtv = tpcb->tp_rtt;
 	}
 	/*
 	 * if there's an mtu associated with the route, use it
 	 */
-	if (rt->rt_rmx.rmx_mtu)
+	if(rt->rt_rmx.rmx_mtu)
 		rt_mss = rt->rt_rmx.rmx_mtu - nhdr_size;
 	else
 #endif /* RTV_MTU */
 		rt_mss = (ifp->if_mtu - nhdr_size);
-	if (tpcb->tp_ptpdusize == 0 || /* assume application doesn't care */
-	    mss > rt_mss /* network won't support what was asked for */)
+	if(tpcb->tp_ptpdusize == 0 || /* assume application doesn't care */
+	   mss > rt_mss /* network won't support what was asked for */)
 		mss = rt_mss;
 	/* can propose mtu which are multiples of 128 */
 	mss &= ~0x7f;
@@ -542,13 +527,13 @@ tp_mss(tpcb, nhdr_size)
 	 * to that size.
 	 */
 #ifdef RTV_SPIPE
-	if ((bufsize = rt->rt_rmx.rmx_sendpipe) > 0) {
+	if((bufsize = rt->rt_rmx.rmx_sendpipe) > 0) {
 #endif
 		bufsize = min(bufsize, so->so_snd.sb_hiwat);
 		(void) sbreserve(&so->so_snd, bufsize);
 	}
 #ifdef RTV_SPIPE
-	if ((bufsize = rt->rt_rmx.rmx_recvpipe) > 0) {
+	if((bufsize = rt->rt_rmx.rmx_recvpipe) > 0) {
 #endif
 		bufsize = min(bufsize, so->so_rcv.sb_hiwat);
 		(void) sbreserve(&so->so_rcv, bufsize);
@@ -571,22 +556,22 @@ punt_route:
 	 * If we received an offer, don't exceed it.
 	 * However, do not accept offers under 128 bytes.
 	 */
-	if (tpcb->tp_l_tpdusize)
+	if(tpcb->tp_l_tpdusize)
 		mss = min(mss, tpcb->tp_l_tpdusize);
 	/*
 	 * We want a minimum recv window of 4 packets to
 	 * signal packet loss by duplicate acks.
 	 */
 	mss = min(mss, bufsize >> 2) & ~0x7f;
-	mss = max(mss, 128);		/* sanity */
+	mss = max(mss, 128); /* sanity */
 	tpcb->tp_cong_win =
-		(rt == 0 || (rt->rt_flags & RTF_GATEWAY)) ? mss : bufsize;
+	        (rt == 0 || (rt->rt_flags & RTF_GATEWAY)) ? mss : bufsize;
 	tpcb->tp_l_tpdusize = mss;
 	tp_rsyset(tpcb);
 	tpcb->tp_ssthresh = max(2 * mss, ssthresh);
 	/* Calculate log2 of mss */
-	for (i = TP_MIN_TPDUSIZE + 1; i <= TP_MAX_TPDUSIZE; i++)
-		if ((1 << i) > mss)
+	for(i = TP_MIN_TPDUSIZE + 1; i <= TP_MAX_TPDUSIZE; i++)
+		if((1 << i) > mss)
 			break;
 	i--;
 	tpcb->tp_tpdusize = i;
@@ -613,13 +598,12 @@ punt_route:
  *   Determines recommended tpdusize, buffering and intial delays
  *	 based on information cached on the route.
  */
-int
-tp_route_to( m, tpcb, channel)
-	struct mbuf					*m;
-	register struct tp_pcb		*tpcb;
-	caddr_t 					channel;
+int tp_route_to(m, tpcb, channel)
+struct mbuf *m;
+register struct tp_pcb *tpcb;
+caddr_t channel;
 {
-	register struct sockaddr_iso *siso;	/* NOTE: this may be a sockaddr_in */
+	register struct sockaddr_iso *siso; /* NOTE: this may be a sockaddr_in */
 	extern struct tp_conn_param tp_conn_param[];
 	int error = 0, save_netservice = tpcb->tp_netservice;
 	register struct rtentry *rt = 0;
@@ -627,86 +611,85 @@ tp_route_to( m, tpcb, channel)
 
 	siso = mtod(m, struct sockaddr_iso *);
 	IFTRACE(D_CONN)
-		tptraceTPCB(TPPTmisc, 
-		"route_to: so  afi netservice class",
-		tpcb->tp_sock, siso->siso_addr.isoa_genaddr[0], tpcb->tp_netservice,
-			tpcb->tp_class);
+	tptraceTPCB(TPPTmisc,
+	            "route_to: so  afi netservice class",
+	            tpcb->tp_sock, siso->siso_addr.isoa_genaddr[0], tpcb->tp_netservice,
+	            tpcb->tp_class);
 	ENDTRACE
 	IFDEBUG(D_CONN)
-		printf("tp_route_to( m x%x, channel 0x%x, tpcb 0x%x netserv 0x%x)\n", 
-			m, channel, tpcb, tpcb->tp_netservice);
-		printf("m->mlen x%x, m->m_data:\n", m->m_len);
-		dump_buf(mtod(m, caddr_t), m->m_len);
+	printf("tp_route_to( m x%x, channel 0x%x, tpcb 0x%x netserv 0x%x)\n",
+	       m, channel, tpcb, tpcb->tp_netservice);
+	printf("m->mlen x%x, m->m_data:\n", m->m_len);
+	dump_buf(mtod(m, caddr_t), m->m_len);
 	ENDDEBUG
-	if (channel) {
+	if(channel) {
 #ifdef TPCONS
-		struct pklcd *lcp = (struct pklcd *)channel;
-		struct isopcb *isop = (struct isopcb *)lcp->lcd_upnext,
-			*isop_new = (struct isopcb *)tpcb->tp_npcb;
+		struct pklcd *lcp       = (struct pklcd *) channel;
+		struct isopcb *isop     = (struct isopcb *) lcp->lcd_upnext,
+		              *isop_new = (struct isopcb *) tpcb->tp_npcb;
 		/* The next 2 lines believe that you haven't
 		   set any network level options or done a pcbconnect
 		   and XXXXXXX'edly apply to both inpcb's and isopcb's */
 		remque(isop_new);
 		free(isop_new, M_PCB);
-		tpcb->tp_npcb = (caddr_t)isop;
+		tpcb->tp_npcb       = (caddr_t) isop;
 		tpcb->tp_netservice = ISO_CONS;
-		tpcb->tp_nlproto = nl_protosw + ISO_CONS;
-		if (isop->isop_refcnt++ == 0) {
+		tpcb->tp_nlproto    = nl_protosw + ISO_CONS;
+		if(isop->isop_refcnt++ == 0) {
 			iso_putsufx(isop, tpcb->tp_lsuffix, tpcb->tp_lsuffixlen, TP_LOCAL);
 			isop->isop_socket = tpcb->tp_sock;
 		} else
 			/* there are already connections sharing this */;
 #endif
 	} else {
-		switch (siso->siso_family) {
-		default:
-			error = EAFNOSUPPORT;
-			goto done;
+		switch(siso->siso_family) {
+			default:
+				error = EAFNOSUPPORT;
+				goto done;
 #ifdef ISO
-		case AF_ISO:
-		{
-			struct isopcb *isop = (struct isopcb *)tpcb->tp_npcb;
-			int flags = tpcb->tp_sock->so_options & SO_DONTROUTE;
-			tpcb->tp_netservice = ISO_CLNS;
-			if (clnp_route(&siso->siso_addr, &isop->isop_route,
-							flags, (void **)0, (void **)0) == 0) {
-				rt = isop->isop_route.ro_rt;
-				if (rt && rt->rt_flags & RTF_PROTO1)
-					tpcb->tp_netservice = ISO_CONS;
-			}
-		}    break;
+			case AF_ISO: {
+				struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
+				int flags           = tpcb->tp_sock->so_options & SO_DONTROUTE;
+				tpcb->tp_netservice = ISO_CLNS;
+				if(clnp_route(&siso->siso_addr, &isop->isop_route,
+				              flags, (void **) 0, (void **) 0) == 0) {
+					rt = isop->isop_route.ro_rt;
+					if(rt && rt->rt_flags & RTF_PROTO1)
+						tpcb->tp_netservice = ISO_CONS;
+				}
+			} break;
 #endif
 #ifdef INET
-		case AF_INET:
-			tpcb->tp_netservice = IN_CLNS;
+			case AF_INET:
+				tpcb->tp_netservice = IN_CLNS;
 #endif
 		}
-		if (tpcb->tp_nlproto->nlp_afamily != siso->siso_family) {
+		if(tpcb->tp_nlproto->nlp_afamily != siso->siso_family) {
 			IFDEBUG(D_CONN)
-				printf("tp_route_to( CHANGING nlproto old 0x%x new 0x%x)\n", 
-						save_netservice, tpcb->tp_netservice);
+			printf("tp_route_to( CHANGING nlproto old 0x%x new 0x%x)\n",
+			       save_netservice, tpcb->tp_netservice);
 			ENDDEBUG
-			if (error = tp_set_npcb(tpcb))
+			if(error = tp_set_npcb(tpcb))
 				goto done;
 		}
 		IFDEBUG(D_CONN)
-			printf("tp_route_to  calling nlp_pcbconn, netserv %d\n",
-				tpcb->tp_netservice);
+		printf("tp_route_to  calling nlp_pcbconn, netserv %d\n",
+		       tpcb->tp_netservice);
 		ENDDEBUG
 		tpcb->tp_nlproto = nl_protosw + tpcb->tp_netservice;
-		error = (tpcb->tp_nlproto->nlp_pcbconn)(tpcb->tp_npcb, m);
+		error            = (tpcb->tp_nlproto->nlp_pcbconn)(tpcb->tp_npcb, m);
 	}
-	if (error)
+	if(error)
 		goto done;
 	nhdr_size = tpcb->tp_nlproto->nlp_mtu(tpcb); /* only gets common info */
 	tp_mss(tpcb, nhdr_size);
 done:
 	IFDEBUG(D_CONN)
-		printf("tp_route_to  returns 0x%x\n", error);
+	printf("tp_route_to  returns 0x%x\n", error);
 	ENDDEBUG
 	IFTRACE(D_CONN)
-		tptraceTPCB(TPPTmisc, "route_to: returns: error netserv class", error, 
-			tpcb->tp_netservice, tpcb->tp_class, 0);
+	tptraceTPCB(TPPTmisc, "route_to: returns: error netserv class", error,
+	            tpcb->tp_netservice, tpcb->tp_class, 0);
 	ENDTRACE
 	return error;
 }
@@ -714,9 +697,8 @@ done:
 
 /* class zero version */
 void
-tp0_stash( tpcb, e )
-	register struct tp_pcb		*tpcb;
-	register struct tp_event	*e;
+        tp0_stash(tpcb, e) register struct tp_pcb *tpcb;
+register struct tp_event *e;
 {
 #ifndef lint
 #define E e->ATTR(DT_TPDU)
@@ -724,58 +706,56 @@ tp0_stash( tpcb, e )
 #define E e->ev_union.EV_DT_TPDU
 #endif /* lint */
 
-	register struct sockbuf *sb = &tpcb->tp_sock->so_rcv;
-	register struct isopcb *isop = (struct isopcb *)tpcb->tp_npcb;
+	register struct sockbuf *sb  = &tpcb->tp_sock->so_rcv;
+	register struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 
 	IFPERF(tpcb)
-		PStat(tpcb, Nb_from_ll) += E.e_datalen;
-		tpmeas(tpcb->tp_lref, TPtime_from_ll, &e->e_time,
-				E.e_seq, PStat(tpcb, Nb_from_ll), E.e_datalen);
+	PStat(tpcb, Nb_from_ll) += E.e_datalen;
+	tpmeas(tpcb->tp_lref, TPtime_from_ll, &e->e_time,
+	       E.e_seq, PStat(tpcb, Nb_from_ll), E.e_datalen);
 	ENDPERF
 
 	IFDEBUG(D_STASH)
-		printf("stash EQ: seq 0x%x datalen 0x%x eot 0x%x", 
-		E.e_seq, E.e_datalen, E.e_eot);
+	printf("stash EQ: seq 0x%x datalen 0x%x eot 0x%x",
+	       E.e_seq, E.e_datalen, E.e_eot);
 	ENDDEBUG
 
 	IFTRACE(D_STASH)
-		tptraceTPCB(TPPTmisc, "stash EQ: seq len eot", 
-		E.e_seq, E.e_datalen, E.e_eot, 0);
+	tptraceTPCB(TPPTmisc, "stash EQ: seq len eot",
+	            E.e_seq, E.e_datalen, E.e_eot, 0);
 	ENDTRACE
 
-	if ( E.e_eot ) {
+	if(E.e_eot) {
 		register struct mbuf *n = E.e_data;
 		n->m_flags |= M_EOR;
 		n->m_act = MNULL; /* set on tp_input */
 	}
 	sbappend(sb, E.e_data);
 	IFDEBUG(D_STASH)
-		dump_mbuf(sb->sb_mb, "stash 0: so_rcv after appending");
+	dump_mbuf(sb->sb_mb, "stash 0: so_rcv after appending");
 	ENDDEBUG
-	if (tpcb->tp_netservice != ISO_CONS)
+	if(tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_stash: tp running over something wierd\n");
 	else {
-		register struct pklcd *lcp = (struct pklcd *)isop->isop_chan;
+		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		pk_flowcontrol(lcp, sbspace(sb) <= 0, 1);
 	}
-} 
+}
 
 void
-tp0_openflow(tpcb)
-register struct tp_pcb *tpcb;
+        tp0_openflow(tpcb) register struct tp_pcb *tpcb;
 {
-	register struct isopcb *isop = (struct isopcb *)tpcb->tp_npcb;
-	if (tpcb->tp_netservice != ISO_CONS)
+	register struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
+	if(tpcb->tp_netservice != ISO_CONS)
 		printf("tp0_openflow: tp running over something wierd\n");
 	else {
-		register struct pklcd *lcp = (struct pklcd *)isop->isop_chan;
-		if (lcp->lcd_rxrnr_condition)
+		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
+		if(lcp->lcd_rxrnr_condition)
 			pk_flowcontrol(lcp, 0, 0);
 	}
 }
 #ifndef TPCONS
-static
-pk_flowcontrol() {}
+static pk_flowcontrol() {}
 #endif
 
 #ifdef TP_PERF_MEAS
@@ -791,30 +771,29 @@ pk_flowcontrol() {}
  *  ENOBUFS if it cannot get a cluster mbuf.
  */
 
-int 
-tp_setup_perf(tpcb)
-	register struct tp_pcb *tpcb;
+int tp_setup_perf(tpcb)
+register struct tp_pcb *tpcb;
 {
 	register struct mbuf *q;
 
-	if( tpcb->tp_p_meas == 0 ) {
+	if(tpcb->tp_p_meas == 0) {
 		MGET(q, M_WAITOK, MT_PCB);
-		if (q == 0)
+		if(q == 0)
 			return ENOBUFS;
 		MCLGET(q, M_WAITOK);
-		if ((q->m_flags & M_EXT) == 0) {
+		if((q->m_flags & M_EXT) == 0) {
 			(void) m_free(q);
 			return ENOBUFS;
 		}
-		q->m_len = sizeof (struct tp_pmeas);
+		q->m_len        = sizeof(struct tp_pmeas);
 		tpcb->tp_p_mbuf = q;
 		tpcb->tp_p_meas = mtod(q, struct tp_pmeas *);
-		bzero( (caddr_t)tpcb->tp_p_meas, sizeof (struct tp_pmeas) );
+		bzero((caddr_t) tpcb->tp_p_meas, sizeof(struct tp_pmeas));
 		IFDEBUG(D_PERF_MEAS)
-			printf(
-			"tpcb 0x%x so 0x%x ref 0x%x tp_p_meas 0x%x tp_perf_on 0x%x\n", 
-				tpcb, tpcb->tp_sock, tpcb->tp_lref, 
-				tpcb->tp_p_meas, tpcb->tp_perf_on);
+		printf(
+		        "tpcb 0x%x so 0x%x ref 0x%x tp_p_meas 0x%x tp_perf_on 0x%x\n",
+		        tpcb, tpcb->tp_sock, tpcb->tp_lref,
+		        tpcb->tp_p_meas, tpcb->tp_perf_on);
 		ENDDEBUG
 		tpcb->tp_perf_on = 1;
 	}
@@ -823,16 +802,15 @@ tp_setup_perf(tpcb)
 #endif /* TP_PERF_MEAS */
 
 #ifdef ARGO_DEBUG
-dump_addr (addr)
-	register struct sockaddr *addr;
+dump_addr(addr) register struct sockaddr *addr;
 {
-	switch( addr->sa_family ) {
+	switch(addr->sa_family) {
 		case AF_INET:
-			dump_inaddr((struct sockaddr_in *)addr);
+			dump_inaddr((struct sockaddr_in *) addr);
 			break;
 #ifdef ISO
 		case AF_ISO:
-			dump_isoaddr((struct sockaddr_iso *)addr);
+			dump_isoaddr((struct sockaddr_iso *) addr);
 			break;
 #endif /* ISO */
 		default:
@@ -841,7 +819,7 @@ dump_addr (addr)
 	}
 }
 
-#define	MAX_COLUMNS	8
+#define MAX_COLUMNS 8
 /*
  *	Dump the buffer to the screen in a readable format. Format is:
  *
@@ -850,26 +828,26 @@ dump_addr (addr)
  *		character representations (if printable).
  */
 Dump_buf(buf, len)
-caddr_t	buf;
-int		len;
+        caddr_t buf;
+int len;
 {
-	int		i,j;
-#define Buf ((u_char *)buf)
+	int i, j;
+#define Buf ((u_char *) buf)
 	printf("Dump buf 0x%x len 0x%x\n", buf, len);
-	for (i = 0; i < len; i += MAX_COLUMNS) {
+	for(i = 0; i < len; i += MAX_COLUMNS) {
 		printf("+%d:\t", i);
-		for (j = 0; j < MAX_COLUMNS; j++) {
-			if (i + j < len) {
-				printf("%x/%d\t", Buf[i+j], Buf[i+j]);
+		for(j = 0; j < MAX_COLUMNS; j++) {
+			if(i + j < len) {
+				printf("%x/%d\t", Buf[i + j], Buf[i + j]);
 			} else {
 				printf("	");
 			}
 		}
 
-		for (j = 0; j < MAX_COLUMNS; j++) {
-			if (i + j < len) {
-				if (((Buf[i+j]) > 31) && ((Buf[i+j]) < 128))
-					printf("%c", Buf[i+j]);
+		for(j = 0; j < MAX_COLUMNS; j++) {
+			if(i + j < len) {
+				if(((Buf[i + j]) > 31) && ((Buf[i + j]) < 128))
+					printf("%c", Buf[i + j]);
 				else
 					printf(".");
 			}

@@ -64,27 +64,26 @@
 
 #include <stand/stand.h>
 
-read(fd, dest, bcount)
-	int fd;
-	char *dest;
-	u_int bcount;
+read(fd, dest, bcount) int fd;
+char *dest;
+u_int bcount;
 {
 	register struct open_file *f = &files[fd];
 	u_int resid;
 
-	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
+	if((unsigned) fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
 		errno = EBADF;
 		return (-1);
 	}
-	if (f->f_flags & F_RAW) {
+	if(f->f_flags & F_RAW) {
 		errno = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-			(daddr_t)0, bcount, dest, &resid);
-		if (errno)
+		                                (daddr_t) 0, bcount, dest, &resid);
+		if(errno)
 			return (-1);
 		return (resid);
 	}
 	resid = bcount;
-	if (errno = (f->f_ops->read)(f, dest, bcount, &resid))
+	if(errno = (f->f_ops->read)(f, dest, bcount, &resid))
 		return (-1);
 	return (bcount - resid);
 }

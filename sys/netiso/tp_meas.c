@@ -76,7 +76,7 @@ SOFTWARE.
 extern struct timeval time;
 
 #ifdef TP_PERF_MEAS
-int		tp_Measn = 0;
+int tp_Measn = 0;
 struct tp_Meas tp_Meas[TPMEASN];
 
 /*
@@ -99,11 +99,11 @@ struct tp_Meas tp_Meas[TPMEASN];
  * NOTES:			
  */
 void
-Tpmeas(ref, kind, timev, seq, win, size)
-	u_int 	ref;
-	u_int	kind;
-	struct 	timeval *timev;
-	u_int	seq, win, size;
+        Tpmeas(ref, kind, timev, seq, win, size)
+                u_int ref;
+u_int kind;
+struct timeval *timev;
+u_int seq, win, size;
 {
 	register struct tp_Meas *tpm;
 	static int mseq;
@@ -113,15 +113,15 @@ Tpmeas(ref, kind, timev, seq, win, size)
 
 	tpm->tpm_kind = kind;
 	tpm->tpm_tseq = mseq++;
-	tpm->tpm_ref = ref;
+	tpm->tpm_ref  = ref;
 	if(kind == TPtime_from_ll)
-		bcopy((caddr_t)timev, (caddr_t)&tpm->tpm_time, sizeof(struct timeval));
+		bcopy((caddr_t) timev, (caddr_t) &tpm->tpm_time, sizeof(struct timeval));
 	else
-		bcopy( (caddr_t)&time, 
-			(caddr_t)&tpm->tpm_time, sizeof(struct timeval) );
-	tpm->tpm_seq = seq;
+		bcopy((caddr_t) &time,
+		      (caddr_t) &tpm->tpm_time, sizeof(struct timeval));
+	tpm->tpm_seq    = seq;
 	tpm->tpm_window = win;
-	tpm->tpm_size = size;
+	tpm->tpm_size   = size;
 }
 
 #endif /* TP_PERF_MEAS */

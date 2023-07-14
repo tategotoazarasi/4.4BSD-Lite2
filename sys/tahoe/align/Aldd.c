@@ -37,7 +37,7 @@
  */
 
 #include "align.h"
-ldd(infop)	process_info *infop;
+ldd(infop) process_info *infop;
 /*
 /*	Load a double operand into accumulator.
 /*
@@ -45,11 +45,11 @@ ldd(infop)	process_info *infop;
 {
 	register struct oprnd *oprnd_pnt;
 
-	oprnd_pnt = operand(infop,0);
-	if ( reserved( oprnd_pnt->data ) ) 
+	oprnd_pnt = operand(infop, 0);
+	if(reserved(oprnd_pnt->data))
 		exception(infop, ILL_OPRND);
-	acc_high = oprnd_pnt->data ;
-	acc_low = oprnd_pnt->data2 ;
+	acc_high = oprnd_pnt->data;
+	acc_low  = oprnd_pnt->data2;
 	psl |= PSL_DBL;
 	infop->acc_dbl = 1;
 }

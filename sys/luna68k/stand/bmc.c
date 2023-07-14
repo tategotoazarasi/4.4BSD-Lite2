@@ -47,13 +47,12 @@
 #include <luna68k/stand/rcvbuf.h>
 #include <luna68k/stand/preset.h>
 
-extern	int dipsw1;
-extern	int nplane;
+extern int dipsw1;
+extern int nplane;
 
-extern	struct rcvbuf	rcvbuf[];
+extern struct rcvbuf rcvbuf[];
 
-bmcintr()
-{
+bmcintr() {
 }
 
 /*
@@ -61,15 +60,14 @@ bmcintr()
  */
 #include <luna68k/luna68k/cons.h>
 
-bmccnprobe(cp)
-	struct consdev *cp;
+bmccnprobe(cp) struct consdev *cp;
 {
-	if ((dipsw1 & PS_BMC_CONS) == 0) {
+	if((dipsw1 & PS_BMC_CONS) == 0) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
 
-	if (nplane == 0) {
+	if(nplane == 0) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
@@ -80,34 +78,33 @@ bmccnprobe(cp)
 	cp->cn_pri = CN_NORMAL;
 }
 
-bmccninit(cp)
-	struct consdev *cp;
+bmccninit(cp) struct consdev *cp;
 {
 	sioinit();
 	bmdinit();
 }
 
 bmccngetc(dev)
-	dev_t dev;
+        dev_t dev;
 {
 	register int c;
 	register int unit = 1;
 
-	while (RBUF_EMPTY(unit)) {
+	while(RBUF_EMPTY(unit)) {
 		DELAY(10);
 	}
 
 	POP_RBUF(unit, c);
 
-	return(c);
-/*
+	return (c);
+	/*
 	return(siocngetc(dev));
  */
 }
 
 bmccnputc(dev, c)
-	dev_t dev;
-	int c;
+        dev_t dev;
+int c;
 {
 	bmdputc(c);
 }

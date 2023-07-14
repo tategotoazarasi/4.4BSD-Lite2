@@ -38,13 +38,15 @@
 
 #include <sys/types.h>
 
-putchar(c)
-char c;
+putchar(c) char c;
 {
-        if (c == '\n')
+	if(c == '\n')
 		sput('\r');
 	sput(c);
-	return(0);
+	return (0);
 }
 
-wait(n) { while(n--) ; }
+wait(n) {
+	while(n--)
+		;
+}

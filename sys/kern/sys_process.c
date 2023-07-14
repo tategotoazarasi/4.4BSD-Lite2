@@ -46,15 +46,14 @@
  * Process debugging system call.
  */
 struct ptrace_args {
-	int	req;
-	pid_t	pid;
-	caddr_t	addr;
-	int	data;
+	int req;
+	pid_t pid;
+	caddr_t addr;
+	int data;
 };
-ptrace(a1, a2, a3)
-	struct proc *a1;
-	struct ptrace_args *a2;
-	int *a3;
+ptrace(a1, a2, a3) struct proc *a1;
+struct ptrace_args *a2;
+int *a3;
 {
 
 	/*
@@ -63,8 +62,7 @@ ptrace(a1, a2, a3)
 	return (ENOSYS);
 }
 
-trace_req(a1)
-	struct proc *a1;
+trace_req(a1) struct proc *a1;
 {
 
 	/*

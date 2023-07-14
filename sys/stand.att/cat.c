@@ -33,12 +33,11 @@
  *	@(#)cat.c	8.1 (Berkeley) 6/11/93
  */
 
-main()
-{
+main() {
 	register int c, fd;
 
 	fd = getfile("File", 0);
-	while ((c = getc(fd)) >= 0)
+	while((c = getc(fd)) >= 0)
 		putchar(c);
 	exit(0);
 }

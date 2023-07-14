@@ -38,41 +38,38 @@
  * a boot program.  Since we restart only on ^C and we do that here, we
  * always return 0 to avoid a longjmp in the caller.
  */
-scankbd()
-{
+scankbd() {
 	register int c;
 
 	c = cngetc();
-	if (c == ('c'&037)) {
+	if(c == ('c' & 037)) {
 		printf("^C");
 		_stop("");
 		/* NOTREACHED */
 	}
-	return(0);
+	return (0);
 }
 
-getchar()
-{
+getchar() {
 	register int c;
 
 	while((c = cngetc()) == 0)
 		;
-	if (c == '\r')
+	if(c == '\r')
 		c = '\n';
-	else if (c == ('c'&037)) {
+	else if(c == ('c' & 037)) {
 		printf("^C");
 		_stop("");
 		/* NOTREACHED */
 	}
-	if (c != '\b' && c != '\177')
+	if(c != '\b' && c != '\177')
 		putchar(c);
-	return(c);
+	return (c);
 }
 
-putchar(c)
-	register int c;
+putchar(c) register int c;
 {
 	cnputc(c);
-	if (c == '\n')
+	if(c == '\n')
 		cnputc('\r');
 }

@@ -44,12 +44,11 @@ static char sccsid[] = "@(#)strcmp.c	8.1 (Berkeley) 6/4/93";
 /*
  * Compare strings.
  */
-int
-strcmp(s1, s2)
-	register const char *s1, *s2;
+int strcmp(s1, s2)
+register const char *s1, *s2;
 {
-	while (*s1 == *s2++)
-		if (*s1++ == 0)
+	while(*s1 == *s2++)
+		if(*s1++ == 0)
 			return (0);
-	return (*(unsigned char *)s1 - *(unsigned char *)--s2);
+	return (*(unsigned char *) s1 - *(unsigned char *) --s2);
 }

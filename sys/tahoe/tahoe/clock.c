@@ -59,29 +59,28 @@
  * interval timer on the console processor card
  * according to hz.
  */
-startrtclock()
-{
+startrtclock() {
 	register int t;
-	static struct cphdr cpclock;	/* must be in data space */
-	
+	static struct cphdr cpclock; /* must be in data space */
+
 	cpclock.cp_unit = CPCLOCK;
 	cpclock.cp_comm = CPWRITE;
-	if (hz == 0) {
-		extern int tickadj;		/* XXX */
-		hz = 60;
-		tick = 1000000 / hz;
+	if(hz == 0) {
+		extern int tickadj; /* XXX */
+		hz      = 60;
+		tick    = 1000000 / hz;
 		tickadj = 240000 / (60 * hz);
 		printf("clock set to %dhz\n", hz);
 	}
 	cpclock.cp_count = hztocount(hz);
-	if (cnlast) {
+	if(cnlast) {
 		/* try to insure last cmd was taken by cp */
-		for (t = 30000; (cnlast->cp_unit&CPTAKE) == 0 && t > 0; t--)
+		for(t = 30000; (cnlast->cp_unit & CPTAKE) == 0 && t > 0; t--)
 			uncache(&cnlast->cp_unit);
 		cnlast = 0;
 	}
 	mtpr(CPMDCB, kvtophys(&cpclock));
-	for (t = 30000; (cpclock.cp_unit&CPDONE) == 0 && t > 0; t--)
+	for(t = 30000; (cpclock.cp_unit & CPDONE) == 0 && t > 0; t--)
 		uncache(&cpclock.cp_unit);
 }
 
@@ -90,12 +89,12 @@ startrtclock()
  * the time base which is, e.g. from a filesystem.
  */
 inittodr(base)
-	time_t base;
+        time_t base;
 {
 
-	if (base < 5*SECYR) {
+	if(base < 5 * SECYR) {
 		printf("WARNING: preposterous time in file system ");
-		time.tv_sec = 6*SECYR + 186*SECDAY + SECDAY/2;
+		time.tv_sec = 6 * SECYR + 186 * SECDAY + SECDAY / 2;
 	} else
 		time.tv_sec = base;
 	printf("CHECK AND RESET THE DATE!\n");

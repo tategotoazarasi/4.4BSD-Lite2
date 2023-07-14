@@ -53,46 +53,44 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 
-int	whichqs;
+int whichqs;
 
 /*
  * Put process p on the run queue indicated by its priority.
  * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
  */
 void
-setrunqueue(p)
-	register struct proc *p;
+        setrunqueue(p) register struct proc *p;
 {
 	register struct prochd *q;
 	register struct proc *oldlast;
 	register int which = p->p_priority >> 2;
 
-	if (p->p_back != NULL)
+	if(p->p_back != NULL)
 		panic("setrunqueue");
 	q = &qs[which];
 	whichqs |= 1 << which;
-	p->p_forw = (struct proc *)q;
+	p->p_forw = (struct proc *) q;
 	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
+	q->ph_rlink         = p;
+	oldlast->p_forw     = p;
 }
 
 /*
  * Remove process p from its run queue, which should be the one
  * indicated by its priority.  Calls should be made at splstatclock().
  */
-remrq(p)
-	register struct proc *p;
+remrq(p) register struct proc *p;
 {
 	register int which = p->p_priority >> 2;
 	register struct prochd *q;
 
-	if ((whichqs & (1 << which)) == 0)
+	if((whichqs & (1 << which)) == 0)
 		panic("remrq");
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
-	q = &qs[which];
-	if (q->ph_link == (struct proc *)q)
+	p->p_back         = NULL;
+	q                 = &qs[which];
+	if(q->ph_link == (struct proc *) q)
 		whichqs &= ~(1 << which);
 }

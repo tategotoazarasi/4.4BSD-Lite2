@@ -47,12 +47,12 @@ static char sccsid[] = "@(#)subdi3.c	8.1 (Berkeley) 6/4/93";
  */
 quad_t
 __subdi3(a, b)
-	quad_t a, b;
+quad_t a, b;
 {
 	union uu aa, bb, diff;
 
-	aa.q = a;
-	bb.q = b;
+	aa.q       = a;
+	bb.q       = b;
 	diff.ul[L] = aa.ul[L] - bb.ul[L];
 	diff.ul[H] = aa.ul[H] - bb.ul[H] - (diff.ul[L] > aa.ul[L]);
 	return (diff.q);

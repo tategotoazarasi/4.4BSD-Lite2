@@ -84,33 +84,32 @@
 /*
  * Bump a timeval by a small number of usec's.
  */
-#define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
- \
-	tp->tv_usec = us = tp->tv_usec + (usec); \
-	if (us >= 1000000) { \
-		tp->tv_usec = us - 1000000; \
-		tp->tv_sec++; \
-	} \
-}
+#define BUMPTIME(t, usec)                           \
+	{                                               \
+		register volatile struct timeval *tp = (t); \
+		register long us;                           \
+                                                    \
+		tp->tv_usec = us = tp->tv_usec + (usec);    \
+		if(us >= 1000000) {                         \
+			tp->tv_usec = us - 1000000;             \
+			tp->tv_sec++;                           \
+		}                                           \
+	}
 
-int	stathz;
-int	profhz;
-int	profprocs;
-int	ticks;
-static int psdiv, pscnt;	/* prof => stat divider */
-int	psratio;		/* ratio: prof / stat */
+int stathz;
+int profhz;
+int profprocs;
+int ticks;
+static int psdiv, pscnt; /* prof => stat divider */
+int psratio;             /* ratio: prof / stat */
 
-volatile struct	timeval time;
-volatile struct	timeval mono_time;
+volatile struct timeval time;
+volatile struct timeval mono_time;
 
 /*
  * Initialize clock frequencies and start both clocks running.
  */
-void
-initclocks()
-{
+void initclocks() {
 	register int i;
 
 	/*
@@ -124,7 +123,7 @@ initclocks()
 	 * Compute profhz/stathz, and fix profhz if needed.
 	 */
 	i = stathz ? stathz : hz;
-	if (profhz == 0)
+	if(profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
 }
@@ -133,8 +132,7 @@ initclocks()
  * The real-time timer, interrupting hz times per second.
  */
 void
-hardclock(frame)
-	register struct clockframe *frame;
+        hardclock(frame) register struct clockframe *frame;
 {
 	register struct callout *p1;
 	register struct proc *p;
@@ -153,35 +151,35 @@ hardclock(frame)
 	 * to all events.
 	 */
 	needsoft = 0;
-	for (p1 = calltodo.c_next; p1 != NULL; p1 = p1->c_next) {
-		if (--p1->c_time > 0)
+	for(p1 = calltodo.c_next; p1 != NULL; p1 = p1->c_next) {
+		if(--p1->c_time > 0)
 			break;
 		needsoft = 1;
-		if (p1->c_time == 0)
+		if(p1->c_time == 0)
 			break;
 	}
 
 	p = curproc;
-	if (p) {
+	if(p) {
 		register struct pstats *pstats;
 
 		/*
 		 * Run current process's virtual and profile time, as needed.
 		 */
 		pstats = p->p_stats;
-		if (CLKF_USERMODE(frame) &&
-		    timerisset(&pstats->p_timer[ITIMER_VIRTUAL].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_VIRTUAL], tick) == 0)
+		if(CLKF_USERMODE(frame) &&
+		   timerisset(&pstats->p_timer[ITIMER_VIRTUAL].it_value) &&
+		   itimerdecr(&pstats->p_timer[ITIMER_VIRTUAL], tick) == 0)
 			psignal(p, SIGVTALRM);
-		if (timerisset(&pstats->p_timer[ITIMER_PROF].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_PROF], tick) == 0)
+		if(timerisset(&pstats->p_timer[ITIMER_PROF].it_value) &&
+		   itimerdecr(&pstats->p_timer[ITIMER_PROF], tick) == 0)
 			psignal(p, SIGPROF);
 	}
 
 	/*
 	 * If no separate statistics clock is available, run it from here.
 	 */
-	if (stathz == 0)
+	if(stathz == 0)
 		statclock(frame);
 
 	/*
@@ -189,7 +187,7 @@ hardclock(frame)
 	 * we are still adjusting the clock; see adjtime().
 	 */
 	ticks++;
-	if (timedelta == 0)
+	if(timedelta == 0)
 		delta = tick;
 	else {
 		delta = tick + tickdelta;
@@ -202,13 +200,13 @@ hardclock(frame)
 	 * Process callouts at a very low cpu priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
-	if (needsoft) {
-		if (CLKF_BASEPRI(frame)) {
+	if(needsoft) {
+		if(CLKF_BASEPRI(frame)) {
 			/*
 			 * Save the overhead of a software interrupt;
 			 * it will happen as soon as we return, so do it now.
 			 */
-			(void)splsoftclock();
+			(void) splsoftclock();
 			softclock();
 		} else
 			setsoftclock();
@@ -220,21 +218,19 @@ hardclock(frame)
  * Run periodic events from timeout queue.
  */
 /*ARGSUSED*/
-void
-softclock()
-{
+void softclock() {
 	register struct callout *c;
 	register void *arg;
-	register void (*func) __P((void *));
+	register void(*func) __P((void *) );
 	register int s;
 
 	s = splhigh();
-	while ((c = calltodo.c_next) != NULL && c->c_time <= 0) {
-		func = c->c_func;
-		arg = c->c_arg;
+	while((c = calltodo.c_next) != NULL && c->c_time <= 0) {
+		func            = c->c_func;
+		arg             = c->c_arg;
 		calltodo.c_next = c->c_next;
-		c->c_next = callfree;
-		callfree = c;
+		c->c_next       = callfree;
+		callfree        = c;
 		splx(s);
 		(*func)(arg);
 		(void) splhigh();
@@ -255,26 +251,25 @@ softclock()
  *	to timeout are used to identify entries for untimeout.
  */
 void
-timeout(ftn, arg, ticks)
-	void (*ftn) __P((void *));
-	void *arg;
-	register int ticks;
+        timeout(ftn, arg, ticks) void(*ftn) __P((void *) );
+void *arg;
+register int ticks;
 {
 	register struct callout *new, *p, *t;
 	register int s;
 
-	if (ticks <= 0)
+	if(ticks <= 0)
 		ticks = 1;
 
 	/* Lock out the clock. */
 	s = splhigh();
 
 	/* Fill in the next free callout structure. */
-	if (callfree == NULL)
+	if(callfree == NULL)
 		panic("timeout table full");
-	new = callfree;
-	callfree = new->c_next;
-	new->c_arg = arg;
+	new         = callfree;
+	callfree    = new->c_next;
+	new->c_arg  = arg;
 	new->c_func = ftn;
 
 	/*
@@ -285,39 +280,38 @@ timeout(ftn, arg, ticks)
 	 * as well.  Watch out for negative c_time values; these represent
 	 * overdue events.
 	 */
-	for (p = &calltodo;
+	for(p                                               = &calltodo;
 	    (t = p->c_next) != NULL && ticks > t->c_time; p = t)
-		if (t->c_time > 0)
+		if(t->c_time > 0)
 			ticks -= t->c_time;
 	new->c_time = ticks;
-	if (t != NULL)
+	if(t != NULL)
 		t->c_time -= ticks;
 
 	/* Insert the new entry into the queue. */
-	p->c_next = new;
+	p->c_next   = new;
 	new->c_next = t;
 	splx(s);
 }
 
 void
-untimeout(ftn, arg)
-	void (*ftn) __P((void *));
-	void *arg;
+        untimeout(ftn, arg) void(*ftn) __P((void *) );
+void *arg;
 {
 	register struct callout *p, *t;
 	register int s;
 
 	s = splhigh();
-	for (p = &calltodo; (t = p->c_next) != NULL; p = t)
-		if (t->c_func == ftn && t->c_arg == arg) {
+	for(p = &calltodo; (t = p->c_next) != NULL; p = t)
+		if(t->c_func == ftn && t->c_arg == arg) {
 			/* Increment next entry's tick count. */
-			if (t->c_next && t->c_time > 0)
+			if(t->c_next && t->c_time > 0)
 				t->c_next->c_time += t->c_time;
 
 			/* Move entry from callout queue to callfree queue. */
 			p->c_next = t->c_next;
 			t->c_next = callfree;
-			callfree = t;
+			callfree  = t;
 			break;
 		}
 	splx(s);
@@ -327,9 +321,8 @@ untimeout(ftn, arg)
  * Compute number of hz until specified time.  Used to
  * compute third argument to timeout() from an absolute time.
  */
-int
-hzto(tv)
-	struct timeval *tv;
+int hzto(tv)
+struct timeval *tv;
 {
 	register long ticks, sec;
 	int s;
@@ -343,12 +336,13 @@ hzto(tv)
 	 * Delta times less than 25 days can be computed ``exactly''.
 	 * Maximum value for any timeout in 10ms ticks is 250 days.
 	 */
-	s = splhigh();
+	s   = splhigh();
 	sec = tv->tv_sec - time.tv_sec;
-	if (sec <= 0x7fffffff / 1000 - 1000)
+	if(sec <= 0x7fffffff / 1000 - 1000)
 		ticks = ((tv->tv_sec - time.tv_sec) * 1000 +
-			(tv->tv_usec - time.tv_usec) / 1000) / (tick / 1000);
-	else if (sec <= 0x7fffffff / hz)
+		         (tv->tv_usec - time.tv_usec) / 1000) /
+		        (tick / 1000);
+	else if(sec <= 0x7fffffff / hz)
 		ticks = sec * hz;
 	else
 		ticks = 0x7fffffff;
@@ -363,15 +357,14 @@ hzto(tv)
  * keeps the profile clock running constantly.
  */
 void
-startprofclock(p)
-	register struct proc *p;
+        startprofclock(p) register struct proc *p;
 {
 	int s;
 
-	if ((p->p_flag & P_PROFIL) == 0) {
+	if((p->p_flag & P_PROFIL) == 0) {
 		p->p_flag |= P_PROFIL;
-		if (++profprocs == 1 && stathz != 0) {
-			s = splstatclock();
+		if(++profprocs == 1 && stathz != 0) {
+			s     = splstatclock();
 			psdiv = pscnt = psratio;
 			setstatclockrate(profhz);
 			splx(s);
@@ -383,15 +376,14 @@ startprofclock(p)
  * Stop profiling on a process.
  */
 void
-stopprofclock(p)
-	register struct proc *p;
+        stopprofclock(p) register struct proc *p;
 {
 	int s;
 
-	if (p->p_flag & P_PROFIL) {
+	if(p->p_flag & P_PROFIL) {
 		p->p_flag &= ~P_PROFIL;
-		if (--profprocs == 0 && stathz != 0) {
-			s = splstatclock();
+		if(--profprocs == 0 && stathz != 0) {
+			s     = splstatclock();
 			psdiv = pscnt = 1;
 			setstatclockrate(stathz);
 			splx(s);
@@ -399,15 +391,14 @@ stopprofclock(p)
 	}
 }
 
-int	dk_ndrive = DK_NDRIVE;
+int dk_ndrive = DK_NDRIVE;
 
 /*
  * Statistics clock.  Grab profile sample, and if divider reaches 0,
  * do process and kernel statistics.
  */
 void
-statclock(frame)
-	register struct clockframe *frame;
+        statclock(frame) register struct clockframe *frame;
 {
 #ifdef GPROF
 	register struct gmonparam *g;
@@ -415,18 +406,18 @@ statclock(frame)
 	register struct proc *p;
 	register int i;
 
-	if (CLKF_USERMODE(frame)) {
+	if(CLKF_USERMODE(frame)) {
 		p = curproc;
-		if (p->p_flag & P_PROFIL)
+		if(p->p_flag & P_PROFIL)
 			addupc_intr(p, CLKF_PC(frame), 1);
-		if (--pscnt > 0)
+		if(--pscnt > 0)
 			return;
 		/*
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
 		 */
 		p->p_uticks++;
-		if (p->p_nice > NZERO)
+		if(p->p_nice > NZERO)
 			cp_time[CP_NICE]++;
 		else
 			cp_time[CP_USER]++;
@@ -436,15 +427,15 @@ statclock(frame)
 		 * Kernel statistics are just like addupc_intr, only easier.
 		 */
 		g = &_gmonparam;
-		if (g->state == GMON_PROF_ON) {
+		if(g->state == GMON_PROF_ON) {
 			i = CLKF_PC(frame) - g->lowpc;
-			if (i < g->textsize) {
+			if(i < g->textsize) {
 				i /= HISTFRACTION * sizeof(*g->kcount);
 				g->kcount[i]++;
 			}
 		}
 #endif
-		if (--pscnt > 0)
+		if(--pscnt > 0)
 			return;
 		/*
 		 * Came from kernel mode, so we were:
@@ -459,11 +450,11 @@ statclock(frame)
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
 		p = curproc;
-		if (CLKF_INTR(frame)) {
-			if (p != NULL)
+		if(CLKF_INTR(frame)) {
+			if(p != NULL)
 				p->p_iticks++;
 			cp_time[CP_INTR]++;
-		} else if (p != NULL) {
+		} else if(p != NULL) {
 			p->p_sticks++;
 			cp_time[CP_SYS]++;
 		} else
@@ -479,8 +470,8 @@ statclock(frame)
 	 * XXX	should either run linked list of drives, or (better)
 	 *	grab timestamps in the start & done code.
 	 */
-	for (i = 0; i < DK_NDRIVE; i++)
-		if (dk_busy & (1 << i))
+	for(i = 0; i < DK_NDRIVE; i++)
+		if(dk_busy & (1 << i))
 			dk_time[i]++;
 
 	/*
@@ -496,13 +487,13 @@ statclock(frame)
 	 * seconds.  This causes the system to favor processes which haven't
 	 * run much recently, and to round-robin among other processes.
 	 */
-	if (p != NULL) {
+	if(p != NULL) {
 		p->p_cpticks++;
-		if (++p->p_estcpu == 0)
+		if(++p->p_estcpu == 0)
 			p->p_estcpu--;
-		if ((p->p_estcpu & 3) == 0) {
+		if((p->p_estcpu & 3) == 0) {
 			resetpriority(p);
-			if (p->p_priority >= PUSER)
+			if(p->p_priority >= PUSER)
 				p->p_priority = p->p_usrpri;
 		}
 	}
@@ -511,17 +502,16 @@ statclock(frame)
 /*
  * Return information about system clocks.
  */
-sysctl_clockrate(where, sizep)
-	register char *where;
-	size_t *sizep;
+sysctl_clockrate(where, sizep) register char *where;
+size_t *sizep;
 {
 	struct clockinfo clkinfo;
 
 	/*
 	 * Construct clockinfo structure.
 	 */
-	clkinfo.hz = hz;
-	clkinfo.tick = tick;
+	clkinfo.hz     = hz;
+	clkinfo.tick   = tick;
 	clkinfo.profhz = profhz;
 	clkinfo.stathz = stathz ? stathz : hz;
 	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
