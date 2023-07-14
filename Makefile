@@ -1,4 +1,3 @@
-
 CC = gcc
 CFLAGS = -g3 -ggdb -Wall -O0 -m32 -Werror=implicit-function-declaration -fcommon
 
@@ -55,7 +54,8 @@ $(OBJDIR)/%.o:%.c
 
 KERNOBJS := $(addprefix $(OBJDIR)/,$(SRCS:.c=.o))
 
-$(KERNOBJS): KERNFLAGS = -nostdinc -fno-builtin -DKERNEL -DINET -I sys
+# Change here: add -I flags for every subdirectory of 'sys'
+$(KERNOBJS): KERNFLAGS = -nostdinc -fno-builtin -DKERNEL -DINET -I sys -I sys/kern -I sys/net -I sys/netinet
 
 $(OBJDIR)/lib/handshake.o: CFLAGS += -Wno-parentheses
 
