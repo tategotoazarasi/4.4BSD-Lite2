@@ -1,4 +1,4 @@
-name: "CodeQL BSD"
+name: "CodeQL"
 
 on:
   push:
@@ -12,8 +12,6 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    container: 
-      image: bsd_image:latest # Use an appropriate BSD Docker image
     permissions:
       actions: read
       contents: read
@@ -22,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp' ]
+        language: [ 'cpp' ] # Using cpp here for C language
 
     steps:
     - name: Checkout repository
@@ -33,14 +31,16 @@ jobs:
       with:
         languages: ${{ matrix.language }}
 
-    # No need for Autobuild as we will use make
+    # Remove the Autobuild action as we're building the code manually
     #- name: Autobuild
     #  uses: github/codeql-action/autobuild@v2
 
-    - name: Build the project
-      run: make
+    # Build the code manually
+    - name: Build code
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make gcc
+        make
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
-      with:
-        category: "/language:${{matrix.language}}"
