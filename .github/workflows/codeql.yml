@@ -43,5 +43,6 @@ jobs:
         sudo apt-get install -y make gcc
         make
 
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
