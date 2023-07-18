@@ -1,4 +1,5 @@
-/*
+/**
+ * @file
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -63,19 +64,18 @@ bad:
 	panic("mbinit");
 }
 
-/*
+/**
  * Allocate some number of mbuf clusters
  * and place on cluster free list.
  * Must be called at splimp.
+ * ARGSUSED
  */
-/* ARGSUSED */
 int m_clalloc(ncl, nowait)
 register int ncl;
 int nowait;
 {
 	static int logged;
 	register caddr_t p;
-	register int i;
 	int npg;
 
 	npg = ncl * CLSIZE;
@@ -85,20 +85,20 @@ int nowait;
 			logged++;
 			log(LOG_ERR, "mb_map full\n");
 		}
-		return (0);
+		return 0;
 	}
 	ncl = ncl * CLBYTES / MCLBYTES;
-	for(i = 0; i < ncl; i++) {
+	for(register int i = 0; i < ncl; i++) {
 		((union mcluster *) p)->mcl_next = mclfree;
 		mclfree                          = (union mcluster *) p;
 		p += MCLBYTES;
 		mbstat.m_clfree++;
 	}
 	mbstat.m_clusters += ncl;
-	return (1);
+	return 1;
 }
 
-/*
+/**
  * When MGET failes, ask protocols to free space when short of memory,
  * then re-attempt to allocate an mbuf.
  */
@@ -110,12 +110,12 @@ int i, t;
 
 	m_reclaim();
 #define m_retry(i, t) (struct mbuf *) 0
-	MGET(m, i, t);
+	MGET(m, i, t)
 #undef m_retry
-	return (m);
+	return m;
 }
 
-/*
+/**
  * As above; retry an MGETHDR.
  */
 struct mbuf *
@@ -126,14 +126,14 @@ int i, t;
 
 	m_reclaim();
 #define m_retryhdr(i, t) (struct mbuf *) 0
-	MGETHDR(m, i, t);
+	MGETHDR(m, i, t)
 #undef m_retryhdr
-	return (m);
+	return m;
 }
 
 void m_reclaim() {
 	register struct domain *dp;
-	register struct protosw *pr;
+	register struct protosw const *pr;
 	int s = splimp();
 
 	for(dp = domains; dp; dp = dp->dom_next)
@@ -144,7 +144,7 @@ void m_reclaim() {
 	mbstat.m_drain++;
 }
 
-/*
+/**
  * Space allocation routines.
  * These are also available as macros
  * for critical paths.
@@ -155,8 +155,8 @@ int nowait, type;
 {
 	register struct mbuf *m;
 
-	MGET(m, nowait, type);
-	return (m);
+	MGET(m, nowait, type)
+	return m;
 }
 
 struct mbuf *
@@ -165,8 +165,8 @@ int nowait, type;
 {
 	register struct mbuf *m;
 
-	MGETHDR(m, nowait, type);
-	return (m);
+	MGETHDR(m, nowait, type)
+	return m;
 }
 
 struct mbuf *
@@ -175,11 +175,11 @@ int nowait, type;
 {
 	register struct mbuf *m;
 
-	MGET(m, nowait, type);
+	MGET(m, nowait, type)
 	if(m == 0)
-		return (0);
+		return 0;
 	bzero(mtod(m, caddr_t), MLEN);
-	return (m);
+	return m;
 }
 
 struct mbuf *
@@ -188,8 +188,8 @@ struct mbuf *m;
 {
 	register struct mbuf *n;
 
-	MFREE(m, n);
-	return (n);
+	MFREE(m, n)
+	return n;
 }
 
 void
@@ -200,7 +200,7 @@ void
 	if(m == NULL)
 		return;
 	do {
-		MFREE(m, n);
+		MFREE(m, n)
 	} while((m = n) != NULL);
 }
 
@@ -208,7 +208,7 @@ void
  * Mbuffer utility routines.
  */
 
-/*
+/**
  * Lesser-used path for M_PREPEND:
  * allocate new mbuf to prepend to chain,
  * copy junk along.
@@ -220,24 +220,24 @@ int len, how;
 {
 	struct mbuf *mn;
 
-	MGET(mn, how, m->m_type);
+	MGET(mn, how, m->m_type)
 	if(mn == (struct mbuf *) NULL) {
 		m_freem(m);
 		return ((struct mbuf *) NULL);
 	}
 	if(m->m_flags & M_PKTHDR) {
-		M_COPY_PKTHDR(mn, m);
+		M_COPY_PKTHDR(mn, m)
 		m->m_flags &= ~M_PKTHDR;
 	}
 	mn->m_next = m;
 	m          = mn;
 	if(len < MHLEN)
-		MH_ALIGN(m, len);
+		MH_ALIGN(m, len)
 	m->m_len = len;
-	return (m);
+	return m;
 }
 
-/*
+/**
  * Make a copy of an mbuf chain starting "off0" bytes from the beginning,
  * continuing for "len" bytes.  If len is M_COPYALL, copy to end of mbuf.
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
@@ -275,12 +275,12 @@ register int len;
 				panic("m_copym");
 			break;
 		}
-		MGET(n, wait, m->m_type);
+		MGET(n, wait, m->m_type)
 		*np = n;
 		if(n == 0)
 			goto nospace;
 		if(copyhdr) {
-			M_COPY_PKTHDR(n, m);
+			M_COPY_PKTHDR(n, m)
 			if(len == M_COPYALL)
 				n->m_pkthdr.len -= off0;
 			else
@@ -304,14 +304,14 @@ register int len;
 	}
 	if(top == 0)
 		MCFail++;
-	return (top);
+	return top;
 nospace:
 	m_freem(top);
 	MCFail++;
-	return (0);
+	return 0;
 }
 
-/*
+/**
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
  * continuing for "len" bytes, into the indicated buffer.
  */
@@ -347,7 +347,7 @@ caddr_t cp;
 	return cp - old_cp;
 }
 
-/*
+/**
  * Concatenate mbuf chain n to m.
  * Both chains must be of the same type (e.g. MT_DATA).
  * Any m_pkthdr is not updated.
@@ -446,7 +446,7 @@ int req_len;
 	}
 }
 
-/*
+/**
  * Rearange an mbuf chain so that len bytes are contiguous
  * and in the data area of an mbuf (so that mtod and dtom
  * will work for a structure of size len).  Returns the resulting
@@ -473,19 +473,19 @@ int len;
 	if((n->m_flags & M_EXT) == 0 &&
 	   n->m_data + len < &n->m_dat[MLEN] && n->m_next) {
 		if(n->m_len >= len)
-			return (n);
+			return n;
 		m = n;
 		n = n->m_next;
 		len -= m->m_len;
 	} else {
 		if(len > MHLEN)
 			goto bad;
-		MGET(m, M_DONTWAIT, n->m_type);
+		MGET(m, M_DONTWAIT, n->m_type)
 		if(m == 0)
 			goto bad;
 		m->m_len = 0;
 		if(n->m_flags & M_PKTHDR) {
-			M_COPY_PKTHDR(m, n);
+			M_COPY_PKTHDR(m, n)
 			n->m_flags &= ~M_PKTHDR;
 		}
 	}
@@ -508,14 +508,14 @@ int len;
 		goto bad;
 	}
 	m->m_next = n;
-	return (m);
+	return m;
 bad:
 	m_freem(n);
 	MPFail++;
-	return (0);
+	return 0;
 }
 
-/*
+/**
  * Partition an mbuf chain in two pieces, returning the tail --
  * all but the first len0 bytes.  In case of failure, it returns NULL and
  * attempts to restore the chain to its original state.
@@ -531,12 +531,12 @@ int len0, wait;
 	for(m = m0; m && len > m->m_len; m = m->m_next)
 		len -= m->m_len;
 	if(m == 0)
-		return (0);
+		return 0;
 	remain = m->m_len - len;
 	if(m0->m_flags & M_PKTHDR) {
-		MGETHDR(n, wait, m0->m_type);
+		MGETHDR(n, wait, m0->m_type)
 		if(n == 0)
-			return (0);
+			return 0;
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len   = m0->m_pkthdr.len - len0;
 		m0->m_pkthdr.len  = len0;
@@ -544,24 +544,24 @@ int len0, wait;
 			goto extpacket;
 		if(remain > MHLEN) {
 			/* m can't be the lead packet */
-			MH_ALIGN(n, 0);
+			MH_ALIGN(n, 0)
 			n->m_next = m_split(m, len, wait);
 			if(n->m_next == 0) {
 				(void) m_free(n);
-				return (0);
+				return 0;
 			} else
-				return (n);
+				return n;
 		} else
-			MH_ALIGN(n, remain);
+			MH_ALIGN(n, remain)
 	} else if(remain == 0) {
 		n         = m->m_next;
 		m->m_next = 0;
-		return (n);
+		return n;
 	} else {
-		MGET(n, wait, m->m_type);
+		MGET(n, wait, m->m_type)
 		if(n == 0)
-			return (0);
-		M_ALIGN(n, remain);
+			return 0;
+		M_ALIGN(n, remain)
 	}
 extpacket:
 	if(m->m_flags & M_EXT) {
@@ -577,9 +577,9 @@ extpacket:
 	m->m_len  = len;
 	n->m_next = m->m_next;
 	m->m_next = 0;
-	return (n);
+	return n;
 }
-/*
+/**
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *
@@ -590,10 +590,12 @@ struct ifnet *ifp;
 void (*copy)();
 {
 	register struct mbuf *m;
-	struct mbuf *top = 0, **mp = &top;
-	register int off = off0, len;
+	struct mbuf *top = 0;
+	struct mbuf **mp = &top;
+	register int off = off0;
+	register int len;
 	register char *cp;
-	char *epkt;
+	char const *epkt;
 
 	cp   = buf;
 	epkt = cp + totlen;
@@ -605,25 +607,25 @@ void (*copy)();
 		cp += off + 2 * sizeof(u_int16_t);
 		totlen -= 2 * sizeof(u_int16_t);
 	}
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	MGETHDR(m, M_DONTWAIT, MT_DATA)
 	if(m == 0)
-		return (0);
+		return 0;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len   = totlen;
 	m->m_len          = MHLEN;
 
 	while(totlen > 0) {
 		if(top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
+			MGET(m, M_DONTWAIT, MT_DATA)
 			if(m == 0) {
 				m_freem(top);
-				return (0);
+				return 0;
 			}
 			m->m_len = MLEN;
 		}
 		len = min(totlen, epkt - cp);
 		if(len >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
+			MCLGET(m, M_DONTWAIT)
 			if(m->m_flags & M_EXT)
 				m->m_len = len = min(len, MCLBYTES);
 			else
@@ -650,5 +652,5 @@ void (*copy)();
 		if(cp == epkt)
 			cp = buf;
 	}
-	return (top);
+	return top;
 }
