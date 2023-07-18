@@ -109,6 +109,9 @@ int i, t;
 	register struct mbuf *m;
 
 	m_reclaim();
+	/*
+	 * 因为在调用了m_reclaim后有可能有机会得到更多的存储器，因此再次调用宏MGET，试图获得mbuf。在展开宏MGET(图2-12)之前，m_retry被定义为一个空指针。这可以防止当存储器仍然不可用时的无休止的循环：这个MGET展开会把m设置为空指针而不是调用m_retry函数。在MGET展开以后，这个m_retry的临时定义就被取消了，以防在此之后有对MGET的其他引用。
+	 */
 #define m_retry(i, t) (struct mbuf *) 0
 	MGET(m, i, t)
 #undef m_retry
@@ -145,6 +148,7 @@ void m_reclaim() {
 }
 
 /**
+ * 这个调用表明参数nowait的值为M_WAIT或M_DONTWAIT,它取决于在存储器不可用时是否要求等待。例如，当插口层请求分配一个mbuf来存储sendto系统调用(图1-6)的目标地址时，它指定M_WAIT，因为在此阻塞是没有问题的。但是当以太网设备驱动程序请求分配一个mbuf来存储一个接收的帧时，它指定M_DONTWAIT，因为它是作为一个设备中断处理来执行的，不能进入睡眠状态来等待一个mbuf。在这种情况下，若存储器不可用，设备驱动程序丢弃这个帧比较好。
  * Space allocation routines.
  * These are also available as macros
  * for critical paths.
@@ -169,7 +173,7 @@ int nowait, type;
 	return m;
 }
 
-struct mbuf *
+__attribute__((unused)) struct mbuf *
 m_getclr(nowait, type)
 int nowait, type;
 {
@@ -456,6 +460,9 @@ int req_len;
  */
 int MPFail;
 
+/**
+ *
+ */
 struct mbuf *
 m_pullup(n, len)
 register struct mbuf *n;
@@ -580,6 +587,7 @@ extpacket:
 	return n;
 }
 /**
+ * 当接收到一个以太网帧时，设备驱动程序调用函数m_devget来创建一个mbuf链表，并把设备中的帧复制到这个链表中。根据所接收的帧的长度（不包括以太网首部），可能导致4种不同的mbuf链表。
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *

@@ -46,18 +46,18 @@
  * at least MINCLSIZE of data must be stored.
  */
 
-#define MLEN (MSIZE - sizeof(struct m_hdr)) /// normal data len
-#define MHLEN (MLEN - sizeof(struct pkthdr))/// data len w/pkthdr
+#define MLEN (MSIZE - sizeof(struct m_hdr)) /// 在正常mbuf中的最大数据量 normal data len
+#define MHLEN (MLEN - sizeof(struct pkthdr))/// 带分组首部的mbuf的最大数据量 data len w/pkthdr
 
-#define MINCLSIZE (MHLEN + MLEN) /// smallest amount to put in cluster
+#define MINCLSIZE (MHLEN + MLEN) /// 存储到簇中的最小数据量 smallest amount to put in cluster
 #define M_MAXCOMPRESS (MHLEN / 2)/// max amount to copy for compression
 
 /**
 * @defgroup macros4typconv Macros for type conversion
 * @{
 */
-#define mtod(m, t) ((t) ((m)->m_data))                                    ///< convert mbuf pointer to data pointer of correct type
-#define dtom(x) ((struct mbuf *) ((long) (x) & ~(MSIZE - 1)))             ///< convert data pointer within mbuf to mbuf pointer (XXX)
+#define mtod(m, t) ((t) ((m)->m_data))                                    ///< 将m指向的mbuf的数据区指针的类型转换成type类型。返回一个指向mbuf数据的指针，并把指针声明为指定类型。 convert mbuf pointer to data pointer of correct type
+#define dtom(x) ((struct mbuf *) ((long) (x) & ~(MSIZE - 1)))             ///< 将指向一个mbuf数据区中某个位置的指针x转换成一个指向这个mbuf的起始的指针。取得一个存放在一个mbuf中任意位置的数据的指针，并返回这个mbuf结构本身的一个指针。 convert data pointer within mbuf to mbuf pointer (XXX)
 #define mtocl(x) (((u_long) (x) - (u_long) mbutl) >> MCLSHIFT)            ///< convert pointer within cluster to cluster index #
 #define cltom(x) ((caddr_t) ((u_long) mbutl + ((u_long) (x) << MCLSHIFT)))///< convert cluster # to ptr to beginning of cluster
 /** @} */
@@ -116,17 +116,17 @@ struct mbuf {
  * @defgroup mbuf_flags mbuf flags
  * @{
  */
-#define M_EXT 0x0001   ///< has associated external storage
-#define M_PKTHDR 0x0002///< start of record
-#define M_EOR 0x0004   ///< end of record
+#define M_EXT 0x0001   ///< 此mbuf带有簇（外部缓存） has associated external storage
+#define M_PKTHDR 0x0002///< 形成一个分组（记录）的第一个mbuf start of record
+#define M_EOR 0x0004   ///< 记录结束 end of record
 /** @} */
 
 /**
  * @defgroup m_flags mbuf pkthdr flags, also in m_flags
  * @{
  */
-#define M_BCAST 0x0100///< send/received as link-level broadcast
-#define M_MCAST 0x0200///< send/received as link-level multicast
+#define M_BCAST 0x0100///< 作为链路层广播发送/接收 send/received as link-level broadcast
+#define M_MCAST 0x0200///< 作为链路层多播发送/接收 send/received as link-level multicast
 /** @} */
 
 /// flags copied when copying m_pkthdr
@@ -136,21 +136,21 @@ struct mbuf {
 * @defgroup mbuf_types mbuf types
 * @{
 */
-#define MT_FREE 0    ///< should be on free list
-#define MT_DATA 1    ///< dynamic (data) allocation
-#define MT_HEADER 2  ///< packet header
-#define MT_SOCKET 3  ///< socket structure
-#define MT_PCB 4     ///< protocol control block
-#define MT_RTABLE 5  ///< routing tables
-#define MT_HTABLE 6  ///< IMP host tables
+#define MT_FREE 0    ///< 应在自由列表中 should be on free list
+#define MT_DATA 1    ///< 动态数据分配 dynamic (data) allocation
+#define MT_HEADER 2  ///< 分组首部 packet header
+#define MT_SOCKET 3  ///< 插口结构 socket structure
+#define MT_PCB 4     ///< 协议控制块 protocol control block
+#define MT_RTABLE 5  ///< 路由表 routing tables
+#define MT_HTABLE 6  ///< IMP主机表 IMP host tables
 #define MT_ATABLE 7  ///< address resolution tables
-#define MT_SONAME 8  ///< socket name
-#define MT_SOOPTS 10 ///< socket options
-#define MT_FTABLE 11 ///< fragment reassembly header
-#define MT_RIGHTS 12 ///< access rights
-#define MT_IFADDR 13 ///< interface address
-#define MT_CONTROL 14///< extra-data protocol message
-#define MT_OOBDATA 15///< expedited data
+#define MT_SONAME 8  ///< 插口名称 socket name
+#define MT_SOOPTS 10 ///< 插口选项 socket options
+#define MT_FTABLE 11 ///< 分片重组首部 fragment reassembly header
+#define MT_RIGHTS 12 ///< 访问权限 access rights
+#define MT_IFADDR 13 ///< 接口地址 interface address
+#define MT_CONTROL 14///< 外部数据协议报文 extra-data protocol message
+#define MT_OOBDATA 15///< 加速（带外）数据 expedited data
 /** @} */
 
 /**
@@ -198,6 +198,9 @@ struct mbuf {
 			(m) = m_retry((how), (type));                        \
 	}
 
+/**
+ * 分配一个mbuf,并把它初始化为一个分组首部。这个宏与MGET(图2-12)相似,但设置了标志M_PKTHDR,并且数据指针(m_data)指向紧接分组首部后的100字节的缓存。
+ */
 #define MGETHDR(m, how, type)                                    \
 	{                                                            \
 		MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
@@ -238,6 +241,9 @@ union mcluster {
 		        mclfree = ((union mcluster *) (p))->mcl_next; \
 	        })
 
+/**
+ * 获得一个簇 (一个外部缓存 )并将m指向的mbuf中的数据指针 (m_data)设置为指向这个簇。如果存储器不可用,返回时不设置mbuf中的M_EXT标志。
+ */
 #define MCLGET(m, how)                        \
 	{                                         \
 		MCLALLOC((m)->m_ext.ext_buf, (how));  \
@@ -260,6 +266,7 @@ union mcluster {
  * MFREE(struct mbuf *m, struct mbuf *n)
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
+ * 释放一个m指向的mbuf。若m指向一个簇 (设置了M_EXT),这个簇的引用计数器减1,但这个簇并不被释放,直到它的引用计数器降为0。返回m的后继(由m->m_next指向,可以为空)存放在n中。
  */
 #ifdef notyet
 #define MFREE(m, n)                                            \
@@ -307,6 +314,7 @@ union mcluster {
 /**
  * As above, for mbufs allocated with m_gethdr/MGETHDR
  * or initialized by M_COPY_PKTHDR.
+ * 设置包含一个分组首部的mbuf的m_data,在这个mbuf数据区的尾部为一个长度为len字节的对象提供空间。这个数据指针也是长字对准方式的。
  */
 #define MH_ALIGN(m, len) \
 	{ (m)->m_data += (MHLEN - (len)) & ~(sizeof(long) - 1); }
@@ -333,6 +341,7 @@ union mcluster {
  * If a new mbuf must be allocated, how specifies whether to wait.
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
  * is freed and m is set to NULL.
+ * 在m指向的mbuf中的数据的前面添加len字节的数据。如果mbuf有空间,则仅把指针(m_data)减len字节,并将长度(m_len)增加len字节。如果没有足够的空间,就分配一个新的mbuf,它的m_next指针被设置为m。一个新mbuf的指针存放在m中。并且新mbuf的数据指针被设置,这样len字节的数据放置到这个mbuf的尾部(例如,调用MH_ALIGN)。如果一个新mbuf被分配,并且原来的mbuf的分组首部标志被设置,则分组首部从老mbuf中移到新mbuf中。
  */
 #define M_PREPEND(m, plen, how)                  \
 	{                                            \
@@ -355,50 +364,53 @@ union mcluster {
 /// length to m_copy to copy all */
 #define M_COPYALL 1000000000
 
-/// compatiblity with 4.3
+/**
+ * 这是m_copym的三参数版本,它隐含的第4个参数的值为M_DONTWAIT。
+ * compatiblity with 4.3
+ */
 #define m_copy(m, o, l) m_copym((m), (o), (l), M_DONTWAIT)
 
 /**
- * Mbuf statistics.
+ * mbuf统计 Mbuf statistics.
  */
 struct mbstat {
-	u_long m_mbufs;       ///< mbufs obtained from page pool
-	u_long m_clusters;    ///< clusters obtained from page pool
-	u_long m_spare;       ///< spare field
-	u_long m_clfree;      ///< free clusters
-	u_long m_drops;       ///< times failed to find space
-	u_long m_wait;        ///< times waited for space
-	u_long m_drain;       ///< times drained protocols for space
-	u_short m_mtypes[256];///< type specific mbuf allocations
+	__attribute__((unused)) u_long m_mbufs;///< 从页池（未用）中获得的mbuf数 mbufs obtained from page pool
+	u_long m_clusters;                     ///< 从页池中获得的簇 clusters obtained from page pool
+	__attribute__((unused)) u_long m_spare;///< 剩余空间（未用） spare field
+	u_long m_clfree;                       ///< 自由簇 free clusters
+	__attribute__((unused)) u_long m_drops;///< 寻找空间（未用）失败的次数 times failed to find space
+	__attribute__((unused)) u_long m_wait; ///< 等待空间（未用）的次数 times waited for space
+	u_long m_drain;                        ///< 调用协议的drain函数来回收空间的次数 times drained protocols for space
+	u_short m_mtypes[256];                 ///< 当前mbuf的分配数量：MT_xxx索引 type specific mbuf allocations
 };
 
 #ifdef KERNEL
 extern struct mbuf *mbutl;///< virtual address of mclusters
 extern char *mclrefcnt;   ///< cluster reference counts
-struct mbstat mbstat;
-extern int nmbclusters;
+struct mbstat mbstat;     ///< mbuf的统计信息
+__attribute__((unused)) extern int nmbclusters;
 union mcluster *mclfree;
-int max_linkhdr;     ///< largest link-level header
-int max_protohdr;    ///< largest protocol header
-int max_hdr;         ///< largest link+protocol header
-int max_datalen;     ///< MHLEN - max_hdr
-extern int mbtypes[];///< XXX
+int max_linkhdr;                        ///< largest link-level header
+int max_protohdr;                       ///< largest protocol header
+int max_hdr;                            ///< largest link+protocol header
+__attribute__((unused)) int max_datalen;///< MHLEN - max_hdr
+extern int mbtypes[];                   ///< XXX
 
-struct mbuf *m_copym __P((struct mbuf *, int, int, int) );
-struct mbuf *m_free __P((struct mbuf *) );
-struct mbuf *m_devget __P((char *, int, int, struct ifnet *, void (*)()));
-struct mbuf *m_get __P((int, int) );
-struct mbuf *m_getclr __P((int, int) );
-struct mbuf *m_gethdr __P((int, int) );
+struct mbuf *m_copym __P((struct mbuf *, int, int, int) );                ///< 创建一个新的mbuf链表,并从m指向的mbuf链表的开始offset处复制len字节的数据。一个新mbuf链表的指针作为此函数的返回值。如果len等于常量M_COPYALL,则从这个mbuf链表的offset开始的所有数据都将被复制。
+struct mbuf *m_free __P((struct mbuf *) );                                ///< 宏MFREE的函数版本。
+struct mbuf *m_devget __P((char *, int, int, struct ifnet *, void (*)()));///< 创建一个带分组首部的mbuf链表,并返回指向这个链表的指针。这个分组首部的len和rcvif字段被设置为len和ifp。调用函数copy从设备接口(由buf指向)将数据复制到mbuf中。如果copy是一个空指针,调用函数bcopy。由于尾部协议不再被支持,off为0。
+struct mbuf *m_get __P((int, int) );                                      ///< 宏MGET的函数版本。
+__attribute__((unused)) struct mbuf *m_getclr __P((int, int) );           ///< 此函数调用宏MGET来得到一个mbuf,并把108字节的缓存清零。
+struct mbuf *m_gethdr __P((int, int) );                                   ///< 宏MGETHDR的函数版本。
 struct mbuf *m_prepend __P((struct mbuf *, int, int) );
-struct mbuf *m_pullup __P((struct mbuf *, int) );
+struct mbuf *m_pullup __P((struct mbuf *, int) );///< 重新排列由m指向的mbuf中的数据,使得前len字节的数据连续地存储在链表中的第一个mbuf中。如果这个函数成功,则宏mtod能返回一个正好指向这个大小为len的结构。
 struct mbuf *m_retry __P((int, int) );
 struct mbuf *m_retryhdr __P((int, int) );
-void m_adj __P((struct mbuf *, int) );
-void m_cat __P((struct mbuf *, struct mbuf *) );
+void m_adj __P((struct mbuf *, int) );          ///< 从m指向的mbuf中移走len字节的数据。如果len是正数,则所操作的是紧排在这个mbuf的开始的len字节数据;否则是紧排在这个mbuf的尾部的len绝对值字节数据。
+void m_cat __P((struct mbuf *, struct mbuf *) );///< 把由n指向的mbuf链表链接到由m指向的mbuf链表的尾部。当我们讨论IP重组时(第10章)会遇到这个函数。
 int m_clalloc __P((int, int) );
-int m_copydata __P((struct mbuf *, int, int, caddr_t));
-void m_freem __P((struct mbuf *) );
+int m_copydata __P((struct mbuf *, int, int, caddr_t));///< 从m指向的mbuf链表中复制len字节数据到由cp指向的缓存。从mbuf链表数据区起始的offset字节开始复制。
+void m_freem __P((struct mbuf *) );                    ///< 释放m指向的链表中的所有mbuf。
 void m_reclaim __P((void) );
 
 #ifdef MBTYPES
