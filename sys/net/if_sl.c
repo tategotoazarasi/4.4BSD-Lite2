@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1987, 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +34,9 @@
  *	@(#)if_sl.c	8.9 (Berkeley) 1/9/95
  */
 
-/*
+/**
+ * @file
+ * SLIP设备驱动程序
  * Serial Line interface
  *
  * Rick Adams
@@ -165,17 +168,17 @@ Huh ? Slip without inet ?
  *	within window time signals a "soft" exit from slip mode by remote end
  *	if the IFF_DEBUG flag is on.
  */
-#define ABT_ESC '\033'                 /* can't be t_intr - distant host must know it*/
-#define ABT_IDLE 1                     /* in seconds - idle before an escape */
-#define ABT_COUNT 3                    /* count of escapes for abort */
-#define ABT_WINDOW (ABT_COUNT * 2 + 2) /* in seconds - time to count */
+#define ABT_ESC '\033'                ///< can't be t_intr - distant host must know it*/
+#define ABT_IDLE 1                    ///< in seconds - idle before an escape
+#define ABT_COUNT 3                   ///< count of escapes for abort
+#define ABT_WINDOW (ABT_COUNT * 2 + 2)///< in seconds - time to count
 
 struct sl_softc sl_softc[NSL];
 
-#define FRAME_END 0xc0          /* Frame End */
-#define FRAME_ESCAPE 0xdb       /* Frame Esc */
-#define TRANS_FRAME_END 0xdc    /* transposed frame end */
-#define TRANS_FRAME_ESCAPE 0xdd /* transposed frame esc */
+#define FRAME_END 0xc0         ///< Frame End
+#define FRAME_ESCAPE 0xdb      ///< Frame Esc
+#define TRANS_FRAME_END 0xdc   ///< transposed frame end
+#define TRANS_FRAME_ESCAPE 0xdd///< transposed frame esc
 
 static int slinit __P((struct sl_softc *) );
 static struct mbuf *sl_btom __P((struct sl_softc *, int) );
@@ -228,11 +231,12 @@ register struct sl_softc *sc;
 	return (1);
 }
 
-/*
+/**
  * Line specific open routine.
  * Attach the given tty to the first available sl unit.
+ *
+ * ARGSUSED
  */
-/* ARGSUSED */
 int slopen(dev, tp)
 dev_t dev;
 register struct tty *tp;
@@ -265,7 +269,7 @@ register struct tty *tp;
 	return (ENXIO);
 }
 
-/*
+/**
  * Line specific close routine.
  * Detach the tty from the sl unit.
  */
@@ -292,11 +296,12 @@ void
 	splx(s);
 }
 
-/*
+/**
  * Line specific (tty) ioctl routine.
  * Provide a way to get the sl unit number.
+ *
+ * ARGSUSED
  */
-/* ARGSUSED */
 int sltioctl(tp, cmd, data, flag)
 struct tty *tp;
 u_long cmd;
@@ -316,7 +321,7 @@ int flag;
 	return (0);
 }
 
-/*
+/**
  * Queue a packet.  Start transmission if not active.
  * Compression happens in slstart; if we do it here, IP TOS
  * will cause us to not compress "background" packets, because
@@ -378,7 +383,7 @@ struct rtentry *rtp;
 	return (0);
 }
 
-/*
+/**
  * Start output on interface.  Get another datagram
  * to send from the interface queue and map it to
  * the interface before starting output.
@@ -565,7 +570,7 @@ void
 	}
 }
 
-/*
+/**
  * Copy data buffer to mbuf chain; add ifnet pointer.
  */
 static struct mbuf *
@@ -608,7 +613,7 @@ register int len;
 	return (m);
 }
 
-/*
+/**
  * tty interface receiver interrupt.
  */
 void
@@ -779,7 +784,7 @@ newpack:
 	sc->sc_escape          = 0;
 }
 
-/*
+/**
  * Process an ioctl request.
  */
 int slioctl(ifp, cmd, data)

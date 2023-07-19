@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +34,9 @@
  *	@(#)if_dl.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/**
+ * @file
+ * 链路层结构定义
  * A Link-Level Sockaddr may specify the interface in one of two
  * ways: either by means of a system-provided index number (computed
  * anew and possibly differently on every reboot), or by a human-readable
@@ -51,30 +54,29 @@
  * expected that all drivers for an interface of a given if_type will agree.
  */
 
-/*
+/**
  * Structure of a Link-Level sockaddr:
  */
 struct sockaddr_dl {
-	u_char	sdl_len;	/* Total length of sockaddr */
-	u_char	sdl_family;	/* AF_DLI */
-	u_short	sdl_index;	/* if != 0, system given index for interface */
-	u_char	sdl_type;	/* interface type */
-	u_char	sdl_nlen;	/* interface name length, no trailing 0 reqd. */
-	u_char	sdl_alen;	/* link level address length */
-	u_char	sdl_slen;	/* link layer selector length */
-	char	sdl_data[12];	/* minimum work area, can be larger;
-				   contains both if name and ll address */
+	u_char sdl_len;   ///< Total length of sockaddr
+	u_char sdl_family;///< AF_DLI
+	u_short sdl_index;///< if != 0, system given index for interface
+	u_char sdl_type;  ///< interface type
+	u_char sdl_nlen;  ///< interface name length, no trailing 0 reqd.
+	u_char sdl_alen;  ///< link level address length
+	u_char sdl_slen;  ///< link layer selector length
+	char sdl_data[12];///< minimum work area, can be larger; contains both if name and ll address
 };
 
-#define LLADDR(s) ((caddr_t)((s)->sdl_data + (s)->sdl_nlen))
+#define LLADDR(s) ((caddr_t) ((s)->sdl_data + (s)->sdl_nlen))
 
 #ifndef KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void	link_addr __P((const char *, struct sockaddr_dl *));
-char	*link_ntoa __P((const struct sockaddr_dl *));
+void link_addr __P((const char *, struct sockaddr_dl *) );
+char *link_ntoa __P((const struct sockaddr_dl *) );
 __END_DECLS
 
 #endif /* !KERNEL */

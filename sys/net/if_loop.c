@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +34,9 @@
  *	@(#)if_loop.c	8.2 (Berkeley) 1/9/95
  */
 
-/*
+/**
+ * @file
+ * 环回设备驱动程序
  * Loopback interface driver for protocol testing and timing.
  */
 
@@ -191,10 +194,11 @@ struct sockaddr *sa;
 		rt->rt_rmx.rmx_mtu = LOMTU;
 }
 
-/*
+/**
  * Process an ioctl request.
+ *
+ * ARGSUSED
  */
-/* ARGSUSED */
 int loioctl(ifp, cmd, data)
 register struct ifnet *ifp;
 u_long cmd;

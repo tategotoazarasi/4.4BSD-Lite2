@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -111,7 +112,7 @@ int leintr(), leinit(), leioctl(), lestart(), ether_output(), lereset();
 struct mbuf *m_devget();
 extern struct ifnet loif;
 
-/*
+/**
  * Ethernet software status per interface.
  *
  * Each interface is referenced by a network interface structure,
@@ -119,15 +120,15 @@ extern struct ifnet loif;
  * This structure contains the output queue for the interface, its address, ...
  */
 struct le_softc {
-	struct arpcom sc_ac;        /* common Ethernet structures */
-#define sc_if sc_ac.ac_if       /* network-visible interface */
-#define sc_addr sc_ac.ac_enaddr /* hardware Ethernet address */
-	struct lereg0 *sc_r0;       /* DIO registers */
-	struct lereg1 *sc_r1;       /* LANCE registers */
-	struct lereg2 *sc_r2;       /* dual-port RAM */
-	int sc_rmd;                 /* predicted next rmd to process */
-	int sc_tmd;                 /* next available tmd */
-	int sc_txcnt;               /* # of transmit buffers in use */
+	struct arpcom sc_ac;       ///< common Ethernet structures
+#define sc_if sc_ac.ac_if      ///< network-visible interface
+#define sc_addr sc_ac.ac_enaddr///< hardware Ethernet address
+	struct lereg0 *sc_r0;      ///< DIO registers
+	struct lereg1 *sc_r1;      ///< LANCE registers
+	struct lereg2 *sc_r2;      ///< dual-port RAM
+	int sc_rmd;                ///< predicted next rmd to process
+	int sc_tmd;                ///< next available tmd
+	int sc_txcnt;              ///< # of transmit buffers in use
 	/* stats */
 	int sc_runt;
 	int sc_jab;
@@ -146,13 +147,13 @@ struct le_softc {
 	short sc_iflags;
 } le_softc[NLE];
 
-/* access LANCE registers */
+/// access LANCE registers
 #define LERDWR(cntl, src, dst) \
 	do {                       \
 		(dst) = (src);         \
 	} while(((cntl)->ler0_status & LE_ACK) == 0);
 
-/*
+/**
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
  * to accept packets.
@@ -225,7 +226,7 @@ leattach(hd) struct hp_device *hd;
 }
 
 #ifdef MULTICAST
-/*
+/**
  * Setup the logical address filter
  */
 void
@@ -377,7 +378,7 @@ lereset(unit) register int unit;
 	le->sc_txcnt = 0;
 }
 
-/*
+/**
  * Initialization of interface
  */
 leinit(unit) int unit;
@@ -401,7 +402,7 @@ leinit(unit) int unit;
 	}
 }
 
-/*
+/**
  * Start output on interface.  Get another datagram to send
  * off of the interface queue, and copy it to the interface
  * before starting the output.
@@ -496,7 +497,7 @@ leintr(unit) register int unit;
 	return (1);
 }
 
-/*
+/**
  * Ethernet interface transmitter interrupt.
  * Start another output if more data to send.
  */
@@ -554,7 +555,7 @@ lexint(unit) register int unit;
 	else                                    \
 		++rmd
 
-/*
+/**
  * Ethernet interface receiver interrupt.
  * If input error just drop packet.
  * Decapsulate packet based on type and pass to type specific
@@ -707,7 +708,7 @@ int len;
 	ether_input(&le->sc_if, et, m);
 }
 
-/*
+/**
  * Routine to copy from mbuf chain to transmit
  * buffer in board local memory.
  */
@@ -733,7 +734,7 @@ register struct mbuf *m;
 	return (tlen);
 }
 
-/*
+/**
  * Process an ioctl request.
  */
 leioctl(ifp, cmd, data) register struct ifnet *ifp;

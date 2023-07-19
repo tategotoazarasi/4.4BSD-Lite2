@@ -1,4 +1,5 @@
-/*
+/**
+ * @file
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -55,7 +56,7 @@ void if_slowtimo
 
 void pfctlinput(int cmd, struct sockaddr *sa);
 
-/*
+/**
  * Network interface utility routines.
  *
  * Routines with ifa_ifwith* names take sockaddr *'s as
@@ -71,7 +72,7 @@ void ifinit() {
 }
 
 #ifdef vax
-/*
+/**
  * Call each interface on a Unibus reset.
  */
 void
@@ -91,7 +92,7 @@ static char *sprint_d
         __P((u_int,
              char *, int) );
 
-/*
+/**
  * Attach an interface to the
  * list of "active" interfaces.
  */
@@ -165,10 +166,11 @@ void
 		ether_ifattach(ifp);
 }
 
-/*
+/**
  * Locate an interface based on a complete address.
+ *
+ * ARGSUSED
  */
-/*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithaddr(addr)
 register struct sockaddr *addr;
@@ -190,10 +192,11 @@ register struct sockaddr *addr;
 		}
 	return ((struct ifaddr *) 0);
 }
-/*
+/**
  * Locate the point to point interface with a given destination address.
+ *
+ * ARGSUSED
  */
-/*ARGSUSED*/
 struct ifaddr *
 ifa_ifwithdstaddr(addr)
 register struct sockaddr *addr;
@@ -213,7 +216,7 @@ register struct sockaddr *addr;
 	return ((struct ifaddr *) 0);
 }
 
-/*
+/**
  * Find an interface on a specific network.  If many, choice
  * is most specific found.
  */
@@ -254,7 +257,7 @@ struct sockaddr *addr;
 	return (ifa_maybe);
 }
 
-/*
+/**
  * Find an interface using a specific address family
  */
 struct ifaddr *
@@ -271,7 +274,7 @@ register int af;
 	return ((struct ifaddr *) 0);
 }
 
-/*
+/**
  * Find an interface address specific to an interface best matching
  * a given address.
  */
@@ -313,7 +316,7 @@ register struct ifnet *ifp;
 
 #include <net/route.h>
 
-/*
+/**
  * Default action when installing a route with a Link Level gateway.
  * Lookup an appropriate real ifa to point to.
  * This should be moved to /sys/net/link.c eventually.
@@ -339,7 +342,7 @@ struct sockaddr *sa;
 	}
 }
 
-/*
+/**
  * Mark an interface down and notify protocols of
  * the transition.
  * NOTE: must be called at splnet or eqivalent.
@@ -356,7 +359,7 @@ void
 	rt_ifmsg(ifp);
 }
 
-/*
+/**
  * Mark an interface up and notify protocols of
  * the transition.
  * NOTE: must be called at splnet or eqivalent.
@@ -375,7 +378,7 @@ void
 	rt_ifmsg(ifp);
 }
 
-/*
+/**
  * Flush an interface queue.
  */
 void
@@ -393,7 +396,7 @@ void
 	ifq->ifq_len  = 0;
 }
 
-/*
+/**
  * Handle interface watchdog timer routines.  Called
  * from softclock, we decrement timers (if set) and
  * call the appropriate interface routine on expiration.
@@ -414,7 +417,7 @@ void
 	timeout(if_slowtimo, (void *) 0, hz / IFNET_SLOWHZ);
 }
 
-/*
+/**
  * Map interface name to
  * interface structure pointer.
  */
@@ -454,7 +457,7 @@ register char *name;
 	return (ifp);
 }
 
-/*
+/**
  * Interface ioctls.
  */
 int ifioctl(so, cmd, data, p)
@@ -580,13 +583,14 @@ struct proc *p;
 	return (0);
 }
 
-/*
+/**
  * Return interface configuration
  * of system.  List may be used
  * in later ioctl's (above) to get
  * other information.
+ *
+ * ARGSUSED
  */
-/*ARGSUSED*/
 int ifconf(cmd, data)
 int cmd;
 caddr_t data;
@@ -596,7 +600,8 @@ caddr_t data;
 	register struct ifaddr *ifa;
 	register char *cp, *ep;
 	struct ifreq ifr, *ifrp;
-	int space = ifc->ifc_len, error = 0;
+	int space = ifc->ifc_len;
+	int error = 0;
 
 	ifrp = ifc->ifc_req;
 	ep   = ifr.ifr_name + sizeof(ifr.ifr_name) - 2;
