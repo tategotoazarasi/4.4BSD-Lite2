@@ -92,16 +92,16 @@ struct linger {
 /*
  * Address families.
  */
-#define AF_UNSPEC 0     ///< unspecified
-#define AF_LOCAL 1      ///< local to host (pipes, portals)
-#define AF_UNIX AF_LOCAL///< backward compatibility
-#define AF_INET 2       ///< internetwork: UDP, TCP, etc.
-#define AF_IMPLINK 3    ///< arpanet imp addresses
-#define AF_PUP 4        ///< pup protocols: e.g. BSP
-#define AF_CHAOS 5      ///< mit CHAOS protocols
-#define AF_NS 6         ///< XEROX NS protocols
-#define AF_ISO 7        ///< ISO protocols
-#define AF_OSI AF_ISO
+#define AF_UNSPEC 0      ///< unspecified
+#define AF_LOCAL 1       ///< local to host (pipes, portals)
+#define AF_UNIX AF_LOCAL ///< UNIX backward compatibility
+#define AF_INET 2        ///< Internet internetwork: UDP, TCP, etc.
+#define AF_IMPLINK 3     ///< arpanet imp addresses
+#define AF_PUP 4         ///< pup protocols: e.g. BSP
+#define AF_CHAOS 5       ///< mit CHAOS protocols
+#define AF_NS 6          ///< XEROX NS protocols
+#define AF_ISO 7         ///< OSI ISO protocols
+#define AF_OSI AF_ISO    ///< OSI
 #define AF_ECMA 8        ///< european computer manufacturers
 #define AF_DATAKIT 9     ///< datakit protocols
 #define AF_CCITT 10      ///< CCITT protocols, X.25 etc
@@ -111,8 +111,8 @@ struct linger {
 #define AF_LAT 14        ///< LAT
 #define AF_HYLINK 15     ///< NSC Hyperchannel
 #define AF_APPLETALK 16  ///< Apple Talk
-#define AF_ROUTE 17      ///< Internal Routing Protocol
-#define AF_LINK 18       ///< Link layer interface
+#define AF_ROUTE 17      ///< 路由表 Internal Routing Protocol
+#define AF_LINK 18       ///< 数据链路 Link layer interface
 #define pseudo_AF_XTP 19 ///< eXpress Transfer Protocol (no AF)
 #define AF_COIP 20       ///< connection-oriented IP, aka ST II
 #define AF_CNT 21        ///< Computer Network Technology

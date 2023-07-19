@@ -49,7 +49,7 @@
 #include <net/if_types.h>
 #include <net/radix.h>
 
-int ifqmaxlen = IFQ_MAXLEN;
+int ifqmaxlen = IFQ_MAXLEN;///< 接口输出队列的最大值
 void if_slowtimo
         __P((
                 void *arg));
@@ -86,8 +86,8 @@ void
 }
 #endif
 
-int if_index = 0;
-struct ifaddr **ifnet_addrs;
+int if_index = 0;           ///< 上一个配置接口的索引
+struct ifaddr **ifnet_addrs;///< 指向链路层接口地址的指针数组
 static char *sprint_d
         __P((u_int,
              char *, int) );
@@ -105,7 +105,7 @@ void
 	register struct ifnet **p = &ifnet;
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
-	static int if_indexlim = 8;
+	static int if_indexlim = 8;///< 数组ifnet_addrs的大小
 	extern void link_rtrequest();
 
 	while(*p)

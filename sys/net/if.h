@@ -61,7 +61,7 @@
  * routing and gateway routines maintaining information used to locate
  * interfaces.  These routines live in the files if.c and route.c
  */
-#ifndef _TIME_///<  XXX fast fix for SNMP, going away soon
+#ifndef _TIME_//  XXX fast fix for SNMP, going away soon
 #include <sys/time.h>
 #endif
 
@@ -86,23 +86,23 @@ struct ether_header;
  */
 
 struct ifnet {
-	char *if_name;             ///< name, e.g. ``en'' or ``lo''
-	struct ifnet *if_next;     ///< all struct ifnets are chained
+	char *if_name;             ///< 是一个短字符串，用于标识接口的类型，而if_unit标识多个相同类型的实例。例如，一个系统有两个SLIP接口，每个都有一个if_name，包含两字节的“s1”和一个if_unit。对第一个接口，if_unit为0；对第二个接口为1。if_index在内核中唯一地标识这个接口，这在sysctl系统调用以及路由域中要用到。 name, e.g. ``en'' or ``lo''
+	struct ifnet *if_next;     ///< 把所有接口的ifnet结构链接成一个链表。函数if_attach在系统初始化期间构造这个链表。if_addrlist指向这个接口的ifaddr结构列表。每个ifaddr结构存储一个要用这个接口通信的协议的地址信息。 all struct ifnets are chained
 	struct ifaddr *if_addrlist;///< linked list of addresses per if
 	int if_pcount;             ///< number of promiscuous listeners
 	caddr_t if_bpf;            ///< packet filter structure
 	u_short if_index;          ///< numeric abbreviation for this if
 	short if_unit;             ///< sub-unit for lower level driver
-	short if_timer;            ///< time 'til if_watchdog called
-	short if_flags;            ///< up/down, broadcast, etc.
+	short if_timer;            ///< 以秒为单位记录时间，直到内核为此接口调用函数if_watchdog为止。这个函数用于设备驱动程序定时收集接口统计，或用于复位运行不正确的硬件 time 'til if_watchdog called
+	short if_flags;            ///< 表明接口的操作状态和属性。一个进程能检查所有的标志，但不能改变在图3-7中“内核专用”列中作了记号的标志。这些标志用4.4节讨论的命令SIOCGIFFLAGS和SIOCSIFFLAGS来访问。 up/down, broadcast, etc.
 	struct if_data {
 		/* generic interface information */
-		u_char ifi_type;              ///< ethernet, tokenring, etc
-		u_char ifi_addrlen;           ///< media address length
-		u_char ifi_hdrlen;            ///< media header length
-		u_long ifi_mtu;               ///< maximum transmission unit
-		u_long ifi_metric;            ///< routing metric (external only)
-		u_long ifi_baudrate;          ///< linespeed
+		u_char ifi_type;              ///< 指明接口支持的硬件地址类型 ethernet, tokenring, etc
+		u_char ifi_addrlen;           ///< 数据链路地址的长度 media address length
+		u_char ifi_hdrlen;            ///< 由硬件附加给任何分组的首部的长度 media header length
+		u_long ifi_mtu;               ///< 接口传输单元的最大值：接口在一次输出操作中能传输的最大数据单元的字节数。这是控制网络和传输协议创建分组大小的重要参数。对于以太网来说，这个值是1500。maximum transmission unit
+		u_long ifi_metric;            ///< 通常是0；其他更大的值不利于路由通过此接口。 routing metric (external only)
+		u_long ifi_baudrate;          ///< 指定接口的传输速率，只有SLIP接口才设置它。 linespeed
 		                              /* volatile statistics */
 		u_long ifi_ipackets;          ///< packets received on interface
 		u_long ifi_ierrors;           ///< input errors on interface
@@ -115,31 +115,31 @@ struct ifnet {
 		u_long ifi_omcasts;           ///< packets sent via multicast
 		u_long ifi_iqdrops;           ///< dropped on input, this interface
 		u_long ifi_noproto;           ///< destined for unsupported protocol
-		struct timeval ifi_lastchange;///< last updated
-	} if_data;
+		struct timeval ifi_lastchange;///< 记录任何统计改变的最近时间 last updated
+	} if_data;                        ///< 用来描述接口的硬件特性
 	/* procedure handles */
-	int(*if_init)///< init routine
+	int(*if_init)/// 初始化接口 init routine
 	        __P((int) );
-	int(*if_output)///< output routine (enqueue)
+	int(*if_output)/// 对要传输的输出分组进行排队 output routine (enqueue)
 	        __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	             struct rtentry *) );
-	int(*if_start)///< initiate output routine
+	int(*if_start)/// 启动分组的传输 initiate output routine
 	        __P((struct ifnet *) );
-	int(*if_done)                  ///< output complete routine
-	        __P((struct ifnet *) );///< (XXX not used; fake prototype)
-	int(*if_ioctl)                 ///< ioctl routine
+	int(*if_done)                  /// 传输完成后的清除 (未用) output complete routine
+	        __P((struct ifnet *) );/// (XXX not used; fake prototype)
+	int(*if_ioctl)                 /// 处理I/O控制命令 ioctl routine
 	        __P((struct ifnet *, u_long, caddr_t));
 	int(*if_reset)
-	        __P((int) );///< new autoconfig will permit removal
-	int(*if_watchdog)   ///< timer routine
+	        __P((int) );/// 复位接口设备 new autoconfig will permit removal
+	int(*if_watchdog)   /// 周期性接口例程 timer routine
 	        __P((int) );
 	struct ifqueue {
-		struct mbuf *ifq_head;
-		struct mbuf *ifq_tail;
-		int ifq_len;
-		int ifq_maxlen;
-		int ifq_drops;
-	} if_snd;///< output queue
+		struct mbuf *ifq_head;///< 指向队列的第一个分组 (下一个要输出的分组)
+		struct mbuf *ifq_tail;///< 指向队列最后一个分组
+		int ifq_len;          ///< 是当前队列中分组的数目
+		int ifq_maxlen;       ///< 队列中允许的缓存最大个数
+		int ifq_drops;        ///< 统计因为队列满而丢弃的分组数
+	} if_snd;                 ///< 接口输出分组队列 output queue
 };
 #define if_mtu if_data.ifi_mtu
 #define if_type if_data.ifi_type
@@ -160,24 +160,24 @@ struct ifnet {
 #define if_noproto if_data.ifi_noproto
 #define if_lastchange if_data.ifi_lastchange
 
-#define IFF_UP 0x1          ///< interface is up
-#define IFF_BROADCAST 0x2   ///< broadcast address valid
-#define IFF_DEBUG 0x4       ///< turn on debugging
-#define IFF_LOOPBACK 0x8    ///< is a loopback net
-#define IFF_POINTOPOINT 0x10///< interface is point-to-point link
-#define IFF_NOTRAILERS 0x20 ///< avoid use of trailers
-#define IFF_RUNNING 0x40    ///< resources allocated
-#define IFF_NOARP 0x80      ///< no address resolution protocol
-#define IFF_PROMISC 0x100   ///< receive all packets
-#define IFF_ALLMULTI 0x200  ///< receive all multicast packets
-#define IFF_OACTIVE 0x400   ///< transmission in progress
-#define IFF_SIMPLEX 0x800   ///< can't hear own transmissions
-#define IFF_LINK0 0x1000    ///< per link layer defined bit
-#define IFF_LINK1 0x2000    ///< per link layer defined bit
-#define IFF_LINK2 0x4000    ///< per link layer defined bit
-#define IFF_MULTICAST 0x8000///< supports multicast
+#define IFF_UP 0x1          ///< 接口正在工作 interface is up
+#define IFF_BROADCAST 0x2   ///< 接口用于广播网 broadcast address valid
+#define IFF_DEBUG 0x4       ///< 这个接口允许调试 turn on debugging
+#define IFF_LOOPBACK 0x8    ///< 接口用于环回网络 is a loopback net
+#define IFF_POINTOPOINT 0x10///< 接口用于点对点网络 interface is point-to-point link
+#define IFF_NOTRAILERS 0x20 ///< 避免使用尾部封装 avoid use of trailers
+#define IFF_RUNNING 0x40    ///< 资源已分配给这个接口 resources allocated
+#define IFF_NOARP 0x80      ///< 在这个接口上不使用ARP协议 no address resolution protocol
+#define IFF_PROMISC 0x100   ///< 接口接收所有网络分组 receive all packets
+#define IFF_ALLMULTI 0x200  ///< 接口正接收所有多播分组 receive all multicast packets
+#define IFF_OACTIVE 0x400   ///< 正在传输数据 transmission in progress
+#define IFF_SIMPLEX 0x800   ///< 接口不能接收它自己发送的数据 can't hear own transmissions
+#define IFF_LINK0 0x1000    ///< 由设备驱动程序定义 per link layer defined bit
+#define IFF_LINK1 0x2000    ///< 由设备驱动程序定义 per link layer defined bit
+#define IFF_LINK2 0x4000    ///< 由设备驱动程序定义 per link layer defined bit
+#define IFF_MULTICAST 0x8000///< 接口支持多播 supports multicast
 
-/// flags set internally only:
+/// 对所有在“内核专用”列中作了记号的标志进行按位“或”操作 flags set internally only:
 #define IFF_CANTCHANGE                                             \
 	(IFF_BROADCAST | IFF_POINTOPOINT | IFF_RUNNING | IFF_OACTIVE | \
 	 IFF_SIMPLEX | IFF_MULTICAST | IFF_ALLMULTI)
@@ -188,8 +188,11 @@ struct ifnet {
  * (defined above).  Entries are added to and deleted from these structures
  * by these macros, which should be called with ipl raised to splimp().
  */
-#define IF_QFULL(ifq) ((ifq)->ifq_len >= (ifq)->ifq_maxlen)
-#define IF_DROP(ifq) ((ifq)->ifq_drops++)
+#define IF_QFULL(ifq) ((ifq)->ifq_len >= (ifq)->ifq_maxlen)///< ifq是否满
+#define IF_DROP(ifq) ((ifq)->ifq_drops++)                  ///< IF_DROP仅将与ifq关联的ifq_drops加1。这个名字会引起误导:调用者丢弃这个分组
+/**
+ * 把分组m追加到ifq队列的后面。分组通过mbuf首部中的m_nextpkt链接在一起
+ */
 #define IF_ENQUEUE(ifq, m)                  \
 	{                                       \
 		(m)->m_nextpkt = 0;                 \
@@ -200,6 +203,9 @@ struct ifnet {
 		(ifq)->ifq_tail = m;                \
 		(ifq)->ifq_len++;                   \
 	}
+/**
+ * 把分组m插入到ifq队列的前面
+ */
 #define IF_PREPEND(ifq, m)                \
 	{                                     \
 		(m)->m_nextpkt = (ifq)->ifq_head; \
@@ -208,6 +214,9 @@ struct ifnet {
 		(ifq)->ifq_head = (m);            \
 		(ifq)->ifq_len++;                 \
 	}
+/**
+ * 从ifq队列中取走第一个分组。m指向取走的分组,若队列为空,则m为空值
+ */
 #define IF_DEQUEUE(ifq, m)                              \
 	{                                                   \
 		(m) = (ifq)->ifq_head;                          \
@@ -223,13 +232,14 @@ struct ifnet {
 #define IFNET_SLOWHZ 1///< granularity is 1 second
 
 /**
+ * 通过ifa_next把分配给一个接口的所有地址链接起来，它还包括一个指回接口的ifnet结构的指针ifa_ifp
  * The ifaddr structure contains information about one address
  * of an interface.  They are maintained by the different address families,
  * are allocated and attached when an address is set, and are linked
  * together so all addresses for an interface can be located.
  */
 struct ifaddr {
-	struct sockaddr *ifa_addr;   ///< address of interface
+	struct sockaddr *ifa_addr;   ///< ifa_addr指向接口的一个协议地址，而ifa_netmask指向一个位掩码，它用于选择ifa_addr中的网络部分。地址中表示网络部分的比特在掩码中被设置为1，地址中表示主机的部分被设置为0 address of interface
 	struct sockaddr *ifa_dstaddr;///< other end of p-to-p link
 #define ifa_broadaddr ifa_dstaddr///< broadcast address interface
 	struct sockaddr *ifa_netmask;///< used to determine subnet
@@ -340,7 +350,7 @@ char *ether_sprintf __P((u_char *) );
 
 void if_attach __P((struct ifnet *) );
 void if_down __P((struct ifnet *) );
-void if_qflush __P((struct ifqueue *) );
+void if_qflush __P((struct ifqueue *) );///< 丢弃队列ifq中的所有分组,例如,当一个接口被关闭了
 void if_slowtimo __P((void *) );
 void if_up __P((struct ifnet *) );
 #ifdef vax
