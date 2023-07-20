@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -81,7 +82,7 @@
 extern struct ifqueue pkintrq;
 #endif
 
-u_char etherbroadcastaddr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+u_char etherbroadcastaddr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};///< 以太网广播地址
 extern struct ifnet loif;
 #define senderr(e)   \
 	{                \
@@ -89,19 +90,19 @@ extern struct ifnet loif;
 		goto bad;    \
 	}
 
-/*
+/**
  * Ethernet output routine.
  * Encapsulate a packet of type family for the local net.
  * Use trailer local net encapsulation if enough data in first
  * packet leaves a multiple of 512 bytes of data in remainder.
  * Assumes that ifp is actually pointer to arpcom structure.
+ * @param ifp 指向输出接口的ifnet结构
+ * @param m0 要发送的分组
+ * @param dst 分组的目标地址
+ * @param rt0 路由信息
+ * @return
  */
-int ether_output(ifp, m0, dst, rt0)
-register struct ifnet *ifp;
-struct mbuf *m0;
-struct sockaddr *dst;
-struct rtentry *rt0;
-{
+int ether_output(register struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst, struct rtentry *rt0) {
 	short type;
 	int s, error = 0;
 	u_char edst[6];
@@ -302,16 +303,16 @@ bad:
 	return (error);
 }
 
-/*
+/**
+ * 检查结构ether_header来判断接收到的数据的类型,并将接收到的分组加入到队列中等待处理。
  * Process a received Ethernet packet;
  * the packet is in the mbuf chain m without
  * the ether header, which is provided separately.
+ * @param ifp 一个指向接收此分组的接口的ifnet结构的指针
+ * @param eh 一个指向接收分组的以太网首部的指针
+ * @param m 一个指向接收分组的指针 (不包括以太网首部)
  */
-void
-        ether_input(ifp, eh, m) struct ifnet *ifp;
-register struct ether_header *eh;
-struct mbuf *m;
-{
+void ether_input(struct ifnet *ifp, register struct ether_header *eh, struct mbuf *m) {
 	register struct ifqueue *inq;
 #ifdef ISO
 	register struct llc *l;
@@ -463,7 +464,7 @@ struct mbuf *m;
 	splx(s);
 }
 
-/*
+/**
  * Convert Ethernet address to printable (loggable) representation.
  */
 static char digits[] = "0123456789abcdef";
@@ -484,7 +485,7 @@ register u_char *ap;
 	return (etherbuf);
 }
 
-/*
+/**
  * Perform common duties while attaching to interface list
  */
 void
@@ -510,7 +511,7 @@ void
 
 u_char ether_ipmulticast_min[6] = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x00};
 u_char ether_ipmulticast_max[6] = {0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff};
-/*
+/**
  * Add an Ethernet multicast address or range of addresses to the list for a
  * given interface.
  */
@@ -597,7 +598,7 @@ register struct arpcom *ac;
 	return (ENETRESET);
 }
 
-/*
+/**
  * Delete a multicast address record.
  */
 int ether_delmulti(ifr, ac)

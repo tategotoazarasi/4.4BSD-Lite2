@@ -86,36 +86,36 @@ struct ether_header;
  */
 
 struct ifnet {
-	char *if_name;             ///< 是一个短字符串，用于标识接口的类型，而if_unit标识多个相同类型的实例。例如，一个系统有两个SLIP接口，每个都有一个if_name，包含两字节的“s1”和一个if_unit。对第一个接口，if_unit为0；对第二个接口为1。if_index在内核中唯一地标识这个接口，这在sysctl系统调用以及路由域中要用到。 name, e.g. ``en'' or ``lo''
+	char *if_name;             ///< 接口的文本名称 是一个短字符串，用于标识接口的类型，而if_unit标识多个相同类型的实例。例如，一个系统有两个SLIP接口，每个都有一个if_name，包含两字节的“s1”和一个if_unit。对第一个接口，if_unit为0；对第二个接口为1。if_index在内核中唯一地标识这个接口，这在sysctl系统调用以及路由域中要用到。 name, e.g. ``en'' or ``lo''
 	struct ifnet *if_next;     ///< 把所有接口的ifnet结构链接成一个链表。函数if_attach在系统初始化期间构造这个链表。if_addrlist指向这个接口的ifaddr结构列表。每个ifaddr结构存储一个要用这个接口通信的协议的地址信息。 all struct ifnets are chained
 	struct ifaddr *if_addrlist;///< linked list of addresses per if
 	int if_pcount;             ///< number of promiscuous listeners
 	caddr_t if_bpf;            ///< packet filter structure
-	u_short if_index;          ///< numeric abbreviation for this if
+	u_short if_index;          ///< 唯一地标识接口 numeric abbreviation for this if
 	short if_unit;             ///< sub-unit for lower level driver
 	short if_timer;            ///< 以秒为单位记录时间，直到内核为此接口调用函数if_watchdog为止。这个函数用于设备驱动程序定时收集接口统计，或用于复位运行不正确的硬件 time 'til if_watchdog called
 	short if_flags;            ///< 表明接口的操作状态和属性。一个进程能检查所有的标志，但不能改变在图3-7中“内核专用”列中作了记号的标志。这些标志用4.4节讨论的命令SIOCGIFFLAGS和SIOCSIFFLAGS来访问。 up/down, broadcast, etc.
 	struct if_data {
 		/* generic interface information */
-		u_char ifi_type;              ///< 指明接口支持的硬件地址类型 ethernet, tokenring, etc
+		u_char ifi_type;              ///< 接口的类型 指明接口支持的硬件地址类型 ethernet, tokenring, etc
 		u_char ifi_addrlen;           ///< 数据链路地址的长度 media address length
 		u_char ifi_hdrlen;            ///< 由硬件附加给任何分组的首部的长度 media header length
-		u_long ifi_mtu;               ///< 接口传输单元的最大值：接口在一次输出操作中能传输的最大数据单元的字节数。这是控制网络和传输协议创建分组大小的重要参数。对于以太网来说，这个值是1500。maximum transmission unit
+		u_long ifi_mtu;               ///< 接口的MTU(字节) 接口传输单元的最大值：接口在一次输出操作中能传输的最大数据单元的字节数。这是控制网络和传输协议创建分组大小的重要参数。对于以太网来说，这个值是1500。maximum transmission unit
 		u_long ifi_metric;            ///< 通常是0；其他更大的值不利于路由通过此接口。 routing metric (external only)
 		u_long ifi_baudrate;          ///< 指定接口的传输速率，只有SLIP接口才设置它。 linespeed
 		                              /* volatile statistics */
-		u_long ifi_ipackets;          ///< packets received on interface
-		u_long ifi_ierrors;           ///< input errors on interface
-		u_long ifi_opackets;          ///< packets sent on interface
-		u_long ifi_oerrors;           ///< output errors on interface
-		u_long ifi_collisions;        ///< collisions on csma interfaces
-		u_long ifi_ibytes;            ///< total number of octets received
-		u_long ifi_obytes;            ///< total number of octets sent
-		u_long ifi_imcasts;           ///< packets received via multicast
-		u_long ifi_omcasts;           ///< packets sent via multicast
-		u_long ifi_iqdrops;           ///< dropped on input, this interface
-		u_long ifi_noproto;           ///< destined for unsupported protocol
-		struct timeval ifi_lastchange;///< 记录任何统计改变的最近时间 last updated
+		u_long ifi_ipackets;          ///< 在接口接收到的分组数 packets received on interface
+		u_long ifi_ierrors;           ///< 接收到的有输入差错分组数 input errors on interface
+		u_long ifi_opackets;          ///< 接口上发送的分组数 packets sent on interface
+		u_long ifi_oerrors;           ///< 接口上输出的差错数 output errors on interface
+		u_long ifi_collisions;        ///< 在CSMA接口的冲突数 if_collisionscollisions on csma interfaces
+		u_long ifi_ibytes;            ///< 接收到的字节总数 total number of octets received
+		u_long ifi_obytes;            ///< 发送的字节总数 total number of octets sent
+		u_long ifi_imcasts;           ///< 接收到的多播分组数 packets received via multicast
+		u_long ifi_omcasts;           ///< 发送的多播分组数 packets sent via multicast
+		u_long ifi_iqdrops;           ///< 被此接口丢失的输入分组数 dropped on input, this interface
+		u_long ifi_noproto;           ///< 指定为不支持协议的分组数 destined for unsupported protocol
+		struct timeval ifi_lastchange;///< 上一次改变统计的时间 记录任何统计改变的最近时间 last updated
 	} if_data;                        ///< 用来描述接口的硬件特性
 	/* procedure handles */
 	int(*if_init)/// 初始化接口 init routine
@@ -136,29 +136,29 @@ struct ifnet {
 	struct ifqueue {
 		struct mbuf *ifq_head;///< 指向队列的第一个分组 (下一个要输出的分组)
 		struct mbuf *ifq_tail;///< 指向队列最后一个分组
-		int ifq_len;          ///< 是当前队列中分组的数目
+		int ifq_len;          ///< 是当前队列中分组的数目输出队列中的分组数
 		int ifq_maxlen;       ///< 队列中允许的缓存最大个数
-		int ifq_drops;        ///< 统计因为队列满而丢弃的分组数
+		int ifq_drops;        ///< 统计因为队列满而丢弃的分组数 在输出期间丢失的分组数
 	} if_snd;                 ///< 接口输出分组队列 output queue
 };
-#define if_mtu if_data.ifi_mtu
-#define if_type if_data.ifi_type
+#define if_mtu if_data.ifi_mtu  ///< 接口的MTU(字节)
+#define if_type if_data.ifi_type///< 接口的类型
 #define if_addrlen if_data.ifi_addrlen
 #define if_hdrlen if_data.ifi_hdrlen
 #define if_metric if_data.ifi_metric
 #define if_baudrate if_data.ifi_baudrate
-#define if_ipackets if_data.ifi_ipackets
-#define if_ierrors if_data.ifi_ierrors
-#define if_opackets if_data.ifi_opackets
-#define if_oerrors if_data.ifi_oerrors
-#define if_collisions if_data.ifi_collisions
-#define if_ibytes if_data.ifi_ibytes
-#define if_obytes if_data.ifi_obytes
-#define if_imcasts if_data.ifi_imcasts
-#define if_omcasts if_data.ifi_omcasts
-#define if_iqdrops if_data.ifi_iqdrops
-#define if_noproto if_data.ifi_noproto
-#define if_lastchange if_data.ifi_lastchange
+#define if_ipackets if_data.ifi_ipackets    ///< 在接口接收到的分组数
+#define if_ierrors if_data.ifi_ierrors      ///< 接收到的有输入差错分组数
+#define if_opackets if_data.ifi_opackets    ///< 接口上发送的分组数
+#define if_oerrors if_data.ifi_oerrors      ///< 接口上输出的差错数
+#define if_collisions if_data.ifi_collisions///< 在CSMA接口的冲突数
+#define if_ibytes if_data.ifi_ibytes        ///< 接收到的字节总数
+#define if_obytes if_data.ifi_obytes        ///< 发送的字节总数
+#define if_imcasts if_data.ifi_imcasts      ///< 接收到的多播分组数
+#define if_omcasts if_data.ifi_omcasts      ///< 发送的多播分组数
+#define if_iqdrops if_data.ifi_iqdrops      ///< 被此接口丢失的输入分组数
+#define if_noproto if_data.ifi_noproto      ///< 指定为不支持协议的分组数
+#define if_lastchange if_data.ifi_lastchange///< 上一次改变统计的时间
 
 #define IFF_UP 0x1          ///< 接口正在工作 interface is up
 #define IFF_BROADCAST 0x2   ///< 接口用于广播网 broadcast address valid

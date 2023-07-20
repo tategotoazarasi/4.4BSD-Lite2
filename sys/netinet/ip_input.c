@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -57,11 +58,11 @@
 
 #ifndef IPFORWARDING
 #ifdef GATEWAY
-#define IPFORWARDING 1 /* forward IP packets not for us */
-#else                  /* GATEWAY */
-#define IPFORWARDING 0 /* don't forward IP packets not for us */
-#endif                 /* GATEWAY */
-#endif                 /* IPFORWARDING */
+#define IPFORWARDING 1///< forward IP packets not for us
+#else                 /* GATEWAY */
+#define IPFORWARDING 0///< don't forward IP packets not for us
+#endif                /* GATEWAY */
+#endif                /* IPFORWARDING */
 #ifndef IPSENDREDIRECTS
 #define IPSENDREDIRECTS 1
 #endif
@@ -76,10 +77,10 @@ extern struct domain inetdomain;
 extern struct protosw inetsw[];
 u_char ip_protox[IPPROTO_MAX];
 int ipqmaxlen = IFQ_MAXLEN;
-struct in_ifaddr *in_ifaddr; /* first inet address */
-struct ifqueue ipintrq;
+struct in_ifaddr *in_ifaddr;///< first inet address
+struct ifqueue ipintrq;     ///< IP输入队列
 
-/*
+/**
  * We need to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
  * using IP source routing.  This allows connection establishment and
@@ -88,9 +89,9 @@ struct ifqueue ipintrq;
  */
 int ip_nhops = 0;
 static struct ip_srcrt {
-	struct in_addr dst;            /* final destination */
-	char nop;                      /* one NOP to align */
-	char srcopt[IPOPT_OFFSET + 1]; /* OPTVAL, OLEN and OFFSET */
+	struct in_addr dst;           ///< final destination
+	char nop;                     ///< one NOP to align
+	char srcopt[IPOPT_OFFSET + 1];///< OPTVAL, OLEN and OFFSET
 	struct in_addr route[MAX_IPOPTLEN / sizeof(struct in_addr)];
 } ip_srcrt;
 
@@ -100,7 +101,7 @@ u_long *ip_ifmatrix;
 #endif
 
 static void save_rte __P((u_char *, struct in_addr));
-/*
+/**
  * IP initialization: fill in IP protocol switch table.
  * All protocols not implemented in kernel go to raw IP protocol handler.
  */
@@ -133,7 +134,7 @@ struct route ipforward_rt;
 
 void ip_intercept(struct mbuf *m);
 
-/*
+/**
  * Ip input routine.  Checksum and byte swap header.  If fragmented
  * try to reassemble.  Process options.  Pass to next level.
  */
@@ -394,7 +395,7 @@ bad:
 	goto next;
 }
 
-/*
+/**
  * Take incoming datagram fragment and try to
  * reassemble it into whole datagram.  If a chain for
  * reassembly of this datagram already exists, then it
@@ -537,7 +538,7 @@ dropfrag:
 	return (0);
 }
 
-/*
+/**
  * Free a fragment reassembly header and all
  * associated datagrams.
  */
@@ -555,7 +556,7 @@ void
 	(void) m_free(dtom(fp));
 }
 
-/*
+/**
  * Put an ip fragment on a reassembly chain.
  * Like insque, but pointers in middle of structure.
  */
@@ -570,7 +571,7 @@ void
 	prev->ipf_next           = p;
 }
 
-/*
+/**
  * To ip_enq as remque is to insque.
  */
 void
@@ -581,7 +582,7 @@ void
 	p->ipf_next->ipf_prev = p->ipf_prev;
 }
 
-/*
+/**
  * IP timer processing;
  * if a timer expires on a reassembly
  * queue, discard it.
@@ -606,7 +607,7 @@ void ip_slowtimo() {
 	splx(s);
 }
 
-/*
+/**
  * Drain off all datagram fragments.
  */
 void ip_drain() {
@@ -617,7 +618,7 @@ void ip_drain() {
 	}
 }
 
-/*
+/**
  * Do option processing on a datagram,
  * possibly discarding it if bad options are encountered,
  * or forwarding it if source-routed.
@@ -813,7 +814,7 @@ bad:
 	return (1);
 }
 
-/*
+/**
  * Given address of next destination (final or next hop),
  * return internet address info of interface to be used to get there.
  */
@@ -841,7 +842,7 @@ struct in_addr dst;
 	return ((struct in_ifaddr *) ipforward_rt.ro_rt->rt_ifa);
 }
 
-/*
+/**
  * Save incoming source route for use in replies,
  * to be picked up later by ip_srcroute if the receiver is interested.
  */
@@ -864,7 +865,7 @@ struct in_addr dst;
 	ip_srcrt.dst = dst;
 }
 
-/*
+/**
  * Retrieve incoming source route for use in replies,
  * in the same form used by setsockopt.
  * The first hop is placed before the options, will be removed later.
@@ -932,7 +933,7 @@ ip_srcroute() {
 	return (m);
 }
 
-/*
+/**
  * Strip out IP options, at higher
  * level protocol in the kernel.
  * Second argument is buffer to which options
@@ -966,7 +967,7 @@ u_char inetctlerrmap[PRC_NCMDS] = {
         0, 0, 0, 0,
         ENOPROTOOPT};
 
-/*
+/**
  * Forward a packet.  If some error occurs return the sender
  * an icmp packet.  Note we can't always generate a meaningful
  * icmp message because icmp doesn't have a large enough repertoire

@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +34,8 @@
  *	@(#)if_ether.c	8.2 (Berkeley) 9/26/94
  */
 
-/*
+/**
+ * @file
  * Ethernet address resolution protocol.
  * TODO:
  *	add "inuse/lock" bit (or ref. count) along with valid bit
@@ -72,9 +74,9 @@
 
 
 /* timer values */
-int arpt_prune = (5 * 60 * 1); /* walk list every 5 minutes */
-int arpt_keep  = (20 * 60);    /* once resolved, good for 20 more minutes */
-int arpt_down  = 20;           /* once declared down, don't send for 20 secs */
+int arpt_prune = (5 * 60 * 1);///< walk list every 5 minutes
+int arpt_keep  = (20 * 60);   ///< once resolved, good for 20 more minutes
+int arpt_down  = 20;          ///< once declared down, don't send for 20 secs
 #define rt_expire rt_rmx.rmx_expire
 
 static void arprequest __P((struct arpcom *, u_long *, u_long *, u_char *) );
@@ -89,13 +91,14 @@ struct llinfo_arp llinfo_arp = {&llinfo_arp, &llinfo_arp};
 struct ifqueue arpintrq      = {0, 0, 0, 50};
 int arp_inuse, arp_allocated, arp_intimer;
 int arp_maxtries = 5;
-int useloopback  = 1; /* use loopback interface for local traffic */
+int useloopback  = 1;///< use loopback interface for local traffic
 int arpinit_done = 0;
 
-/*
+/**
  * Timeout routine.  Age arp_tab entries periodically.
+ *
+ * ARGSUSED
  */
-/* ARGSUSED */
 static void
         arptimer(ignored_arg) void *ignored_arg;
 {
@@ -112,7 +115,7 @@ static void
 	splx(s);
 }
 
-/*
+/**
  * Parallel to llc_rtrequest.
  */
 void
@@ -218,7 +221,7 @@ struct sockaddr *sa;
 	}
 }
 
-/*
+/**
  * Broadcast an ARP packet, asking who has addr on interface ac.
  */
 void
@@ -228,7 +231,7 @@ register struct in_addr *addr;
 	arprequest(ac, &ac->ac_ipaddr.s_addr, &addr->s_addr, ac->ac_enaddr);
 }
 
-/*
+/**
  * Broadcast an ARP request. Caller specifies:
  *	- arp header source ip address
  *	- arp header target ip address
@@ -268,7 +271,7 @@ register u_char *enaddr;
 	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *) 0);
 }
 
-/*
+/**
  * Resolve an IP address into an ethernet address.  If success,
  * desten is filled in.  If there is no entry in arptab,
  * set one up and broadcast a request for the IP address.
@@ -342,7 +345,7 @@ register u_char *desten;
 	return (0);
 }
 
-/*
+/**
  * Common length and type checks are done here,
  * then the protocol-specific routine is called.
  */
@@ -374,7 +377,7 @@ void arpintr() {
 	}
 }
 
-/*
+/**
  * ARP for Internet protocols on 10 Mb/s Ethernet.
  * Algorithm is that given in RFC 826.
  * In addition, a sanity check is performed on the sender
@@ -488,7 +491,7 @@ reply:
 	return;
 }
 
-/*
+/**
  * Free an arp entry.
  */
 static void
@@ -508,7 +511,7 @@ static void
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *) 0, rt_mask(rt),
 	          0, (struct rtentry **) 0);
 }
-/*
+/**
  * Lookup or enter a new address in arptab.
  */
 static struct llinfo_arp *
