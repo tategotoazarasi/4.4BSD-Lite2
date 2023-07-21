@@ -102,12 +102,15 @@ void
 #endif
 }
 
-int looutput(ifp, m, dst, rt)
-struct ifnet *ifp;
-register struct mbuf *m;
-struct sockaddr *dst;
-register struct rtentry *rt;
-{
+/**
+ * 将输出分组放置到分组的目的地址指明的协议的输入队列中
+ * @param ifp 指向输出接口的ifnet结构的指针
+ * @param m 要发送的分组
+ * @param dst 分组的目的地址
+ * @param rt 路由信息
+ * @return
+ */
+int looutput(struct ifnet *ifp, register struct mbuf *m, struct sockaddr *dst, register struct rtentry *rt) {
 	int s, isr;
 	register struct ifqueue *ifq = 0;
 
