@@ -54,8 +54,12 @@ $(OBJDIR)/%.o:%.c
 
 KERNOBJS := $(addprefix $(OBJDIR)/,$(SRCS:.c=.o))
 
+SYS_SUBDIRS := $(shell find sys -type d)
+SYS_INCLUDES := $(patsubst %,-I %,$(SYS_SUBDIRS))
+
+$(KERNOBJS): KERNFLAGS = -nostdinc -fno-builtin -DKERNEL -DINET $(SYS_INCLUDES)
 # Change here: add -I flags for every subdirectory of 'sys'
-$(KERNOBJS): KERNFLAGS = -nostdinc -fno-builtin -DKERNEL -DINET -I sys -I sys/kern -I sys/net -I sys/netinet
+#$(KERNOBJS): KERNFLAGS = -nostdinc -fno-builtin -DKERNEL -DINET -I sys -I sys/kern -I sys/net -I sys/netinet
 
 $(OBJDIR)/lib/handshake.o: CFLAGS += -Wno-parentheses
 
