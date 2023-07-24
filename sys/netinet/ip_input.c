@@ -77,7 +77,7 @@ extern struct domain inetdomain;
 extern struct protosw inetsw[];
 u_char ip_protox[IPPROTO_MAX];
 int ipqmaxlen = IFQ_MAXLEN;
-struct in_ifaddr *in_ifaddr;///< first inet address
+struct in_ifaddr *in_ifaddr;///< in_ifaddr结构列表的首部 first inet address
 struct ifqueue ipintrq;     ///< IP输入队列
 
 /**

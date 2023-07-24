@@ -51,26 +51,26 @@
 #define SIOCADDRT _IOW('r', 10, struct ortentry)///< add route
 #define SIOCDELRT _IOW('r', 11, struct ortentry)///< delete route
 
-#define SIOCSIFADDR _IOW('i', 12, struct ifreq)     ///< set ifnet address
+#define SIOCSIFADDR _IOW('i', 12, struct ifreq)     ///< 设置接口地址 set ifnet address
 #define OSIOCGIFADDR _IOWR('i', 13, struct ifreq)   ///< get ifnet address
-#define SIOCGIFADDR _IOWR('i', 33, struct ifreq)    ///< get ifnet address
-#define SIOCSIFDSTADDR _IOW('i', 14, struct ifreq)  ///< set p-p address
+#define SIOCGIFADDR _IOWR('i', 33, struct ifreq)    ///< 获得接口地址 get ifnet address
+#define SIOCSIFDSTADDR _IOW('i', 14, struct ifreq)  ///< 设置接口目标地址 set p-p address
 #define OSIOCGIFDSTADDR _IOWR('i', 15, struct ifreq)///< get p-p address
-#define SIOCGIFDSTADDR _IOWR('i', 34, struct ifreq) ///< get p-p address
+#define SIOCGIFDSTADDR _IOWR('i', 34, struct ifreq) ///< 获得接口目标地址 get p-p address
 #define SIOCSIFFLAGS _IOW('i', 16, struct ifreq)    ///< 设置接口标志 set ifnet flags
 #define SIOCGIFFLAGS _IOWR('i', 17, struct ifreq)   ///< 获得接口标志 get ifnet flags
 #define OSIOCGIFBRDADDR _IOWR('i', 18, struct ifreq)///< get broadcast addr
-#define SIOCGIFBRDADDR _IOWR('i', 35, struct ifreq) ///< get broadcast addr
-#define SIOCSIFBRDADDR _IOW('i', 19, struct ifreq)  ///< set broadcast addr
+#define SIOCGIFBRDADDR _IOWR('i', 35, struct ifreq) ///< 获得接口广播地址 get broadcast addr
+#define SIOCSIFBRDADDR _IOW('i', 19, struct ifreq)  ///< 设置接口广播地址 set broadcast addr
 #define OSIOCGIFCONF _IOWR('i', 20, struct ifconf)  ///< 获取接口配置清单 get ifnet list
 #define SIOCGIFCONF _IOWR('i', 36, struct ifconf)   ///< get ifnet list
 #define OSIOCGIFNETMASK _IOWR('i', 21, struct ifreq)///< get net addr mask
-#define SIOCGIFNETMASK _IOWR('i', 37, struct ifreq) ///< get net addr mask
-#define SIOCSIFNETMASK _IOW('i', 22, struct ifreq)  ///< set net addr mask
+#define SIOCGIFNETMASK _IOWR('i', 37, struct ifreq) ///< 获得接口网络掩码 get net addr mask
+#define SIOCSIFNETMASK _IOW('i', 22, struct ifreq)  ///< 设置接口网络掩码 set net addr mask
 #define SIOCGIFMETRIC _IOWR('i', 23, struct ifreq)  ///< 获得接口度量 get IF metric
 #define SIOCSIFMETRIC _IOW('i', 24, struct ifreq)   ///< 设置接口度量 set IF metric
-#define SIOCDIFADDR _IOW('i', 25, struct ifreq)     ///< delete IF addr
-#define SIOCAIFADDR _IOW('i', 26, struct ifaliasreq)///< add/chg IF alias
+#define SIOCDIFADDR _IOW('i', 25, struct ifreq)     ///< 删除接口地址 delete IF addr
+#define SIOCAIFADDR _IOW('i', 26, struct ifaliasreq)///< 添加接口地址 add/chg IF alias
 
 #define SIOCADDMULTI _IOW('i', 49, struct ifreq)///< add m'cast addr
 #define SIOCDELMULTI _IOW('i', 50, struct ifreq)///< del m'cast addr

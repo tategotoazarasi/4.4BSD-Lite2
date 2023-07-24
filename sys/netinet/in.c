@@ -1,4 +1,5 @@
-/*
+/**
+ * @copyright
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -53,7 +54,8 @@
 #include <netinet/ip_var.h>
 
 #ifdef INET
-/*
+/**
+ * 返回 in 中的网络和子网部分。主机比特被设置为 0。对于 D 类地址,返回 D 类首标比特和用于多播组的 0 比特
  * Return the network number from an internet address.
  */
 u_long
@@ -89,7 +91,8 @@ struct in_addr in;
 #define SUBNETSARELOCAL 1
 #endif
 int subnetsarelocal = SUBNETSARELOCAL;
-/*
+/**
+ * 如果主机 in 被定位在一个直接连接的网络,则返回真。如果全局变量 subnetsarelocal 非 0,则所有直接连接的网络的子网也被认为是本地的
  * Return 1 if an internet address is for a ``local'' host
  * (one to which we have a connection).  If subnetsarelocal
  * is true, this includes other subnets of the local net.
@@ -113,7 +116,8 @@ struct in_addr in;
 	return (0);
 }
 
-/*
+/**
+ * 如果地址为 in 的 IP 分组有资格转发,则返回真。D 类和 E 类地址、环回网络地址和有一个为 0 网络号的地址不能转发
  * Determine whether an IP address is in a reserved set of addresses
  * that may not be forwarded, or whether datagrams to that destination
  * may be forwarded.
@@ -134,7 +138,7 @@ struct in_addr in;
 	return (1);
 }
 
-/*
+/**
  * Trim a mask in a sockaddr
  */
 void
@@ -154,17 +158,17 @@ void
 int in_interfaces; /* number of external internet interfaces */
 extern struct ifnet loif;
 
-/*
+/**
  * Generic internet control operations (ioctl's).
  * Ifp is 0 if not an interface-specific ioctl.
+ *
+ * ARGSUSED
+ * @param so 指向这个ioctl命令指定的插口
+ * @param cmd 标识ioctl命令指定的插口
+ * @param data 指向命令所用或返回的数据
+ * @param ifp 为空(来自soo_ioctl的无接口ioctl)或指向结构 ifreq或in_aliasreq中命名的接口 (来自ifioctl的接口 ioctl)
  */
-/* ARGSUSED */
-int in_control(so, cmd, data, ifp)
-struct socket *so;
-u_long cmd;
-caddr_t data;
-register struct ifnet *ifp;
-{
+int in_control(struct socket *so, u_long cmd, caddr_t data, register struct ifnet *ifp) {
 	register struct ifreq *ifr    = (struct ifreq *) data;
 	register struct in_ifaddr *ia = 0;
 	register struct ifaddr *ifa;
@@ -373,7 +377,7 @@ register struct ifnet *ifp;
 	return (0);
 }
 
-/*
+/**
  * Delete any existing route for an interface.
  */
 void
@@ -390,16 +394,15 @@ register struct in_ifaddr *ia;
 	ia->ia_flags &= ~IFA_ROUTE;
 }
 
-/*
+/**
  * Initialize an interface's internet address
  * and routing table entry.
+ * @param ifp 指向接口结构的指针
+ * @param ia 指向要改变的in_ifaddr结构的指针
+ * @param sin 指向请求的IP地址的指针
+ * @param scrub 指示这个接口如果存在路由应该被忽略
  */
-int in_ifinit(ifp, ia, sin, scrub)
-register struct ifnet *ifp;
-register struct in_ifaddr *ia;
-struct sockaddr_in *sin;
-int scrub;
-{
+int in_ifinit(register struct ifnet *ifp, register struct in_ifaddr *ia, struct sockaddr_in *sin, int scrub) {
 	register u_long i = ntohl(sin->sin_addr.s_addr);
 	struct sockaddr_in oldaddr;
 	int s = splimp(), flags = RTF_UP, error, ether_output();
@@ -479,7 +482,8 @@ int scrub;
 }
 
 
-/*
+/**
+ * 如果 in 是一个由 ifp 指向的接口所关联的广播地址,则返回真
  * Return 1 if the address might be a local broadcast address.
  */
 int in_broadcast(in, ifp)
@@ -512,7 +516,7 @@ struct ifnet *ifp;
 	return (0);
 #undef ia
 }
-/*
+/**
  * Add an address to the list of IP multicast addresses for a given interface.
  */
 struct in_multi *
@@ -579,7 +583,7 @@ register struct ifnet *ifp;
 	return (inm);
 }
 
-/*
+/**
  * Delete a multicast address record.
  */
 void

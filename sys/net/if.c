@@ -167,6 +167,7 @@ void
 }
 
 /**
+ * 在 ifnet 列表中查找有一个单播或广播地址 addr 的接口。返回一个指向这个匹配的 ifaddr 结构的指针; 或者若没有找到,则返回一个空指针
  * Locate an interface based on a complete address.
  *
  * ARGSUSED
@@ -193,6 +194,7 @@ register struct sockaddr *addr;
 	return ((struct ifaddr *) 0);
 }
 /**
+ * 在 ifnet 列表中查找目的地址为 addr 的接口。返回一个指向这个匹配的 ifaddr 结构的指针; 或者若没有找到,则返回一个空指针
  * Locate the point to point interface with a given destination address.
  *
  * ARGSUSED
@@ -217,6 +219,7 @@ register struct sockaddr *addr;
 }
 
 /**
+ * 在 ifnet 列表中查找与 addr 同一网络的地址。返回匹配的 ifaddr 结构的指针; 或者若没有找到,则返回一个空指针
  * Find an interface on a specific network.  If many, choice
  * is most specific found.
  */
@@ -258,6 +261,7 @@ struct sockaddr *addr;
 }
 
 /**
+ * 在 ifnet 列表中查找与 addr 具有相同地址族类的第一个地址。返回匹配的 ifaddr 结构的指针; 或者若没有找到,则返回一个空指针
  * Find an interface using a specific address family
  */
 struct ifaddr *
@@ -275,6 +279,7 @@ register int af;
 }
 
 /**
+ * 在 ifp 列表中查找与 addr 匹配的地址。用于精确匹配的引用次序为:一个点对点链路上的目的地址、一个同一网络上的地址和一个在同一地址族类的地址,则返回匹配的 ifaddr 结构的指针; 或者若没有找到,则返回一个空指针
  * Find an interface address specific to an interface best matching
  * a given address.
  */
@@ -418,6 +423,7 @@ void
 }
 
 /**
+ * 返回与 name 关联的 ifnet 结构的指针
  * Map interface name to
  * interface structure pointer.
  */
