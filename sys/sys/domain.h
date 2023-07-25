@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,28 +39,28 @@
  * Structure per communications domain.
  */
 
-/*
+/**
  * Forward structure declarations for function prototypes [sic].
  */
-struct	mbuf;
+struct mbuf;
 
-struct	domain {
-	int	dom_family;		/* AF_xxx */
-	char	*dom_name;
-	void	(*dom_init)		/* initialize domain data structures */
-		__P((void));
-	int	(*dom_externalize)	/* externalize access rights */
-		__P((struct mbuf *));
-	int	(*dom_dispose)		/* dispose of internalized rights */
-		__P((struct mbuf *));
-	struct	protosw *dom_protosw, *dom_protoswNPROTOSW;
-	struct	domain *dom_next;
-	int	(*dom_rtattach)		/* initialize routing table */
-		__P((void **, int));
-	int	dom_rtoffset;		/* an arg to rtattach, in bits */
-	int	dom_maxrtkey;		/* for routing layer */
+struct domain {
+	int dom_family;///< 一个地址族常量 (例如 AF_INET)，它指示在此域中协议使用的编址方式 AF_xxx
+	char *dom_name;///< 此域的一个文本名称 (例如“internet”)
+	void(*dom_init)///< initialize domain data structures
+	        __P((void) );
+	int(*dom_externalize)///< externalize access rights
+	        __P((struct mbuf *) );
+	int(*dom_dispose)///< dispose of internalized rights
+	        __P((struct mbuf *) );
+	struct protosw *dom_protosw, *dom_protoswNPROTOSW;
+	struct domain *dom_next;///< 指向在一个内核支持的域链表中的下一个域。包含所有域的链表通过全局指针 domains 来访问。
+	int(*dom_rtattach)      ///< initialize routing table
+	        __P((void **, int) );
+	int dom_rtoffset;///< an arg to rtattach, in bits
+	int dom_maxrtkey;///< for routing layer
 };
 
 #ifdef KERNEL
-struct	domain *domains;
+struct domain *domains;
 #endif

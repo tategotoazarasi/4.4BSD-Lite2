@@ -1,4 +1,5 @@
 /**
+ * @file
  * @copyright
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -44,11 +45,11 @@
 /*
  * Types
  */
-#define SOCK_STREAM 1   ///< stream socket
-#define SOCK_DGRAM 2    ///< datagram socket
-#define SOCK_RAW 3      ///< raw-protocol interface
-#define SOCK_RDM 4      ///< reliably-delivered message
-#define SOCK_SEQPACKET 5///< sequenced packet stream
+#define SOCK_STREAM 1   ///< 可靠的双向字节流服务 stream socket
+#define SOCK_DGRAM 2    ///< 最好的运输层数据报服务 datagram socket
+#define SOCK_RAW 3      ///< 最好的网络层数据报服务 raw-protocol interface
+#define SOCK_RDM 4      ///< 可靠的数据报服务 (未实现) reliably-delivered message
+#define SOCK_SEQPACKET 5///< 可靠的双向记录流服务 sequenced packet stream
 
 /*
  * Option flags per-socket.
@@ -92,9 +93,9 @@ struct linger {
 /*
  * Address families.
  */
-#define AF_UNSPEC 0      ///< unspecified
-#define AF_LOCAL 1       ///< local to host (pipes, portals)
-#define AF_UNIX AF_LOCAL ///< UNIX backward compatibility
+#define AF_UNSPEC 0     ///< unspecified
+#define AF_LOCAL 1      ///< 本地IPC local to host (pipes, portals)
+#define AF_UNIX AF_LOCAL///< UNIX backward compatibility
 #define AF_INET 2        ///< Internet internetwork: UDP, TCP, etc.
 #define AF_IMPLINK 3     ///< arpanet imp addresses
 #define AF_PUP 4         ///< pup protocols: e.g. BSP

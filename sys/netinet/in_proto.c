@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -76,7 +78,7 @@ int tp_ctloutput(), tp_usrreq();
 void eoninput(), eonctlinput(), eonprotoinit();
 #endif /* EON */
 
-extern struct domain inetdomain;
+extern struct domain inetdomain;///< Internet协议的domain结构
 
 struct protosw inetsw[] = {
         {0, &inetdomain, 0, 0,
@@ -204,7 +206,7 @@ struct protosw inetsw[] = {
                 0,
                 0,
         },
-};
+};///< Internet协议的protosw结构数组
 
 struct domain inetdomain =
         {AF_INET, "internet", 0, 0, 0,

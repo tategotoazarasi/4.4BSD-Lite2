@@ -1,4 +1,5 @@
 /**
+ * @file
  * @copyright
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +36,6 @@
  */
 
 /**
- * @file
  * Internet地址定义
  * Constants and structures defined by the internet system,
  * Per RFC 790, September 1981, and numerous additions.
@@ -45,19 +45,19 @@
  * Protocols
  */
 #define IPPROTO_IP 0    ///< dummy for IP
-#define IPPROTO_ICMP 1  ///< control message protocol
-#define IPPROTO_IGMP 2  ///< group mgmt protocol
+#define IPPROTO_ICMP 1  ///< Internet控制报文协议 control message protocol
+#define IPPROTO_IGMP 2  ///< Internet组管理协议 group mgmt protocol
 #define IPPROTO_GGP 3   ///< gateway^2 (deprecated)
-#define IPPROTO_TCP 6   ///< tcp
+#define IPPROTO_TCP 6   ///< 传输控制协议 tcp
 #define IPPROTO_EGP 8   ///< exterior gateway protocol
 #define IPPROTO_PUP 12  ///< pup
-#define IPPROTO_UDP 17  ///< user datagram protocol
+#define IPPROTO_UDP 17  ///< 用户数据报协议 user datagram protocol
 #define IPPROTO_IDP 22  ///< xns idp
 #define IPPROTO_TP 29   ///< tp-4 w/ class negotiation
 #define IPPROTO_EON 80  ///< ISO cnlp
 #define IPPROTO_ENCAP 98///< encapsulation header
 
-#define IPPROTO_RAW 255///< raw IP packet
+#define IPPROTO_RAW 255///< Internet协议(原始) raw IP packet
 #define IPPROTO_MAX 256
 
 
