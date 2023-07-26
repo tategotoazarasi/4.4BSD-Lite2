@@ -228,7 +228,7 @@ struct ifnet {
 		}                                               \
 	}
 
-#define IFQ_MAXLEN 50
+#define IFQ_MAXLEN 50 ///< IP输入队列的最大长度
 #define IFNET_SLOWHZ 1///< granularity is 1 second
 
 /**

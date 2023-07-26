@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -60,7 +62,7 @@ static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *) )
 static void ip_mloopback
         __P((struct ifnet *, struct mbuf *, struct sockaddr_in *) );
 
-/*
+/**
  * IP output.  The packet in mbuf chain m contains a skeletal IP
  * header (with len, off, ttl, proto, tos, src, dst).
  * The mbuf chain containing the packet will be freed.
@@ -387,7 +389,7 @@ bad:
 	goto done;
 }
 
-/*
+/**
  * Insert IP options into preformed packet.
  * Adjust IP destination as required for IP source routing,
  * as indicated by a non-zero in_addr at the start of the options.
@@ -433,7 +435,7 @@ int *phlen;
 	return (m);
 }
 
-/*
+/**
  * Copy options from ip to jp,
  * omitting those not copied during fragmentation.
  */
@@ -470,7 +472,7 @@ struct ip *ip, *jp;
 	return (optlen);
 }
 
-/*
+/**
  * IP socket option processing.
  */
 int ip_ctloutput(op, so, level, optname, mp)
@@ -621,7 +623,7 @@ struct mbuf **mp;
 	return (error);
 }
 
-/*
+/**
  * Set up IP options in pcb for insertion in output packets.
  * Store in mbuf with pointer in pcbopt, adding pseudo-option
  * with destination address if source routed.
@@ -728,7 +730,7 @@ bad:
 	return (EINVAL);
 }
 
-/*
+/**
  * Set the IP multicast options in response to user setsockopt().
  */
 int ip_setmoptions(optname, imop, m)
@@ -964,7 +966,7 @@ struct mbuf *m;
 	return (error);
 }
 
-/*
+/**
  * Return the IP multicast options in response to user getsockopt().
  */
 int ip_getmoptions(optname, imo, mp)
@@ -1012,7 +1014,7 @@ register struct mbuf **mp;
 	}
 }
 
-/*
+/**
  * Discard the IP multicast options.
  */
 void
@@ -1027,7 +1029,7 @@ void
 	}
 }
 
-/*
+/**
  * Routine called from ip_output() to loop back a copy of an IP multicast
  * packet to the input queue of a specified interface.  Note that this
  * calls the output routine of the loopback "driver", but with an interface

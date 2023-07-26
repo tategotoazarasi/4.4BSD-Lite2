@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1980, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -56,8 +58,8 @@
 
 #define SA(p) ((struct sockaddr *) (p))
 
-int rttrash;              /* routes not in table but not freed */
-struct sockaddr wildcard; /* zero valued cookie for wildcard searches */
+int rttrash;             ///< routes not in table but not freed
+struct sockaddr wildcard;///< zero valued cookie for wildcard searches
 
 void
         rtable_init(table) void **table;
@@ -74,7 +76,7 @@ void route_init() {
 	rtable_init((void **) rt_tables);
 }
 
-/*
+/**
  * Packet routing routines.
  */
 void
@@ -161,7 +163,7 @@ void
 		ifa->ifa_refcnt--;
 }
 
-/*
+/**
  * Force a routing table entry to the specified
  * destination to go through the given gateway.
  * Normally called as a result of a routing redirect
@@ -258,7 +260,7 @@ out:
 	rt_missmsg(RTM_REDIRECT, &info, flags, error);
 }
 
-/*
+/**
 * Routing table ioctl interface.
 */
 int rtioctl(req, data, p)
@@ -475,7 +477,7 @@ void
 		bzero((caddr_t) cp2, (unsigned) (cplim2 - cp2));
 }
 
-/*
+/**
  * Set up a routing table entry, normally
  * for an interface.
  */

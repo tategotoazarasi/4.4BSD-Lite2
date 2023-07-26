@@ -59,26 +59,26 @@
 #ifndef IPFORWARDING
 #ifdef GATEWAY
 #define IPFORWARDING 1///< forward IP packets not for us
-#else                 /* GATEWAY */
+#else                 ///< GATEWAY
 #define IPFORWARDING 0///< don't forward IP packets not for us
-#endif                /* GATEWAY */
-#endif                /* IPFORWARDING */
+#endif                ///< GATEWAY
+#endif                ///< IPFORWARDING
 #ifndef IPSENDREDIRECTS
-#define IPSENDREDIRECTS 1
+#define IPSENDREDIRECTS 1///< 系统是否发送ICMP重定向
 #endif
-int ipforwarding    = IPFORWARDING;
-int ipsendredirects = IPSENDREDIRECTS;
-int ip_defttl       = IPDEFTTL;
+int ipforwarding    = IPFORWARDING;   ///< 系统是否转发IP分组
+int ipsendredirects = IPSENDREDIRECTS;///< 系统是否发送ICMP重定向
+int ip_defttl       = IPDEFTTL;       ///< IP分组的默认TTL
 #ifdef DIAGNOSTIC
 int ipprintfs = 0;
 #endif
 
 extern struct domain inetdomain;
 extern struct protosw inetsw[];
-u_char ip_protox[IPPROTO_MAX];
-int ipqmaxlen = IFQ_MAXLEN;
-struct in_ifaddr *in_ifaddr;///< in_ifaddr结构列表的首部 first inet address
-struct ifqueue ipintrq;     ///< IP输入队列
+u_char ip_protox[IPPROTO_MAX];///< IP分组的分路矩阵
+int ipqmaxlen = IFQ_MAXLEN;   ///< IP输入队列的最大长度
+struct in_ifaddr *in_ifaddr;  ///< in_ifaddr结构列表的首部 IP地址清单 first inet address
+struct ifqueue ipintrq;       ///< IP输入队列
 
 /**
  * We need to save the IP options in case a protocol wants to respond
@@ -130,7 +130,7 @@ void ip_init() {
 }
 
 struct sockaddr_in ipaddr = {sizeof(ipaddr), AF_INET};
-struct route ipforward_rt;
+struct route ipforward_rt;///< 大多数最近转发的路由的缓存
 
 void ip_intercept(struct mbuf *m);
 
