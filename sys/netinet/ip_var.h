@@ -171,7 +171,7 @@ int ip_pcbopts __P((struct mbuf **, struct mbuf *) );
 struct ip *
         ip_reass __P((struct ipasfrag *, struct ipq *) );
 struct in_ifaddr *
-        ip_rtaddr __P((struct in_addr));
+        ip_rtaddr __P((struct in_addr));///< 查询路由缓存,必要时查询完整的路由表,来找到到给定IP地址的路由。
 int ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *) );
 void ip_slowtimo __P((void) );
 struct mbuf *

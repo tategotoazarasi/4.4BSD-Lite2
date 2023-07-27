@@ -87,13 +87,13 @@ struct ifqueue ipintrq;       ///< IP输入队列
  * maintenance when the remote end is on a network that is not known
  * to us.
  */
-int ip_nhops = 0;
+int ip_nhops = 0;///< 以前的源路由跳计数
 static struct ip_srcrt {
 	struct in_addr dst;           ///< final destination
 	char nop;                     ///< one NOP to align
 	char srcopt[IPOPT_OFFSET + 1];///< OPTVAL, OLEN and OFFSET
 	struct in_addr route[MAX_IPOPTLEN / sizeof(struct in_addr)];
-} ip_srcrt;
+} ip_srcrt;///< 以前的源路由
 
 #ifdef GATEWAY
 extern int if_index;
@@ -815,6 +815,7 @@ bad:
 }
 
 /**
+ * 查询路由缓存,必要时查询完整的路由表,来找到到给定IP地址的路由。
  * Given address of next destination (final or next hop),
  * return internet address info of interface to be used to get there.
  */

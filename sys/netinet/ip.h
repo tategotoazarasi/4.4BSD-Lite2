@@ -103,15 +103,15 @@ struct ip {
 #define IPOPT_DEBMEAS 0x40
 #define IPOPT_RESERVED2 0x60
 
-#define IPOPT_EOL 0///< end of option list
-#define IPOPT_NOP 1///< no operation
+#define IPOPT_EOL 0///< 选项表的结尾 end of option list
+#define IPOPT_NOP 1///< 无操作 no operation
 
-#define IPOPT_RR 7        ///< record packet route
-#define IPOPT_TS 68       ///< timestamp
-#define IPOPT_SECURITY 130///< provide s,c,h,tcc
-#define IPOPT_LSRR 131    ///< loose source route
-#define IPOPT_SATID 136   ///< satnet id
-#define IPOPT_SSRR 137    ///< strict source route
+#define IPOPT_RR 7        ///< 记录路由 record packet route
+#define IPOPT_TS 68       ///< 时戳 timestamp
+#define IPOPT_SECURITY 130///< 基本的安全 provide s,c,h,tcc
+#define IPOPT_LSRR 131    ///< 宽松源路由和记录路由/扩展的安全 loose source route
+#define IPOPT_SATID 136   ///< 流标识符 satnet id
+#define IPOPT_SSRR 137    ///< 严格源路由和记录路由 strict source route
 
 /*
  * Offsets to fields in options other than EOL and NOP.
@@ -146,9 +146,9 @@ struct ip_timestamp {
 };
 
 /* flag bits for ipt_flg */
-#define IPOPT_TS_TSONLY 0   ///< timestamps only
-#define IPOPT_TS_TSANDADDR 1///< timestamps and addresses
-#define IPOPT_TS_PRESPEC 3  ///< specified modules only
+#define IPOPT_TS_TSONLY 0   ///< 记录时间戳 timestamps only
+#define IPOPT_TS_TSANDADDR 1///< 记录地址和时间戳 timestamps and addresses
+#define IPOPT_TS_PRESPEC 3  ///< 只在预先指定的系统记录时间戳 specified modules only
 
 /* bits for security (not byte swapped) */
 #define IPOPT_SECUR_UNCLASS 0x0000
