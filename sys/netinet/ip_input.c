@@ -557,6 +557,7 @@ void
 }
 
 /**
+ * 紧接在分片prev后面插入分片p
  * Put an ip fragment on a reassembly chain.
  * Like insque, but pointers in middle of structure.
  */
@@ -571,7 +572,7 @@ void
 	prev->ipf_next           = p;
 }
 
-/**
+/** 移走分片p
  * To ip_enq as remque is to insque.
  */
 void

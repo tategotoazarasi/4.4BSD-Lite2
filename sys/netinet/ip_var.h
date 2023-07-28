@@ -148,7 +148,7 @@ struct ipstat {
 #define IP_ALLOWBROADCAST SO_BROADCAST///< can send broadcast packets
 
 struct ipstat ipstat;///< IP统计
-struct ipq ipq;      ///< ip reass. queue
+struct ipq ipq;      ///< 重装表 ip reass. queue
 u_short ip_id;       ///< ip packet ctr, for ids
 int ip_defttl;       ///< 数据报的默认 TTL (64跳) default IP ttl
 

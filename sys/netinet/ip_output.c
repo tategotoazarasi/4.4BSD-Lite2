@@ -438,10 +438,11 @@ int *phlen;
 /**
  * Copy options from ip to jp,
  * omitting those not copied during fragmentation.
+ * @param ip 一个指向外出分组的IP首部的指针
+ * @param jp 一个指向新生成的分片的IP首部的指针
+ * @return
  */
-int ip_optcopy(ip, jp)
-struct ip *ip, *jp;
-{
+int ip_optcopy(struct ip *ip, struct ip *jp) {
 	register u_char *cp, *dp;
 	int opt, optlen, cnt;
 

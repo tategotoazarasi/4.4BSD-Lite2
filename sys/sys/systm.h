@@ -1,4 +1,6 @@
-/*-
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -65,110 +67,113 @@
  * comes into existence when the kernel is loaded and hence cannot be
  * patched by a stalking hacker.
  */
-extern int securelevel;		/* system security level */
-extern const char *panicstr;	/* panic message */
-extern char version[];		/* system version */
-extern char copyright[];	/* system copyright */
+extern int securelevel;     ///< system security level
+extern const char *panicstr;///< panic message
+extern char version[];      ///< system version
+extern char copyright[];    ///< system copyright
 
-extern int nblkdev;		/* number of entries in bdevsw */
-extern int nchrdev;		/* number of entries in cdevsw */
-extern int nswdev;		/* number of swap devices */
-extern int nswap;		/* size of swap space */
+extern int nblkdev;///< number of entries in bdevsw
+extern int nchrdev;///< number of entries in cdevsw
+extern int nswdev; ///< number of swap devices
+extern int nswap;  ///< size of swap space
 
-extern int selwait;		/* select timeout address */
+extern int selwait;///< select timeout address
 
-extern u_char curpriority;	/* priority of current process */
+extern u_char curpriority;///< priority of current process
 
-extern int maxmem;		/* max memory per process */
-extern int physmem;		/* physical memory */
+extern int maxmem; ///< max memory per process
+extern int physmem;///< physical memory
 
-extern dev_t dumpdev;		/* dump device */
-extern long dumplo;		/* offset into dumpdev */
+extern dev_t dumpdev;///< dump device
+extern long dumplo;  ///< offset into dumpdev
 
-extern dev_t rootdev;		/* root device */
-extern struct vnode *rootvp;	/* vnode equivalent to above */
+extern dev_t rootdev;       ///< root device
+extern struct vnode *rootvp;///< vnode equivalent to above
 
-extern dev_t swapdev;		/* swapping device */
-extern struct vnode *swapdev_vp;/* vnode equivalent to above */
+extern dev_t swapdev;           ///< swapping device
+extern struct vnode *swapdev_vp;///< vnode equivalent to above
 
-extern struct sysent {		/* system call table */
-	short	sy_narg;	/* number of args */
-	short	sy_argsize;	/* total size of arguments */
-	int	(*sy_call)();	/* implementing function */
+/**
+ * system call table
+ */
+extern struct sysent {
+	short sy_narg;   ///< number of args
+	short sy_argsize;///< total size of arguments
+	int (*sy_call)();///< implementing function
 } sysent[];
 extern int nsysent;
-#define	SCARG(p,k)	((p)->k.datum)	/* get arg from args pointer */
+#define SCARG(p, k) ((p)->k.datum)///< get arg from args pointer
 
-extern int boothowto;		/* reboot flags, from console subsystem */
+extern int boothowto;///< reboot flags, from console subsystem
 
 struct prochd;
 void _insque(struct prochd *element, struct prochd *head);
 void _remque(struct prochd *element);
 
 /* casts to keep lint happy */
-#define	insque(q,p)	_insque((void*)q,(void*)p)
-#define	remque(q)	_remque((void*)q)
+#define insque(q, p) _insque((void *) q, (void *) p)///< 紧接在prev后面插入node
+#define remque(q) _remque((void *) q)               ///< 把node从表中移走
 
 /*
  * General function declarations.
  */
-int	nullop __P((void));
-int	enodev __P((void));
-int	enoioctl __P((void));
-int	enxio __P((void));
-int	eopnotsupp __P((void));
-int	einval __P((void));
-int	seltrue __P((dev_t dev, int which, struct proc *p));
-void	*hashinit __P((int count, int type, u_long *hashmask));
-int	nosys __P((struct proc *, void *, register_t *));
+int nullop __P((void) );
+int enodev __P((void) );
+int enoioctl __P((void) );
+int enxio __P((void) );
+int eopnotsupp __P((void) );
+int einval __P((void) );
+int seltrue __P((dev_t dev, int which, struct proc *p));
+void *hashinit __P((int count, int type, u_long *hashmask));
+int nosys __P((struct proc *, void *, register_t *) );
 
 #ifdef __GNUC__
-void	panic __P((const char *, ...));
+void panic __P((const char *, ...));
 #else
-void	panic __P((const char *, ...));
+void panic __P((const char *, ...));
 #endif
-void	tablefull __P((const char *));
-void	addlog __P((const char *, ...));
-void	log __P((int, const char *, ...));
-void	printf __P((const char *, ...));
-int	sprintf __P((char *buf, const char *, ...));
-void	ttyprintf __P((struct tty *, const char *, ...));
+void tablefull __P((const char *) );
+void addlog __P((const char *, ...));
+void log __P((int, const char *, ...));
+void printf __P((const char *, ...));
+int sprintf __P((char *buf, const char *, ...));
+void ttyprintf __P((struct tty *, const char *, ...));
 
-void	bcopy __P((const void *from, void *to, u_int len));
-void	ovbcopy __P((const void *from, void *to, u_int len));
-void	bzero __P((void *buf, u_int len));
+void bcopy __P((const void *from, void *to, u_int len));
+void ovbcopy __P((const void *from, void *to, u_int len));
+void bzero __P((void *buf, u_int len));
 
-int	copystr __P((void *kfaddr, void *kdaddr, u_int len, u_int *done));
-int	copyinstr __P((void *udaddr, void *kaddr, u_int len, u_int *done));
-int	copyoutstr __P((void *kaddr, void *udaddr, u_int len, u_int *done));
-int	copyin __P((void *udaddr, void *kaddr, u_int len));
-int	copyout __P((void *kaddr, void *udaddr, u_int len));
+int copystr __P((void *kfaddr, void *kdaddr, u_int len, u_int *done));
+int copyinstr __P((void *udaddr, void *kaddr, u_int len, u_int *done));
+int copyoutstr __P((void *kaddr, void *udaddr, u_int len, u_int *done));
+int copyin __P((void *udaddr, void *kaddr, u_int len));
+int copyout __P((void *kaddr, void *udaddr, u_int len));
 
-int	fubyte __P((void *base));
+int fubyte __P((void *base));
 #ifdef notdef
-int	fuibyte __P((void *base));
+int fuibyte __P((void *base));
 #endif
-int	subyte __P((void *base, int byte));
-int	suibyte __P((void *base, int byte));
-int	fuword __P((void *base));
-int	fuiword __P((void *base));
-int	suword __P((void *base, int word));
-int	suiword __P((void *base, int word));
+int subyte __P((void *base, int byte));
+int suibyte __P((void *base, int byte));
+int fuword __P((void *base));
+int fuiword __P((void *base));
+int suword __P((void *base, int word));
+int suiword __P((void *base, int word));
 
-int	hzto __P((struct timeval *tv));
-void	timeout __P((void (*func)(void *), void *arg, int ticks));
-void	untimeout __P((void (*func)(void *), void *arg));
-void	realitexpire __P((void *));
+int hzto __P((struct timeval * tv));
+void timeout __P((void (*func)(void *), void *arg, int ticks));
+void untimeout __P((void (*func)(void *), void *arg));
+void realitexpire __P((void *) );
 
 struct clockframe;
-void	hardclock __P((struct clockframe *frame));
-void	softclock __P((void));
-void	statclock __P((struct clockframe *frame));
+void hardclock __P((struct clockframe * frame));
+void softclock __P((void) );
+void statclock __P((struct clockframe * frame));
 
-void	initclocks __P((void));
+void initclocks __P((void) );
 
-void	startprofclock __P((struct proc *));
-void	stopprofclock __P((struct proc *));
-void	setstatclockrate __P((int hzrate));
+void startprofclock __P((struct proc *) );
+void stopprofclock __P((struct proc *) );
+void setstatclockrate __P((int hzrate));
 
 #include <libkern/libkern.h>
