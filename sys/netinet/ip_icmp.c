@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -61,14 +63,15 @@ void pfctlinput(int cmd, struct sockaddr *sa);
  * host table maintenance routines.
  */
 
-int icmpmaskrepl = 0;
+int icmpmaskrepl = 0;///< 使ICMP地址掩码回答的返回有效
 #ifdef ICMPPRINTFS
 int icmpprintfs = 0;
 #endif
 
 extern struct protosw inetsw[];
 
-/*
+/**
+ * 在IP或运输层协议的请求下，构造一个ICMP差错请求报文，并把它传给icmp_reflect，在那里该报文被返回无效数据报的源站
  * Generate an error packet of type error
  * in response to bad packet ip.
  */
@@ -169,7 +172,8 @@ static struct sockaddr_in icmpdst = {sizeof(struct sockaddr_in), AF_INET};
 static struct sockaddr_in icmpgw  = {sizeof(struct sockaddr_in), AF_INET};
 struct sockaddr_in icmpmask       = {8, 0};
 
-/*
+/**
+ * 在地址掩码请求中,用接收接口的广播或目的地址代替全0地址
  * Process a received ICMP message.
  */
 void
@@ -406,7 +410,9 @@ freeit:
 	m_freem(m);
 }
 
-/*
+/**
+ * 为ICMP生成回答
+ * 把ICMP回答或差错发回给请求或无效数据报的源站。
  * Reflect the ip packet back to the source
  */
 void
@@ -528,7 +534,8 @@ done:
 		(void) m_free(opts);
 }
 
-/*
+/**
+ * 处理所有输出的ICMP报文,并在把它们传给IP层之前计算ICMP检验和
  * Send an icmp packet back to the ip level,
  * after supplying a checksum.
  */

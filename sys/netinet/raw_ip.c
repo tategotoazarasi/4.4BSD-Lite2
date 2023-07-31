@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -64,7 +66,7 @@ struct inpcb rawinpcb;
  * Raw interface to IP protocol.
  */
 
-/*
+/**
  * Initialize raw connection block q.
  */
 void rip_init() {
@@ -73,7 +75,8 @@ void rip_init() {
 }
 
 struct sockaddr_in ripsrc = {sizeof(ripsrc), AF_INET};
-/*
+/**
+ * 进程不识别的ICMP报文
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
  * mbuf chain.
@@ -122,7 +125,7 @@ void
 	}
 }
 
-/*
+/**
  * Generate IP header and pass packet to ip_output.
  * Tack on options user may have setup with control call.
  */
@@ -163,7 +166,7 @@ u_long dst;
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions));
 }
 
-/*
+/**
  * Raw IP socket option processing.
  */
 int rip_ctloutput(op, so, level, optname, m)
@@ -246,7 +249,9 @@ struct mbuf **m;
 u_long rip_sendspace = RIPSNDQ;
 u_long rip_recvspace = RIPRCVQ;
 
-/*ARGSUSED*/
+/**
+ * ARGSUSED
+ */
 int rip_usrreq(so, req, m, nam, control)
 register struct socket *so;
 int req;

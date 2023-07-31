@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -66,12 +68,12 @@ int tcp_do_rfc1323 = 1;
 
 extern struct inpcb *tcp_last_inpcb;
 
-/*
+/**
  * Tcp initialization
  */
 void tcp_init() {
 
-	tcp_iss      = random(); /* wrong, but better than a constant */
+	tcp_iss      = random();///< wrong, but better than a constant
 	tcb.inp_next = tcb.inp_prev = &tcb;
 	if(max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
@@ -79,7 +81,7 @@ void tcp_init() {
 		panic("tcp_init");
 }
 
-/*
+/**
  * Create template to be used to send tcp packets on a connection.
  * Call after host entry created, allocates an mbuf and fills
  * in a skeletal tcp/ip header, minimizing the amount of work
@@ -119,7 +121,7 @@ struct tcpcb *tp;
 	return (n);
 }
 
-/*
+/**
  * Send a single message to the TCP at address specified by
  * the given TCP/IP header.  If m == 0, then we make a copy
  * of the tcpiphdr at ti and send directly to the addressed host.
@@ -201,7 +203,7 @@ int flags;
 	(void) ip_output(m, NULL, ro, 0, NULL);
 }
 
-/*
+/**
  * Create a new TCP control block, making an
  * empty reassembly queue and hooking it to the argument
  * protocol control block.
@@ -239,7 +241,7 @@ struct inpcb *inp;
 	return (tp);
 }
 
-/*
+/**
  * Drop a TCP connection, reporting
  * the specified error.  If connection is synchronized,
  * then send a RST to peer.
@@ -263,7 +265,7 @@ int errno;
 	return (tcp_close(tp));
 }
 
-/*
+/**
  * Close a TCP control block:
  *	discard all space held by the tcp
  *	discard internet protocol block
@@ -371,7 +373,8 @@ register struct tcpcb *tp;
 void tcp_drain() {
 }
 
-/*
+/**
+ * 向进程报告差错或忽略
  * Notify a tcp user of an asynchronous error;
  * store error as soft error, but wake up user
  * (for now, won't do anything until can select for soft error).
@@ -427,7 +430,8 @@ register struct ip *ip;
 		in_pcbnotify(&tcb, sa, 0, zeroin_addr, 0, cmd, notify);
 }
 
-/*
+/**
+ * 放慢输出
  * When a source quench is received, close congestion window
  * to one segment.  We will gradually open it again as we proceed.
  */

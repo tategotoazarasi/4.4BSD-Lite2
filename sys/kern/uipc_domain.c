@@ -179,7 +179,9 @@ found:
 			                         oldp, oldlenp, newp, newlen));
 	return (ENOPROTOOPT);
 }
-
+/**
+ * 向所有协议报告差错
+ */
 void
         pfctlinput(cmd, sa) int cmd;
 struct sockaddr *sa;

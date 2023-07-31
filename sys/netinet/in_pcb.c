@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -148,7 +150,7 @@ struct mbuf *nam;
 	return (0);
 }
 
-/*
+/**
  * Connect from a socket to a specified address.
  * Both address and port must be specified in argument sin.
  * If don't have a local address for this socket yet,
@@ -327,7 +329,7 @@ struct mbuf *nam;
 	sin->sin_addr   = inp->inp_faddr;
 }
 
-/*
+/**
  * Pass some notification to all connections of a protocol
  * associated with address dst.  The local address and/or port numbers
  * may be specified to limit the search.  The "usual action" will be
@@ -389,7 +391,7 @@ void(*notify) __P((struct inpcb *, int) );
 	}
 }
 
-/*
+/**
  * Check for alternatives when higher level complains
  * about service problems.  For now, invalidate cached
  * routing information.  If the route was created dynamically
@@ -423,6 +425,7 @@ void
 }
 
 /*
+ * 更新IP路由表
  * After a routing change, flush old routing
  * and allocate a (hopefully) better one.
  */

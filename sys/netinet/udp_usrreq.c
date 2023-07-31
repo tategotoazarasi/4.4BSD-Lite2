@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -69,7 +71,7 @@ struct sockaddr_in udp_in    = {sizeof(udp_in), AF_INET};
 struct inpcb *udp_last_inpcb = &udb;
 
 static void udp_detach __P((struct inpcb *) );
-static void udp_notify __P((struct inpcb *, int) );
+static void udp_notify __P((struct inpcb *, int) );///< 向进程报告差错
 static struct mbuf *udp_saveopt __P((caddr_t, int, int) );
 
 void udp_init() {
@@ -311,7 +313,7 @@ bad:
 		m_freem(opts);
 }
 
-/*
+/**
  * Create a "control" mbuf containing the specified data
  * with the specified type for presentation with a datagram.
  */
@@ -336,7 +338,8 @@ int type;
 	return (m);
 }
 
-/*
+/**
+ * 向进程报告差错
  * Notify a udp user of an asynchronous error;
  * just wake up so that he can collect error status.
  */
@@ -460,7 +463,9 @@ u_long udp_sendspace = 9216; /* really max datagram size */
 u_long udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 /* 40 1K datagrams */
 
-/*ARGSUSED*/
+/**
+ * ARGSUSED
+ */
 int udp_usrreq(so, req, m, addr, control)
 struct socket *so;
 int req;
@@ -608,7 +613,7 @@ static void
 	splx(s);
 }
 
-/*
+/**
  * Sysctl for udp variables.
  */
 int udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,36 +35,37 @@
  *	@(#)icmp_var.h	8.1 (Berkeley) 6/10/93
  */
 
-/*
+/**
  * Variables related to this implementation
  * of the internet control message protocol.
  */
-struct	icmpstat {
-/* statistics related to icmp packets generated */
-	u_long	icps_error;		/* # of calls to icmp_error */
-	u_long	icps_oldshort;		/* no error 'cuz old ip too short */
-	u_long	icps_oldicmp;		/* no error 'cuz old was icmp */
-	u_long	icps_outhist[ICMP_MAXTYPE + 1];
-/* statistics related to input messages processed */
- 	u_long	icps_badcode;		/* icmp_code out of range */
-	u_long	icps_tooshort;		/* packet < ICMP_MINLEN */
-	u_long	icps_checksum;		/* bad checksum */
-	u_long	icps_badlen;		/* calculated bound mismatch */
-	u_long	icps_reflect;		/* number of responses */
-	u_long	icps_inhist[ICMP_MAXTYPE + 1];
+struct icmpstat {
+	/* statistics related to icmp packets generated */
+	u_long icps_error;                    ///< icmp_error的调用(重定向除外)数 # of calls to icmp_error
+	u_long icps_oldshort;                 ///< 因为IP数据报太短而丢弃的差错数 no error 'cuz old ip too short
+	u_long icps_oldicmp;                  ///< 因为数据报是一个ICMP报文而丢弃的差错数 no error 'cuz old was icmp
+	u_long icps_outhist[ICMP_MAXTYPE + 1];///< 输出计数器数组;每种ICMP类型对应一个
+	/* statistics related to input messages processed */
+	u_long icps_badcode;                 ///< 由于无效码而丢弃的ICMP报文数 icmp_code out of range
+	u_long icps_tooshort;                ///< 由于ICMP首部太短而丢弃的报文数 packet < ICMP_MINLEN
+	u_long icps_checksum;                ///< 由于坏的ICMP检验和而丢弃的ICMP报文数 bad checksum
+	u_long icps_badlen;                  ///< 由于无效的ICMP体而丢弃的ICMP报文数 calculated bound mismatch
+	u_long icps_reflect;                 ///< 内核反映的ICMP报文数 number of responses
+	u_long icps_inhist[ICMP_MAXTYPE + 1];///< 输入计数器数组;每种ICMP类型对应一个
 };
 
 /*
  * Names for ICMP sysctl objects
  */
-#define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
-#define ICMPCTL_MAXID		2
+#define ICMPCTL_MASKREPL 1///< allow replies to netmask requests
+#define ICMPCTL_MAXID 2
 
-#define ICMPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "maskrepl", CTLTYPE_INT }, \
-}
+#define ICMPCTL_NAMES                      \
+	{                                      \
+		{0, 0},                            \
+		        {"maskrepl", CTLTYPE_INT}, \
+	}
 
 #ifdef KERNEL
-struct	icmpstat icmpstat;
+struct icmpstat icmpstat;///< ICMP统计量
 #endif
