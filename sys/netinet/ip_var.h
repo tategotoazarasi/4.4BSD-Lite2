@@ -123,8 +123,8 @@ struct ipstat {
 	u_long ips_fragments;   ///< 收到分片数 fragments received
 	u_long ips_fragdropped; ///< 分片丢失数 (副本或空间不足) frags dropped (dups, out of space)
 	u_long ips_fragtimeout; ///< 超时的分片数 fragments timed out
-	u_long ips_forward;     ///< 转发的分组数 packets forwarded
-	u_long ips_cantforward; ///< 目的站不可到达的分组数 packets rcvd for unreachable dest
+	u_long ips_forward;     ///< 被这个系统转发的分组数 packets forwarded
+	u_long ips_cantforward; ///< 不能被系统转发的分组数—系统不是一个路由器 目的站不可到达的分组数 packets rcvd for unreachable dest
 	u_long ips_redirectsent;///< 已发送的重定向报文数 packets forwarded on same net
 	u_long ips_noproto;     ///< 具有未知或不支持的协议的分组数 unknown or unsupported protocol
 	u_long ips_delivered;   ///< 向高层交付的数据报数 datagrams delivered to upper level*/
@@ -135,7 +135,7 @@ struct ipstat {
 	u_long ips_ofragments;  ///< 为输出产生的分片数 output fragments created
 	u_long ips_cantfrag;    ///< 由于不分片比特而丢弃的分组数 don't fragment flag was set, etc.
 	u_long ips_badoptions;  ///< 在选项处理中发现差错的分组数 error in option processing
-	u_long ips_noroute;     ///< 丢弃的分组数 —到目的地没有路由 packets discarded due to no route
+	u_long ips_noroute;     ///< 由于无法访问到路由器而无法转发的分组数 packets discarded due to no route
 	u_long ips_badvers;     ///< IP版本不是4的分组数 ip version != 4
 	u_long ips_rawout;      ///< 全部生成的原始ip分组数 total raw ip packets generated
 };

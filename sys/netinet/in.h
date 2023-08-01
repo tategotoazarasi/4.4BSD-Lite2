@@ -156,11 +156,11 @@ struct ip_opts {
 #define IP_RECVRETOPTS 6     ///< bool; receive IP opts for response
 #define IP_RECVDSTADDR 7     ///< bool; receive IP dst addr w/dgram
 #define IP_RETOPTS 8         ///< ip_opts; set/get IP options
-#define IP_MULTICAST_IF 9    ///< u_char; set/get IP multicast i/f
-#define IP_MULTICAST_TTL 10  ///< u_char; set/get IP multicast ttl
-#define IP_MULTICAST_LOOP 11 ///< u_char; set/get IP multicast loopback
-#define IP_ADD_MEMBERSHIP 12 ///< ip_mreq; add an IP group membership
-#define IP_DROP_MEMBERSHIP 13///< ip_mreq; drop an IP group membership
+#define IP_MULTICAST_IF 9    ///< 为外出的多播选择默认接口 u_char; set/get IP multicast i/f
+#define IP_MULTICAST_TTL 10  ///< 为外出的多播选择默认的TTL u_char; set/get IP multicast ttl
+#define IP_MULTICAST_LOOP 11 ///< 允许或使能回送外出的多播 u_char; set/get IP multicast loopback
+#define IP_ADD_MEMBERSHIP 12 ///< 加入一个多播组 ip_mreq; add an IP group membership
+#define IP_DROP_MEMBERSHIP 13///< 离开一个多播组 ip_mreq; drop an IP group membership
 
 /**
  * Defaults and limits for options

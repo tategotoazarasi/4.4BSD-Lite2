@@ -1,4 +1,5 @@
 /**
+ * @file
  * @copyright
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -509,8 +510,8 @@ void
 		}
 }
 
-u_char ether_ipmulticast_min[6] = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x00};
-u_char ether_ipmulticast_max[6] = {0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff};
+u_char ether_ipmulticast_min[6] = {0x01, 0x00, 0x5e, 0x00, 0x00, 0x00};///< 为IP预留的最小以太网多播地址
+u_char ether_ipmulticast_max[6] = {0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff};///< 为IP预留的最大以太网多播地址
 /**
  * Add an Ethernet multicast address or range of addresses to the list for a
  * given interface.

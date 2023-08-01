@@ -733,12 +733,12 @@ bad:
 
 /**
  * Set the IP multicast options in response to user setsockopt().
+ * @param optname
+ * @param imop
+ * @param m
+ * @return
  */
-int ip_setmoptions(optname, imop, m)
-int optname;
-struct ip_moptions **imop;
-struct mbuf *m;
-{
+int ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m) {
 	register int error = 0;
 	u_char loop;
 	register int i;

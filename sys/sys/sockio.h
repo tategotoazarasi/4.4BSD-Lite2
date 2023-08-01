@@ -72,7 +72,7 @@
 #define SIOCDIFADDR _IOW('i', 25, struct ifreq)     ///< 删除接口地址 delete IF addr
 #define SIOCAIFADDR _IOW('i', 26, struct ifaliasreq)///< 添加接口地址 add/chg IF alias
 
-#define SIOCADDMULTI _IOW('i', 49, struct ifreq)///< add m'cast addr
-#define SIOCDELMULTI _IOW('i', 50, struct ifreq)///< del m'cast addr
+#define SIOCADDMULTI _IOW('i', 49, struct ifreq)///< 在接收表里加上多播地址 add m'cast addr
+#define SIOCDELMULTI _IOW('i', 50, struct ifreq)///< 在接收表里删去多播地址 del m'cast addr
 
 #endif /* !_SYS_SOCKIO_H_ */
