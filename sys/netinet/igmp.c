@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1988 Stephen Deering.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,8 +61,8 @@
 
 extern struct ifnet loif;
 
-static int igmp_timers_are_running = 0;
-static u_long igmp_all_hosts_group;
+static int igmp_timers_are_running = 0;///< 如果所有IGMP定时器都有效,则为真;否则为假
+static u_long igmp_all_hosts_group;    ///< 网络字节序的“所有主机组”地址
 
 static void igmp_sendreport __P((struct in_multi *) );
 
@@ -200,9 +202,11 @@ register int iphlen;
 	rip_input(m);
 }
 
-void
-        igmp_joingroup(inm) struct in_multi *inm;
-{
+/**
+ * 加入一个组
+ * @param inm 指向组的新in_multi结构
+ */
+void igmp_joingroup(struct in_multi *inm) {
 	register int s = splnet();
 
 	if(inm->inm_addr.s_addr == igmp_all_hosts_group ||
@@ -252,9 +256,12 @@ void igmp_fasttimo() {
 	splx(s);
 }
 
+/**
+ * 为一个多播组构造和发送IGMP报告报文
+ * @param inm 指向被报告组的in_multi结构
+ */
 static void
-        igmp_sendreport(inm) register struct in_multi *inm;
-{
+igmp_sendreport(register struct in_multi *inm) {
 	register struct mbuf *m;
 	register struct igmp *igmp;
 	register struct ip *ip;
