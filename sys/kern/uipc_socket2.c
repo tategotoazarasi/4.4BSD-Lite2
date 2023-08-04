@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -54,9 +56,10 @@ char netio[]  = "netio";
 char netcon[] = "netcon";
 char netcls[] = "netcls";
 
-u_long sb_max = SB_MAX; /* patchable */
+u_long sb_max = SB_MAX;///< patchable
 
-/*
+/**
+ * 将插口状态设置为 SO_ISCONNECTING
  * Procedures to manipulate state flags of socket
  * and do appropriate wakeups.  Normal sequence from the
  * active (originating) side is that soisconnecting() is
@@ -85,7 +88,6 @@ u_long sb_max = SB_MAX; /* patchable */
  * the kernel, the wakeups done here will sometimes
  * cause software-interrupt process scheduling.
  */
-
 void
         soisconnecting(so) register struct socket *so;
 {
@@ -112,6 +114,9 @@ void
 	}
 }
 
+/**
+ * 清除SS_ISCONNECTING标志。设置SS_ISDISCONG、SS_CANTRCVMORE 和SS_CANTSENDMORE标志。唤醒所有等待在插口上的进程
+ */
 void
         soisdisconnecting(so) register struct socket *so;
 {
@@ -123,6 +128,9 @@ void
 	sorwakeup(so);
 }
 
+/**
+ * 清除SS_ISCONNECTING、SS_ISCONNECTED和SS_ISDISCONNECTING标志。设置SS_CANTRCVMORE和SS_CANTSENDMORE标志。唤醒所有等待在插口上的进程或等待close完成的进程
+ */
 void
         soisdisconnected(so) register struct socket *so;
 {
@@ -134,7 +142,7 @@ void
 	sorwakeup(so);
 }
 
-/*
+/**
  * When an attempt at a new connection is noted on a socket
  * which accepts connections, sonewconn is called.  If the
  * connection is possible (subject to space constraints, etc.)
@@ -182,6 +190,9 @@ int connstatus;
 	return (so);
 }
 
+/**
+ * 将so插入head指向的队列中。如果q等于0,插口被插到存放未完成的连接的so_q0队列的后面。否则,插口被插到存放准备接受的连接的队列so_q的后面。Net/1错误地将插口插到队列的前面
+ */
 void
         soqinsque(head, so, q) register struct socket *head,
         *so;
@@ -204,6 +215,9 @@ int q;
 	*prev = so;
 }
 
+/**
+ * 从队列q中删除so。通过so->so_head来定位插口队列
+ */
 int soqremque(so, q)
 register struct socket *so;
 int q;
@@ -232,7 +246,8 @@ int q;
 	return (1);
 }
 
-/*
+/**
+ * 设置插口标志 SO_CANTSENDMORE。唤醒所有等待在发送缓存上的进程
  * Socantsendmore indicates that no more data will be sent on the
  * socket; it would normally be applied to a socket when the user
  * informs the system that no more data is to be sent, by the protocol
@@ -241,7 +256,6 @@ int q;
  * protocol when it detects that the peer will send no more data.
  * Data queued for reading in the socket may yet be read.
  */
-
 void
         socantsendmore(so) struct socket *so;
 {
@@ -250,6 +264,9 @@ void
 	sowwakeup(so);
 }
 
+/**
+ * 设置插口标志 SO_CANTRCVMORE。唤醒所有等待在接收缓存上的进程
+ */
 void
         socantrcvmore(so) struct socket *so;
 {
@@ -258,7 +275,7 @@ void
 	sorwakeup(so);
 }
 
-/*
+/**
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int sbwait(sb)
@@ -271,7 +288,7 @@ struct sockbuf *sb;
 	               sb->sb_timeo));
 }
 
-/* 
+/**
  * Lock a sockbuf already known to be locked;
  * return any error returned from sleep (EINTR).
  */
@@ -291,7 +308,7 @@ register struct sockbuf *sb;
 	return (0);
 }
 
-/*
+/**
  * Wakeup processes waiting on a socket buffer.
  * Do asynchronous notification via SIGIO
  * if the socket has the SS_ASYNC flag set.
@@ -316,7 +333,7 @@ register struct sockbuf *sb;
 	}
 }
 
-/*
+/**
  * Socket buffer (struct sockbuf) utility routines.
  *
  * Each socket contains two socket buffers: one for sending data and
@@ -347,7 +364,6 @@ register struct sockbuf *sb;
  * socket (currently, it does nothing but enforce limits).  The space
  * should be released by calling sbrelease() when the socket is destroyed.
  */
-
 int soreserve(so, sndcc, rcvcc)
 register struct socket *so;
 u_long sndcc, rcvcc;
@@ -370,7 +386,7 @@ bad:
 	return (ENOBUFS);
 }
 
-/*
+/**
  * Allot mbufs to a sockbuf.
  * Attempt to scale mbmax so that mbcnt doesn't become limiting
  * if buffering efficiency is near the normal case.
@@ -389,7 +405,7 @@ u_long cc;
 	return (1);
 }
 
-/*
+/**
  * Free mbufs held by a socket, and reserved mbuf space.
  */
 void
@@ -425,7 +441,7 @@ void
  * or sbdroprecord() when the data is acknowledged by the peer.
  */
 
-/*
+/**
  * Append mbuf chain m to the last record in the
  * socket buffer sb.  The additional space associated
  * the mbuf chain is recorded in sb.  Empty mbufs are
@@ -475,7 +491,7 @@ void
 }
 #endif
 
-/*
+/**
  * As above, except the mbuf chain
  * begins a new record.
  */
@@ -508,7 +524,7 @@ register struct mbuf *m0;
 	sbcompress(sb, m, m0);
 }
 
-/*
+/**
  * As above except that OOB data
  * is inserted at the beginning of the sockbuf,
  * but after any other OOB data.
@@ -551,7 +567,7 @@ register struct mbuf *m0;
 	sbcompress(sb, m, m0);
 }
 
-/*
+/**
  * Append address and data, and optionally, control (ancillary) data
  * to the receive queue of a socket.  If present,
  * m0 must include a packet header with total length.
@@ -630,7 +646,7 @@ struct mbuf *m0, *control;
 	return (1);
 }
 
-/*
+/**
  * Compress mbuf chain m into the socket
  * buffer sb following mbuf n.  If n
  * is null, the buffer is presumed empty.
@@ -679,7 +695,7 @@ register struct mbuf *m, *n;
 	}
 }
 
-/*
+/**
  * Free all mbufs in a sockbuf.
  * Check that all resources are reclaimed.
  */
@@ -695,7 +711,7 @@ void
 		panic("sbflush 2");
 }
 
-/*
+/**
  * Drop data from (the front of) a sockbuf.
  */
 void
@@ -737,7 +753,7 @@ register int len;
 		sb->sb_mb = next;
 }
 
-/*
+/**
  * Drop a record off the front of a sockbuf
  * and move the next record to the front.
  */

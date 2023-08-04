@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -49,20 +51,20 @@
 
 int uiomove(caddr_t, int, struct uio *);
 
-/*
+/**
  * Socket operation routines.
  * These routines are called by the routines in
  * sys_socket.c or from a system process, and
  * implement the semantics of socket operations by
  * switching out to the protocol specific routines.
+ *
+ * ARGSUSED
+ * @param dom 请求的协议域
+ * @param aso 保存指向一个新的socket结构的指针
+ * @param type 请求的插口类型
+ * @param proto 请求的协议
  */
-/*ARGSUSED*/
-int socreate(dom, aso, type, proto)
-int dom;
-struct socket **aso;
-register int type;
-int proto;
-{
+int socreate(int dom, struct socket **aso, register int type, int proto) {
 	struct proc *p = curproc; /* XXX */
 	register struct protosw *prp;
 	register struct socket *so;
@@ -145,7 +147,7 @@ void
 	FREE(so, M_SOCKET);
 }
 
-/*
+/**
  * Close a socket on last file table reference removal.
  * Initiate disconnect if connected.
  * Free socket when disconnect complete.
@@ -197,7 +199,7 @@ discard:
 	return (error);
 }
 
-/*
+/**
  * Must be called at splnet...
  */
 int soabort(so)
@@ -287,7 +289,7 @@ bad:
 }
 
 #define SBLOCKWAIT(f) (((f) &MSG_DONTWAIT) ? M_NOWAIT : M_WAITOK)
-/*
+/**
  * Send on a socket.
  * If send must go all at once and message is larger than
  * send buffering, then hard error.
@@ -470,7 +472,7 @@ out:
 	return (error);
 }
 
-/*
+/**
  * Implement receive operations on a socket.
  * We depend on the way that records are added to the sockbuf
  * by sbappend*.  In particular, each record (mbufs linked through m_next)

@@ -1,2 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module classpath="External" external.linked.project.id="4.4BSD-Lite2" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="Makefile" type="CPP_MODULE" version="4" />
+<module classpath="External" external.linked.project.id="4.4BSD-Lite2" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="Makefile" type="CPP_MODULE" version="4">
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="6354b589-a721-42ee-84a0-dd93997060a7" />
+  </component>
+</module>

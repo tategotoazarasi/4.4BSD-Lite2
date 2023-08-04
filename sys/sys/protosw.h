@@ -103,24 +103,24 @@ struct protosw {
  * A non-zero return from usrreq gives an
  * UNIX error number which should be passed to higher level software.
  */
-#define PRU_ATTACH 0    ///< attach protocol to up
-#define PRU_DETACH 1    ///< detach protocol from up
-#define PRU_BIND 2      ///< bind socket to address
-#define PRU_LISTEN 3    ///< listen for connection
-#define PRU_CONNECT 4   ///< establish connection to peer
-#define PRU_ACCEPT 5    ///< accept connection from peer
-#define PRU_DISCONNECT 6///< disconnect from peer
-#define PRU_SHUTDOWN 7  ///< won't send any more data
-#define PRU_RCVD 8      ///< have taken data; more room now
-#define PRU_SEND 9      ///< send this data
-#define PRU_ABORT 10    ///< abort (fast DISCONNECT, DETATCH)
+#define PRU_ATTACH 0    ///< 产生了一个新的插口 attach protocol to up
+#define PRU_DETACH 1    ///< 插口被关闭 detach protocol from up
+#define PRU_BIND 2      ///< 绑定地址到插口 bind socket to address
+#define PRU_LISTEN 3    ///< 开始监听连接请求 listen for connection
+#define PRU_CONNECT 4   ///< 同地址建立关联或连接 establish connection to peer
+#define PRU_ACCEPT 5    ///< 等待并接受连接 accept connection from peer
+#define PRU_DISCONNECT 6///< 切断插口和另一地址间的关联 disconnect from peer
+#define PRU_SHUTDOWN 7  ///< 结束同另一地址的通信 won't send any more data
+#define PRU_RCVD 8      ///< 进程已收到一些数据 have taken data; more room now
+#define PRU_SEND 9      ///< 发送正常数据 send this data
+#define PRU_ABORT 10    ///< 异常终止每一个存在的连接 abort (fast DISCONNECT, DETATCH)
 #define PRU_CONTROL 11  ///< control operations on protocol
 #define PRU_SENSE 12    ///< return status into m
-#define PRU_RCVOOB 13   ///< retrieve out of band data
-#define PRU_SENDOOB 14  ///< send out of band data
-#define PRU_SOCKADDR 15 ///< fetch socket's address
-#define PRU_PEERADDR 16 ///< fetch peer's address
-#define PRU_CONNECT2 17 ///< connect two sockets
+#define PRU_RCVOOB 13   ///< 接收OOB数据 retrieve out of band data
+#define PRU_SENDOOB 14  ///< 发送OOB数据 send out of band data
+#define PRU_SOCKADDR 15 ///< 返回与插口相关联的本地地址 fetch socket's address
+#define PRU_PEERADDR 16 ///< 返回与插口关联的对方地址 fetch peer's address
+#define PRU_CONNECT2 17 ///< 将两个插口连在一起 connect two sockets
 /* begin for protocols internal use */
 #define PRU_FASTTIMO 18 ///< 200ms timeout
 #define PRU_SLOWTIMO 19 ///< 500ms timeout

@@ -100,7 +100,7 @@ extern struct sysent {
 	short sy_narg;   ///< number of args
 	short sy_argsize;///< total size of arguments
 	int (*sy_call)();///< implementing function
-} sysent[];
+} sysent[];          ///< 系统调用入口数组
 extern int nsysent;
 #define SCARG(p, k) ((p)->k.datum)///< get arg from args pointer
 

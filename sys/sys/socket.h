@@ -54,16 +54,16 @@
 /*
  * Option flags per-socket.
  */
-#define SO_DEBUG 0x0001      ///< turn on debugging info recording
-#define SO_ACCEPTCONN 0x0002 ///< socket has had listen()
-#define SO_REUSEADDR 0x0004  ///< allow local address reuse
-#define SO_KEEPALIVE 0x0008  ///< keep connections alive
-#define SO_DONTROUTE 0x0010  ///< just use interface addresses
-#define SO_BROADCAST 0x0020  ///< permit sending of broadcast msgs
-#define SO_USELOOPBACK 0x0040///< bypass hardware when possible
+#define SO_DEBUG 0x0001      ///< 插口记录排错信息 turn on debugging info recording
+#define SO_ACCEPTCONN 0x0002 ///< 插口接受进入的连接 socket has had listen()
+#define SO_REUSEADDR 0x0004  ///< 插口能重新使用一个本地地址 allow local address reuse
+#define SO_KEEPALIVE 0x0008  ///< 插口查询空闲的连接 keep connections alive
+#define SO_DONTROUTE 0x0010  ///< 输出操作旁路选路表 just use interface addresses
+#define SO_BROADCAST 0x0020  ///< 插口能够发送广播报文 permit sending of broadcast msgs
+#define SO_USELOOPBACK 0x0040///< 仅针对选路域插口;发送进程收到它自己的选路请求 bypass hardware when possible
 #define SO_LINGER 0x0080     ///< linger on close if data present
-#define SO_OOBINLINE 0x0100  ///< leave received OOB data in line
-#define SO_REUSEPORT 0x0200  ///< allow local address & port reuse
+#define SO_OOBINLINE 0x0100  ///< 插口将带外数据同正常数据存放在一起 leave received OOB data in line
+#define SO_REUSEPORT 0x0200  ///< 插口能重新使用一个本地地址和端口 allow local address & port reuse
 
 /*
  * Additional options, not kept in so_options.
