@@ -56,7 +56,7 @@ char netio[]  = "netio";
 char netcon[] = "netcon";
 char netcls[] = "netcls";
 
-u_long sb_max = SB_MAX;///< patchable
+u_long sb_max = SB_MAX;///< 插口发送或接收缓存的最大字节数 patchable
 
 /**
  * 将插口状态设置为 SO_ISCONNECTING
@@ -276,6 +276,7 @@ void
 }
 
 /**
+ * 调用tsleep等待sb上的协议动作。返回tsleep返回的结果。
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int sbwait(sb)
@@ -309,6 +310,7 @@ register struct sockbuf *sb;
 }
 
 /**
+ * 通知插口有协议动作出现。唤醒所有匹配的调用sbwait的进程或在sb上调用tsleep的进程。
  * Wakeup processes waiting on a socket buffer.
  * Do asynchronous notification via SIGIO
  * if the socket has the SS_ASYNC flag set.
@@ -442,6 +444,7 @@ void
  */
 
 /**
+ * 将m中的mbuf加到sb的最后面。
  * Append mbuf chain m to the last record in the
  * socket buffer sb.  The additional space associated
  * the mbuf chain is recorded in sb.  Empty mbufs are
@@ -492,6 +495,7 @@ void
 #endif
 
 /**
+ * 将m0中的记录加到sb的最后面。
  * As above, except the mbuf chain
  * begins a new record.
  */
@@ -525,6 +529,7 @@ register struct mbuf *m0;
 }
 
 /**
+ * 将m0插在没有带外数据的sb的第一个记录的前面。
  * As above except that OOB data
  * is inserted at the beginning of the sockbuf,
  * but after any other OOB data.
@@ -568,6 +573,7 @@ register struct mbuf *m0;
 }
 
 /**
+ * 将asa的地址放入一个mbuf。将地址、control和m0连接成一个mbuf链,并将该链放在sb的最后面。
  * Append address and data, and optionally, control (ancillary) data
  * to the receive queue of a socket.  If present,
  * m0 must include a packet header with total length.
@@ -615,6 +621,9 @@ struct mbuf *m0, *control;
 	return (1);
 }
 
+/**
+ * 将control和m0连接成一个mbuf链,并将该链放在sb的最后面。
+ */
 int sbappendcontrol(sb, m0, control)
 struct sockbuf *sb;
 struct mbuf *m0, *control;
@@ -647,6 +656,7 @@ struct mbuf *m0, *control;
 }
 
 /**
+ * 将m合并到n中并压缩没用的空间。
  * Compress mbuf chain m into the socket
  * buffer sb following mbuf n.  If n
  * is null, the buffer is presumed empty.
@@ -712,6 +722,7 @@ void
 }
 
 /**
+ * 删除sb的前len个字节。
  * Drop data from (the front of) a sockbuf.
  */
 void

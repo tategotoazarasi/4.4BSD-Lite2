@@ -257,14 +257,14 @@ struct msghdr {
 	int msg_flags;        ///< flags on received message
 };
 
-#define MSG_OOB 0x1      ///< process out-of-band data
+#define MSG_OOB 0x1      ///< 发送带外数据 process out-of-band data
 #define MSG_PEEK 0x2     ///< peek at incoming message
-#define MSG_DONTROUTE 0x4///< send without using routing tables
-#define MSG_EOR 0x8      ///< data completes record
+#define MSG_DONTROUTE 0x4///< 发送本报文时,不查路由表 send without using routing tables
+#define MSG_EOR 0x8      ///< 标志一个逻辑记录的结束 data completes record
 #define MSG_TRUNC 0x10   ///< data discarded before delivery
 #define MSG_CTRUNC 0x20  ///< control data lost before delivery
 #define MSG_WAITALL 0x40 ///< wait for full request or error
-#define MSG_DONTWAIT 0x80///< this message should be nonblocking
+#define MSG_DONTWAIT 0x80///< 发送本报文时,不等待资源 this message should be nonblocking
 
 /**
  * Header for ancillary data objects in msg_control buffer.

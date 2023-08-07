@@ -85,14 +85,14 @@ struct socket {
 		short sb_flags;       ///< flags, see below
 		short sb_timeo;       ///< timeout for read/write
 	} so_rcv, so_snd;
-#define SB_MAX (256 * 1024)///< default for max chars in sockbuf
-#define SB_LOCK 0x01       ///< lock on data queue
-#define SB_WANT 0x02       ///< someone is waiting to lock
-#define SB_WAIT 0x04       ///< someone is waiting for data/space
-#define SB_SEL 0x08        ///< someone is selecting
-#define SB_ASYNC 0x10      ///< ASYNC I/O, need signals
-#define SB_NOTIFY (SB_WAIT | SB_SEL | SB_ASYNC)
-#define SB_NOINTR 0x40///< operations not interruptible
+#define SB_MAX (256 * 1024)                    ///< 插口发送或接收缓存的最大字节数 default for max chars in sockbuf
+#define SB_LOCK 0x01                           ///< 一个进程已经锁定了插口缓存 lock on data queue
+#define SB_WANT 0x02                           ///< 一个进程正在等待给插口缓存加锁 someone is waiting to lock
+#define SB_WAIT 0x04                           ///< 一个进程正在等待接收数据或发送数据所需的缓存 someone is waiting for data/space
+#define SB_SEL 0x08                            ///< 一个或多个进程正在选择这个缓存 someone is selecting
+#define SB_ASYNC 0x10                          ///< 为这个缓存产生异步I/O信号 ASYNC I/O, need signals
+#define SB_NOTIFY (SB_WAIT | SB_SEL | SB_ASYNC)///< 一个进程正在等待缓存的变化,如果缓存发生任何改变,用wakeup通知该进程
+#define SB_NOINTR 0x40                         ///< 信号不取消加锁请求 operations not interruptible
 
 	caddr_t so_tpcb;///< Wisc. protocol control block XXX
 	void(*so_upcall) __P((struct socket * so, caddr_t arg, int waitf));
@@ -121,6 +121,7 @@ struct socket {
  */
 
 /**
+ * sb中可用的空间 (字节数): min(sb_hiwat - sb_cc), (sb_mbmax - sb_mbcont)。
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
  * This is problematical if the fields are unsigned, as the space might
  * still be negative (cc > hiwat or mbcnt > mbmax).  Should detect
@@ -158,6 +159,7 @@ struct socket {
 	 (so)->so_error)
 
 /**
+ * 将m加到sb中,同时修改sb中的sb_cc和sb_mbcnt。
  * adjust counters in sb reflecting allocation of m
  */
 #define sballoc(sb, m)                             \
@@ -169,6 +171,7 @@ struct socket {
 	}
 
 /**
+ * 从sb中删除m,同时修改sb中的sb_cc和sb_mbcnt。
  * adjust counters in sb reflecting freeing of m
  */
 #define sbfree(sb, m)                              \
@@ -180,6 +183,7 @@ struct socket {
 	}
 
 /**
+ * 申请给sb加锁,如果wf等于M_WAITOK,则进程睡眠等待加锁;否则,如果不能立即给缓存加锁,就返回EWOULDBLOCK。如果进程睡眠被一个信号中断,则返回EINTR或ERESTART;否则返回0。
  * Set lock on sockbuf sb; sleep if lock is already held.
  * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
  * Returns error without lock if sleep is interrupted.
@@ -187,6 +191,7 @@ struct socket {
 #define sblock(sb, wf) ((sb)->sb_flags & SB_LOCK ? (((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) : ((sb)->sb_flags |= SB_LOCK), 0)
 
 /**
+ * 释放加在sb上的锁。所有等待给sb加锁的进程被唤醒。
  * release lock on sockbuf sb
  */
 #define sbunlock(sb)                            \
@@ -198,6 +203,9 @@ struct socket {
 		}                                       \
 	}
 
+/**
+ * 唤醒等待sb上的读事件的进程,如果进程请求了I/O事件的异步通知,则还应给该进程发送SIGIO信号。
+ */
 #define sorwakeup(so)                                                   \
 	{                                                                   \
 		sowakeup((so), &(so)->so_rcv);                                  \
@@ -205,6 +213,9 @@ struct socket {
 			(*((so)->so_upcall))((so), (so)->so_upcallarg, M_DONTWAIT); \
 	}
 
+/**
+ * 唤醒等待sb上的写事件的进程,如果进程请求了I/O事件的异步通知,则还应给该进程发送SIGIO信号。
+ */
 #define sowwakeup(so) sowakeup((so), &(so)->so_snd)
 
 #ifdef KERNEL
@@ -231,21 +242,21 @@ int soo_close __P((struct file * fp, struct proc *p));
 struct mbuf;
 struct sockaddr;
 
-void sbappend __P((struct sockbuf * sb, struct mbuf *m));
-int sbappendaddr __P((struct sockbuf * sb, struct sockaddr *asa,
+void sbappend __P((struct sockbuf * sb, struct mbuf *m));       ///< 将m中的mbuf加到sb的最后面。
+int sbappendaddr __P((struct sockbuf * sb, struct sockaddr *asa,///< 将asa的地址放入一个mbuf。将地址、control和m0连接成一个mbuf链,并将该链放在sb的最后面。
                       struct mbuf *m0, struct mbuf *control));
 int sbappendcontrol __P((struct sockbuf * sb, struct mbuf *m0,
-                         struct mbuf *control));
-void sbappendrecord __P((struct sockbuf * sb, struct mbuf *m0));
+                         struct mbuf *control));                ///< 将control和m0连接成一个mbuf链,并将该链放在sb的最后面。
+void sbappendrecord __P((struct sockbuf * sb, struct mbuf *m0));///< 将m0中的记录加到sb的最后面。
 void sbcheck __P((struct sockbuf * sb));
-void sbcompress __P((struct sockbuf * sb, struct mbuf *m, struct mbuf *n));
-void sbdrop __P((struct sockbuf * sb, int len));
+void sbcompress __P((struct sockbuf * sb, struct mbuf *m, struct mbuf *n));///< 将m合并到n中并压缩没用的空间。
+void sbdrop __P((struct sockbuf * sb, int len));                           ///< 删除sb的前len个字节。
 void sbdroprecord __P((struct sockbuf * sb));
 void sbflush __P((struct sockbuf * sb));
-void sbinsertoob __P((struct sockbuf * sb, struct mbuf *m0));
+void sbinsertoob __P((struct sockbuf * sb, struct mbuf *m0));///< 将m0插在没有带外数据的sb的第一个记录的前面。
 void sbrelease __P((struct sockbuf * sb));
 int sbreserve __P((struct sockbuf * sb, u_long cc));
-int sbwait __P((struct sockbuf * sb));
+int sbwait __P((struct sockbuf * sb));///< 调用tsleep等待sb上的协议动作。返回tsleep返回的结果。
 int sb_lock __P((struct sockbuf * sb));
 int soabort __P((struct socket * so));
 int soaccept __P((struct socket * so, struct mbuf *nam));
