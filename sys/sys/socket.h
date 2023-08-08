@@ -258,12 +258,12 @@ struct msghdr {
 };
 
 #define MSG_OOB 0x1      ///< 发送带外数据 process out-of-band data
-#define MSG_PEEK 0x2     ///< peek at incoming message
+#define MSG_PEEK 0x2     ///< 接收数据的副本而不取走数据 peek at incoming message
 #define MSG_DONTROUTE 0x4///< 发送本报文时,不查路由表 send without using routing tables
 #define MSG_EOR 0x8      ///< 标志一个逻辑记录的结束 data completes record
-#define MSG_TRUNC 0x10   ///< data discarded before delivery
-#define MSG_CTRUNC 0x20  ///< control data lost before delivery
-#define MSG_WAITALL 0x40 ///< wait for full request or error
+#define MSG_TRUNC 0x10   ///< 收到的报文的长度大于提供的缓存长度 data discarded before delivery
+#define MSG_CTRUNC 0x20  ///< 控制信息的长度大于提供的缓存长度 control data lost before delivery
+#define MSG_WAITALL 0x40 ///< 在返回之前等待数据写缓存 wait for full request or error
 #define MSG_DONTWAIT 0x80///< 发送本报文时,不等待资源 this message should be nonblocking
 
 /**
