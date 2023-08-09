@@ -61,21 +61,21 @@
 #define SO_DONTROUTE 0x0010  ///< 输出操作旁路选路表 just use interface addresses
 #define SO_BROADCAST 0x0020  ///< 插口能够发送广播报文 permit sending of broadcast msgs
 #define SO_USELOOPBACK 0x0040///< 仅针对选路域插口;发送进程收到它自己的选路请求 bypass hardware when possible
-#define SO_LINGER 0x0080     ///< linger on close if data present
+#define SO_LINGER 0x0080     ///< 插口关闭但仍发送剩余数据 linger on close if data present
 #define SO_OOBINLINE 0x0100  ///< 插口将带外数据同正常数据存放在一起 leave received OOB data in line
 #define SO_REUSEPORT 0x0200  ///< 插口能重新使用一个本地地址和端口 allow local address & port reuse
 
 /*
  * Additional options, not kept in so_options.
  */
-#define SO_SNDBUF 0x1001  ///< send buffer size
-#define SO_RCVBUF 0x1002  ///< receive buffer size
-#define SO_SNDLOWAT 0x1003///< send low-water mark
-#define SO_RCVLOWAT 0x1004///< receive low-water mark
-#define SO_SNDTIMEO 0x1005///< send timeout
-#define SO_RCVTIMEO 0x1006///< receive timeout
-#define SO_ERROR 0x1007   ///< get error status and clear
-#define SO_TYPE 0x1008    ///< get socket type
+#define SO_SNDBUF 0x1001  ///< 发送缓存高水位标记 send buffer size
+#define SO_RCVBUF 0x1002  ///< 接收缓存高水位标记 receive buffer size
+#define SO_SNDLOWAT 0x1003///< 发送缓存低水位标记 send low-water mark
+#define SO_RCVLOWAT 0x1004///< 接收缓存低水位标记 receive low-water mark
+#define SO_SNDTIMEO 0x1005///< 发送超时值 send timeout
+#define SO_RCVTIMEO 0x1006///< 接收超时值 receive timeout
+#define SO_ERROR 0x1007   ///< 获取差错状态并清除;只用于getsockopt get error status and clear
+#define SO_TYPE 0x1008    ///< 获取插口类型;只用于getsockopt get socket type
 
 /**
  * Structure used for manipulating linger option.
