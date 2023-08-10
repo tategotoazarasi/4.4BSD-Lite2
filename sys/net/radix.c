@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1988, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -56,12 +58,13 @@
 
 #endif
 
-int max_keylen;
-struct radix_mask *rn_mkfreelist;
-struct radix_node_head *mask_rnhead;
+int max_keylen;                     ///< 以字节为单位的路由表键值的最大长度
+struct radix_mask *rn_mkfreelist;   ///< 可用radix_mask结构的链表表头
+struct radix_node_head *mask_rnhead;///< 指向掩码表表头的指针
 static char *addmask_key;
 static char normal_chars[] = {0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, -1};
-static char *rn_zeros, *rn_ones;
+static char *rn_zeros;///< 长为max_keylen、值为全零比特的数组
+static char *rn_ones; ///< 长为max_keylen、值为全1比特的数组
 
 #define rn_masktop (mask_rnhead->rnh_treetop)
 #undef Bcmp

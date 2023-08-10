@@ -58,7 +58,7 @@
 
 #define SA(p) ((struct sockaddr *) (p))
 
-int rttrash;             ///< routes not in table but not freed
+int rttrash;             ///< 未释放的非表中路由的数目 routes not in table but not freed
 struct sockaddr wildcard;///< zero valued cookie for wildcard searches
 
 void
@@ -77,6 +77,7 @@ void route_init() {
 }
 
 /**
+ * 查找通往目的地的路由
  * Packet routing routines.
  */
 void
