@@ -192,27 +192,27 @@ struct rt_msghdr {
 /*
  * Bitmask values for rtm_addr.
  */
-#define RTA_DST 0x1    ///< destination sockaddr present
-#define RTA_GATEWAY 0x2///< gateway sockaddr present
-#define RTA_NETMASK 0x4///< netmask sockaddr present
-#define RTA_GENMASK 0x8///< cloning mask sockaddr present
-#define RTA_IFP 0x10   ///< interface name sockaddr present
-#define RTA_IFA 0x20   ///< interface addr sockaddr present
-#define RTA_AUTHOR 0x40///< sockaddr for author of redirect
-#define RTA_BRD 0x80   ///< for NEWADDR, broadcast or p-p dest addr
+#define RTA_DST 0x1    ///< 目的插口地址结构 destination sockaddr present
+#define RTA_GATEWAY 0x2///< 网关插口地址结构 gateway sockaddr present
+#define RTA_NETMASK 0x4///< 网络掩码插口地址结构 netmask sockaddr present
+#define RTA_GENMASK 0x8///< 克隆掩码插口地址结构 cloning mask sockaddr present
+#define RTA_IFP 0x10   ///< 接口名称插口地址结构 interface name sockaddr present
+#define RTA_IFA 0x20   ///< 接口地址插口地址结构 interface addr sockaddr present
+#define RTA_AUTHOR 0x40///< 重定向产生者的插口地址结构 sockaddr for author of redirect
+#define RTA_BRD 0x80   ///< 广播或点到点的目的地址 for NEWADDR, broadcast or p-p dest addr
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
  */
-#define RTAX_DST 0    ///< destination sockaddr present
-#define RTAX_GATEWAY 1///< gateway sockaddr present
-#define RTAX_NETMASK 2///< netmask sockaddr present
-#define RTAX_GENMASK 3///< cloning mask sockaddr present
-#define RTAX_IFP 4    ///< interface name sockaddr present
-#define RTAX_IFA 5    ///< interface addr sockaddr present
-#define RTAX_AUTHOR 6 ///< sockaddr for author of redirect
-#define RTAX_BRD 7    ///< for NEWADDR, broadcast or p-p dest addr
-#define RTAX_MAX 8    ///< size of array to allocate
+#define RTAX_DST 0    ///< 目的插口地址结构 destination sockaddr present
+#define RTAX_GATEWAY 1///< 网关插口地址结构 gateway sockaddr present
+#define RTAX_NETMASK 2///< 网络掩码插口地址结构 netmask sockaddr present
+#define RTAX_GENMASK 3///< 克隆掩码插口地址结构 cloning mask sockaddr present
+#define RTAX_IFP 4    ///< 接口名称插口地址结构 interface name sockaddr present
+#define RTAX_IFA 5    ///< 接口地址插口地址结构 interface addr sockaddr present
+#define RTAX_AUTHOR 6 ///< 重定向产生者的插口地址结构 sockaddr for author of redirect
+#define RTAX_BRD 7    ///< 广播或点到点的目的地址 for NEWADDR, broadcast or p-p dest addr
+#define RTAX_MAX 8    ///< rti-into[]数组的元素个数 size of array to allocate
 
 struct rt_addrinfo {
 	int rti_addrs;

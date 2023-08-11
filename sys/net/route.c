@@ -88,6 +88,9 @@ void
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
 }
 
+/**
+ * 路由表的查找
+ */
 struct rtentry *
 rtalloc1(dst, report)
 register struct sockaddr *dst;
@@ -171,14 +174,14 @@ void
  * message from the network layer.
  *
  * N.B.: must be called at splnet
- *
+ * @param dst 导致重定向的数据报的目的IP地址
+ * @param gateway 路由器的IP地址,用作该目的的新网关字段
+ * @param netmask 空指针
+ * @param flags 设置了RTF_GATEWAY标志和RTF_HOST标志
+ * @param src 发送重定向的路由器的IP地址
+ * @param rtp 空指针
  */
-void
-        rtredirect(dst, gateway, netmask, flags, src, rtp) struct sockaddr *dst,
-        *gateway, *netmask, *src;
-int flags;
-struct rtentry **rtp;
-{
+void rtredirect(struct sockaddr *dst, struct sockaddr *gateway, struct sockaddr *netmask, int flags, struct sockaddr *src, struct rtentry **rtp) {
 	register struct rtentry *rt;
 	int error   = 0;
 	short *stat = 0;
@@ -320,11 +323,17 @@ struct sockaddr *dst, *gateway;
 
 #define ROUNDUP(a) (a > 0 ? (1 + (((a) -1) | (sizeof(long) - 1))) : sizeof(long))
 
-int rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
-int req, flags;
-struct sockaddr *dst, *gateway, *netmask;
-struct rtentry **ret_nrt;
-{
+/**
+ *
+ * @param req
+ * @param dst 一个插口地址结构,它指定在路由表中添加或删除的表项
+ * @param gateway
+ * @param netmask 空指针,这是因为新路由是一个主机路由,它的掩码是隐含的全1比特
+ * @param flags
+ * @param ret_nrt
+ * @return
+ */
+int rtrequest(int req, struct sockaddr *dst, struct sockaddr *gateway, struct sockaddr *netmask, int flags, struct rtentry **ret_nrt) {
 	int s     = splnet();
 	int error = 0;
 	register struct rtentry *rt;

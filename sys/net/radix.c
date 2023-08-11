@@ -208,10 +208,14 @@ int skip;
 	return 1;
 }
 
+/**
+ *
+ * @param v_arg 一个指针,指向一个含有待查找地址的插口地址结构
+ * @param head
+ * @return
+ */
 struct radix_node *
-        rn_match(v_arg, head) void *v_arg;
-struct radix_node_head *head;
-{
+rn_match(void *v_arg, struct radix_node_head *head) {
 	caddr_t v                     = v_arg;
 	register struct radix_node *t = head->rnh_treetop, *x;
 	register caddr_t cp           = v, cp2;
