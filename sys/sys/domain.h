@@ -47,18 +47,19 @@ struct mbuf;
 struct domain {
 	int dom_family;///< 一个地址族常量 (例如 AF_INET)，它指示在此域中协议使用的编址方式 AF_xxx
 	char *dom_name;///< 此域的一个文本名称 (例如“internet”)
-	void(*dom_init)///< initialize domain data structures
-	        __P((void) );
-	int(*dom_externalize)///< externalize access rights
-	        __P((struct mbuf *) );
-	int(*dom_dispose)///< dispose of internalized rights
-	        __P((struct mbuf *) );
-	struct protosw *dom_protosw, *dom_protoswNPROTOSW;
-	struct domain *dom_next;///< 指向在一个内核支持的域链表中的下一个域。包含所有域的链表通过全局指针 domains 来访问。
-	int(*dom_rtattach)      ///< initialize routing table
-	        __P((void **, int) );
-	int dom_rtoffset;///< an arg to rtattach, in bits
-	int dom_maxrtkey;///< for routing layer
+	void(*dom_init)
+	        __P((void) );///< 域的初始化 initialize domain data structures
+	int(*dom_externalize)
+	        __P((struct mbuf *) );///< externalize access rights
+	int(*dom_dispose)
+	        __P((struct mbuf *) );      ///< dispose of internalized rights
+	struct protosw *dom_protosw;        ///< 协议交换结构
+	struct protosw *dom_protoswNPROTOSW;///< 指向协议交换结构之后的指针
+	struct domain *dom_next;            ///< 指向在一个内核支持的域链表中的下一个域。包含所有域的链表通过全局指针 domains 来访问。
+	int(*dom_rtattach)
+	        __P((void **, int) );///< initialize routing table
+	int dom_rtoffset;            ///< an arg to rtattach, in bits
+	int dom_maxrtkey;            ///< for routing layer
 };
 
 #ifdef KERNEL

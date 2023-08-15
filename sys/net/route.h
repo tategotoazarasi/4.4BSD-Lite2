@@ -180,14 +180,14 @@ struct rt_msghdr {
 #define RTM_DELADDR 0xd ///< 从接口中删除地址 address being removed from iface
 #define RTM_IFINFO 0xe  ///< 接口打开或关闭等 iface going up/down etc.
 
-#define RTV_MTU 0x1      ///< init or lock _mtu
-#define RTV_HOPCOUNT 0x2 ///< init or lock _hopcount
-#define RTV_EXPIRE 0x4   ///< init or lock _hopcount
-#define RTV_RPIPE 0x8    ///< init or lock _recvpipe
-#define RTV_SPIPE 0x10   ///< init or lock _sendpipe
-#define RTV_SSTHRESH 0x20///< init or lock _ssthresh
-#define RTV_RTT 0x40     ///< init or lock _rtt
-#define RTV_RTTVAR 0x80  ///< init or lock _rttvar
+#define RTV_MTU 0x1      ///< 初始化或者锁住rmx_mtu init or lock _mtu
+#define RTV_HOPCOUNT 0x2 ///< 初始化或者锁住rmx_hopcount init or lock _hopcount
+#define RTV_EXPIRE 0x4   ///< 初始化或者锁住rmx_expire init or lock _hopcount
+#define RTV_RPIPE 0x8    ///< 初始化或者锁住rmx_recvpipe init or lock _recvpipe
+#define RTV_SPIPE 0x10   ///< 初始化或者锁住rmx_sendpipe init or lock _sendpipe
+#define RTV_SSTHRESH 0x20///< 初始化或者锁住rmx_ssthresh init or lock _ssthresh
+#define RTV_RTT 0x40     ///< 初始化或者锁住rmx_rtt init or lock _rtt
+#define RTV_RTTVAR 0x80  ///< 初始化或者锁住rmx_rttvar init or lock _rttvar
 
 /*
  * Bitmask values for rtm_addr.
