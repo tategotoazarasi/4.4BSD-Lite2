@@ -43,10 +43,10 @@ struct ether_header {
 	u_short ether_type;
 };
 
-#define ETHERTYPE_PUP 0x0200   ///< PUP protocol
-#define ETHERTYPE_IP 0x0800    ///< IP protocol
-#define ETHERTYPE_ARP 0x0806   ///< Addr. resolution protocol
-#define ETHERTYPE_REVARP 0x8035///< reverse Addr. resolution protocol
+#define ETHERTYPE_PUP 0x0200   ///< 尾部封装 (已废弃) PUP protocol
+#define ETHERTYPE_IP 0x0800    ///< IP帧 IP protocol
+#define ETHERTYPE_ARP 0x0806   ///< ARP帧 Addr. resolution protocol
+#define ETHERTYPE_REVARP 0x8035///< 逆ARP帧 reverse Addr. resolution protocol
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
@@ -149,7 +149,7 @@ void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *) );
 void arpintr __P((void) );
 int arpresolve __P((struct arpcom *,
                     struct rtentry *, struct mbuf *, struct sockaddr *, u_char *) );
-void arpwhohas __P((struct arpcom *, struct in_addr *) );
+void arpwhohas __P((struct arpcom *, struct in_addr *) );///< 用于广播一个 AR P请求
 
 int ether_addmulti __P((struct ifreq *, struct arpcom *) );
 int ether_delmulti __P((struct ifreq *, struct arpcom *) );

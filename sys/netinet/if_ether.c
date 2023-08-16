@@ -74,9 +74,9 @@
 
 
 /* timer values */
-int arpt_prune = (5 * 60 * 1);///< walk list every 5 minutes
-int arpt_keep  = (20 * 60);   ///< once resolved, good for 20 more minutes
-int arpt_down  = 20;          ///< once declared down, don't send for 20 secs
+int arpt_prune = (5 * 60 * 1);///< 检查ARP链表的时间间隔的分钟数 (5) walk list every 5 minutes
+int arpt_keep  = (20 * 60);   ///< ARP结点的有效时间的分钟数 (20) once resolved, good for 20 more minutes
+int arpt_down  = 20;          ///< ARP洪泛算法的时间间隔的秒数 (20) once declared down, don't send for 20 secs
 #define rt_expire rt_rmx.rmx_expire
 
 static void arprequest __P((struct arpcom *, u_long *, u_long *, u_char *) );
@@ -87,12 +87,14 @@ static void in_arpinput __P((struct mbuf *) );
 
 extern struct ifnet loif;
 // extern struct timeval time;
-struct llinfo_arp llinfo_arp = {&llinfo_arp, &llinfo_arp};
-struct ifqueue arpintrq      = {0, 0, 0, 50};
-int arp_inuse, arp_allocated, arp_intimer;
-int arp_maxtries = 5;
-int useloopback  = 1;///< use loopback interface for local traffic
-int arpinit_done = 0;
+struct llinfo_arp llinfo_arp = {&llinfo_arp, &llinfo_arp};///< 链接表的表头
+struct ifqueue arpintrq      = {0, 0, 0, 50};             ///< 来自以太网设备驱动程序的ARP输入队列
+int arp_inuse;                                            ///< 正在使用的ARP结点数
+int arp_allocated;                                        ///< 已经分配的ARP结点数
+int arp_intimer;
+int arp_maxtries = 5;///< 对一个IP地址发送ARP请求的重试次数 (5)
+int useloopback  = 1;///< 对本机使用环回(默认) use loopback interface for local traffic
+int arpinit_done = 0;///< 初始化标志
 
 /**
  * Timeout routine.  Age arp_tab entries periodically.
@@ -222,6 +224,7 @@ struct sockaddr *sa;
 }
 
 /**
+ * 用于广播一个 AR P请求
  * Broadcast an ARP packet, asking who has addr on interface ac.
  */
 void
@@ -232,16 +235,14 @@ register struct in_addr *addr;
 }
 
 /**
- * Broadcast an ARP request. Caller specifies:
- *	- arp header source ip address
- *	- arp header target ip address
- *	- arp header source ethernet address
+ * 用于广播一个ARP请求。该函数建立一个ARP请求分组,并将它传送到接口的输出函数。
+ * Broadcast an ARP request.
+ * @param sip header source ip address
+ * @param tip header target ip address
+ * @param enaddr header source ethernet address
  */
 static void
-        arprequest(ac, sip, tip, enaddr) register struct arpcom *ac;
-register u_long *sip, *tip;
-register u_char *enaddr;
-{
+arprequest(register struct arpcom *ac, register u_long *sip, register u_long *tip, register u_char *enaddr) {
 	register struct mbuf *m;
 	register struct ether_header *eh;
 	register struct ether_arp *ea;
@@ -378,6 +379,7 @@ void arpintr() {
 }
 
 /**
+ * 用于处理接收到的ARP请求/回答
  * ARP for Internet protocols on 10 Mb/s Ethernet.
  * Algorithm is that given in RFC 826.
  * In addition, a sanity check is performed on the sender
