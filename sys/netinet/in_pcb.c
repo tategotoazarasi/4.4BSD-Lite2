@@ -57,7 +57,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
-struct in_addr zeroin_addr;
+struct in_addr zeroin_addr;///< 32 bit 全零IP地址
 
 int in_pcballoc(so, head)
 struct socket *so;
@@ -424,7 +424,7 @@ void
 	}
 }
 
-/*
+/**
  * 更新IP路由表
  * After a routing change, flush old routing
  * and allocate a (hopefully) better one.
@@ -450,9 +450,12 @@ struct in_addr faddr, laddr;
 u_int fport_arg, lport_arg;
 int flags;
 {
-	register struct inpcb *inp, *match = 0;
-	int matchwild = 3, wildcard;
-	u_short fport = fport_arg, lport = lport_arg;
+	register struct inpcb *inp;
+	register struct inpcb *match = 0;
+	int matchwild                = 3;
+	int wildcard;
+	u_short fport = fport_arg;
+	u_short lport = lport_arg;
 
 	for(inp = head->inp_next; inp != head; inp = inp->inp_next) {
 		if(inp->inp_lport != lport)

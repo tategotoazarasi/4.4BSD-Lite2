@@ -59,11 +59,11 @@ struct inpcb {
 };
 
 /* flags in inp_flags: */
-#define INP_RECVOPTS 0x01   ///< receive incoming IP options
-#define INP_RECVRETOPTS 0x02///< receive IP options for reply
-#define INP_RECVDSTADDR 0x04///< receive IP dst address
+#define INP_RECVOPTS 0x01   ///< 把到达IP选项作为控制信息接收 (只有UDP, 还没有实现) receive incoming IP options
+#define INP_RECVRETOPTS 0x02///< 把回答的IP选项作为控制信息接收 (只有UDP, 还没有实现) receive IP options for reply
+#define INP_RECVDSTADDR 0x04///< 把IP目的地址作为控制信息接收 (只有UDP) receive IP dst address
 #define INP_CONTROLOPTS (INP_RECVOPTS | INP_RECVRETOPTS | INP_RECVDSTADDR)
-#define INP_HDRINCL 0x08///< user supplies entire IP header
+#define INP_HDRINCL 0x08///< 进程提供整个 IP首部(只有原始插口) user supplies entire IP header
 
 #define INPLOOKUP_WILDCARD 1
 #define INPLOOKUP_SETLOCAL 2
