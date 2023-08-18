@@ -62,13 +62,13 @@
  * Per RFC 768, August, 1980.
  */
 #ifndef COMPAT_42
-int udpcksum = 1;
+int udpcksum = 1;///< 用于计算和验证 UDP检验和的标志位
 #else
 int udpcksum = 0; /* XXX */
 #endif
 
-struct sockaddr_in udp_in    = {sizeof(udp_in), AF_INET};
-struct inpcb *udp_last_inpcb = &udb;
+struct sockaddr_in udp_in    = {sizeof(udp_in), AF_INET};///< 在输入时存放发送方的 IP地址
+struct inpcb *udp_last_inpcb = &udb;                     ///< 指向最近收到的数据报的指针：“向后一个”高速缓存
 
 static void udp_detach __P((struct inpcb *) );
 static void udp_notify __P((struct inpcb *, int) );///< 向进程报告差错
@@ -459,9 +459,8 @@ release:
 	return (error);
 }
 
-u_long udp_sendspace = 9216; /* really max datagram size */
-u_long udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
-/* 40 1K datagrams */
+u_long udp_sendspace = 9216;                                    ///< 插口发送缓存的默认大小, 9216 字节 really max datagram size
+u_long udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));///< 插口接收缓存的默认大小, 41600 字节 40 1K datagrams
 
 /**
  * ARGSUSED
