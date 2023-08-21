@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -60,17 +62,17 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 
-int tcp_keepidle       = TCPTV_KEEP_IDLE;
-int tcp_keepintvl      = TCPTV_KEEPINTVL;
-int tcp_keepcnt        = TCPTV_KEEPCNT;   /* max idle probes */
-int tcp_maxpersistidle = TCPTV_KEEP_IDLE; /* max idle time in persist */
-int tcp_maxidle;
-#else  /* TUBA_INCLUDE */
+int tcp_keepidle       = TCPTV_KEEP_IDLE;///< 保活:第一次探测前的空闲时间 (2小时)
+int tcp_keepintvl      = TCPTV_KEEPINTVL;///< 保活:无响应时两次探测的间隔时间 (75秒)
+int tcp_keepcnt        = TCPTV_KEEPCNT;  ///< max idle probes
+int tcp_maxpersistidle = TCPTV_KEEP_IDLE;///< max idle time in persist
+int tcp_maxidle;                         ///< 保活:探测之后、放弃之前的时间 (10分钟)
+#else                                    /* TUBA_INCLUDE */
 
 extern int tcp_maxpersistidle;
-#endif /* TUBA_INCLUDE */
+#endif                                   /* TUBA_INCLUDE */
 
-/*
+/**
  * Fast timeout routine for processing delayed acks
  */
 void tcp_fasttimo() {
@@ -91,7 +93,7 @@ void tcp_fasttimo() {
 	splx(s);
 }
 
-/*
+/**
  * Tcp protocol timeout routine called every 500 ms.
  * Updates the timers in all active tcb's and
  * causes finite state machine actions if timers expire.
@@ -140,7 +142,7 @@ void tcp_slowtimo() {
 }
 #ifndef TUBA_INCLUDE
 
-/*
+/**
  * Cancel all timers for TCP tp.
  */
 void
@@ -157,7 +159,7 @@ int tcp_backoff[TCP_MAXRXTSHIFT + 1] =
 
 int tcp_totbackoff = 511; /* sum of tcp_backoff[] */
 
-/*
+/**
  * TCP timer processing.
  */
 struct tcpcb *

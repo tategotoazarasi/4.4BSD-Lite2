@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -68,7 +70,7 @@
 #ifdef TCPDEBUG
 int tcpconsdebug = 0;
 #endif
-/*
+/**
  * Tcp debug routines
  */
 void

@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -65,7 +67,7 @@ extern struct mbuf *m_copypack();
 
 #define MAX_TCPOPTLEN 32 /* max # bytes that go in options */
 
-/*
+/**
  * Tcp output routine: figure out what should be sent and send it.
  */
 int tcp_output(tp)

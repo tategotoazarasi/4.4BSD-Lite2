@@ -62,9 +62,9 @@
 #include <netinet/tcpip.h>
 
 /* patchable/settable parameters for tcp */
-int tcp_mssdflt    = TCP_MSS;
-int tcp_rttdflt    = TCPTV_SRTTDFLT / PR_SLOWHZ;
-int tcp_do_rfc1323 = 1;
+int tcp_mssdflt    = TCP_MSS;                   ///< 默认MSS值(512字节)
+int tcp_rttdflt    = TCPTV_SRTTDFLT / PR_SLOWHZ;///< 没有数据时 RTT的默认值(3秒)
+int tcp_do_rfc1323 = 1;                         ///< 如果为真(默认值),请求窗口大小和时间戳选项
 
 extern struct inpcb *tcp_last_inpcb;
 

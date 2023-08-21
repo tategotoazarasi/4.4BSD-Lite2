@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -38,22 +40,22 @@
  * on with modular arithmetic.  These macros can be
  * used to compare such integers.
  */
-#define	SEQ_LT(a,b)	((int)((a)-(b)) < 0)
-#define	SEQ_LEQ(a,b)	((int)((a)-(b)) <= 0)
-#define	SEQ_GT(a,b)	((int)((a)-(b)) > 0)
-#define	SEQ_GEQ(a,b)	((int)((a)-(b)) >= 0)
+#define SEQ_LT(a, b) ((int) ((a) - (b)) < 0)
+#define SEQ_LEQ(a, b) ((int) ((a) - (b)) <= 0)
+#define SEQ_GT(a, b) ((int) ((a) - (b)) > 0)
+#define SEQ_GEQ(a, b) ((int) ((a) - (b)) >= 0)
 
 /*
  * Macros to initialize tcp sequence numbers for
  * send and receive from initial send and receive
  * sequence numbers.
  */
-#define	tcp_rcvseqinit(tp) \
+#define tcp_rcvseqinit(tp) \
 	(tp)->rcv_adv = (tp)->rcv_nxt = (tp)->irs + 1
 
-#define	tcp_sendseqinit(tp) \
+#define tcp_sendseqinit(tp)                                        \
 	(tp)->snd_una = (tp)->snd_nxt = (tp)->snd_max = (tp)->snd_up = \
-	    (tp)->iss
+	        (tp)->iss
 
 #ifdef KERNEL
 /*
@@ -66,11 +68,11 @@
  * number in the range [0-0x3ffff] that is hard to predict.
  */
 #ifndef tcp_random18
-#define	tcp_random18()	((random() >> 14) & 0x3ffff)
+#define tcp_random18() ((random() >> 14) & 0x3ffff)
 #endif
-#define	TCP_ISSINCR	(122*1024 + tcp_random18())
+#define TCP_ISSINCR (122 * 1024 + tcp_random18())
 
-tcp_seq	tcp_iss;		/* tcp initial send seq # */
+tcp_seq tcp_iss;///< TCP发送初始序号 tcp initial send seq #
 #else
-#define	TCP_ISSINCR	(250*1024)	/* increment for tcp_iss each second */
+#define TCP_ISSINCR (250 * 1024) /* increment for tcp_iss each second */
 #endif

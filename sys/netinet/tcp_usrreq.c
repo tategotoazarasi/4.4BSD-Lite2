@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -59,17 +61,15 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
-/*
- * TCP protocol interface to socket abstraction.
- */
-extern char *tcpstates[];
+extern char *tcpstates[];///< TCP protocol interface to socket abstraction.
 
-/*
+/**
  * Process a TCP user request for TCP tb.  If this is a send request
  * then m is the mbuf chain of send data.  If this is a timer expiration
  * (called from the software clock routine), then timertype tells which timer.
+ *
+ * ARGSUSED
  */
-/*ARGSUSED*/
 int tcp_usrreq(so, req, m, nam, control)
 struct socket *so;
 int req;
@@ -423,10 +423,10 @@ struct mbuf **mp;
 	return (error);
 }
 
-u_long tcp_sendspace = 1024 * 8;
-u_long tcp_recvspace = 1024 * 8;
+u_long tcp_sendspace = 1024 * 8;///< 端口发送缓存大小默认值
+u_long tcp_recvspace = 1024 * 8;///< 端口接收缓存大小默认值
 
-/*
+/**
  * Attach TCP protocol to socket, allocating
  * internet protocol control block, tcp control block,
  * bufer space, and entering LISTEN state if to accept connections.
@@ -460,7 +460,7 @@ struct socket *so;
 	return (0);
 }
 
-/*
+/**
  * Initiate (or continue) disconnect.
  * If embryonic state, just send reset (once).
  * If in ``let data drain'' option and linger null, just drop.
@@ -488,7 +488,7 @@ register struct tcpcb *tp;
 	return (tp);
 }
 
-/*
+/**
  * User issued close, and wish to trail through shutdown states:
  * if never received SYN, just forget it.  If got a SYN from peer,
  * but haven't sent FIN, then go to FIN_WAIT_1 state to send peer a FIN.

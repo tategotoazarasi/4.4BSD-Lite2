@@ -1,4 +1,6 @@
-/*
+/**
+ * @file
+ * @copyright
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -61,9 +63,9 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
-int tcprexmtthresh = 3;
+int tcprexmtthresh = 3;///< ACK重复次数的门限值 (3),触发快速重传
 struct tcpiphdr tcp_saveti;
-struct inpcb *tcp_last_inpcb = &tcb;
+struct inpcb *tcp_last_inpcb = &tcb;///< 指向最后收到报文段的 PCB 的指针：“后面一个”高速缓存
 
 extern u_long sb_max;
 
@@ -75,7 +77,7 @@ extern u_long sb_max;
 #define TSTMP_GEQ(a, b) ((int) ((a) - (b)) >= 0)
 
 
-/*
+/**
  * Insert segment ti into reassembly queue of tcp with
  * control block tp.  Return TH_FIN if reassembly now includes
  * a segment with FIN.  The macro form does the common case inline
@@ -207,7 +209,7 @@ present:
 	return (flags);
 }
 
-/*
+/**
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
  */
@@ -1401,7 +1403,7 @@ u_long *ts_val, *ts_ecr;
 	}
 }
 
-/*
+/**
  * Pull out of band byte out of a segment so
  * it doesn't appear in the user's data queue.
  * It is still reflected in the segment length for
@@ -1433,7 +1435,7 @@ register struct mbuf *m;
 	panic("tcp_pulloutofband");
 }
 
-/*
+/**
  * Collect new round-trip time estimate
  * and update averages and current timeout.
  */
@@ -1506,7 +1508,7 @@ short rtt;
 	tp->t_softerror = 0;
 }
 
-/*
+/**
  * Determine a reasonable value for maxseg size.
  * If the route is known, check route for mtu.
  * If none, use an mss that can be handled on the outgoing
