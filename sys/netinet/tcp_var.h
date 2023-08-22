@@ -47,8 +47,8 @@ struct tcpcb {
 	struct tcpiphdr *seg_prev;
 	short t_state;              ///< state of this connection
 	short t_timer[TCPT_NTIMERS];///< tcp timers
-	short t_rxtshift;           ///< log(2) of rexmt exp. backoff
-	short t_rxtcur;             ///< current retransmit value
+	short t_rxtshift;           ///< tcp_backoff[数组索引(指数退避)] log(2) of rexmt exp. backoff
+	short t_rxtcur;             ///< 当前重传时限 current retransmit value
 	short t_dupacks;            ///< consecutive dup acks recd
 	u_short t_maxseg;           ///< maximum segment size
 	char t_force;               ///< 1 if forcing out a byte
@@ -98,11 +98,11 @@ struct tcpcb {
  * "Variance" is actually smoothed difference.
  */
 	u_short t_idle;             ///< inactivity time
-	short t_rtt;                ///< round trip time
+	short t_rtt;                ///< 已平滑的RTT估计器 round trip time
 	tcp_seq t_rtseq;            ///< sequence number being timed
 	short t_srtt;               ///< smoothed round-trip time
-	short t_rttvar;             ///< variance in round-trip time
-	u_short t_rttmin;           ///< minimum rtt allowed
+	short t_rttvar;             ///< 已平滑的RTT平均偏差估计器 variance in round-trip time
+	u_short t_rttmin;           ///< 重传时限最小值 minimum rtt allowed
 	u_long max_sndwnd;          ///< largest window peer has offered
 
 	/* out-of-band data */
@@ -137,10 +137,10 @@ struct tcpcb {
  * and thus an "ALPHA" of 0.875.  rttvar has 2 bits to the right of the
  * binary point, and is smoothed with an ALPHA of 0.75.
  */
-#define TCP_RTT_SCALE 8   ///< multiplier for srtt; 3 bits frac.
-#define TCP_RTT_SHIFT 3   ///< shift for srtt; 3 bits frac.
-#define TCP_RTTVAR_SCALE 4///< multiplier for rttvar; 2 bits
-#define TCP_RTTVAR_SHIFT 2///< multiplier for rttvar; 2 bits
+#define TCP_RTT_SCALE 8   ///< 相乘: t_srtt = srtt × 8 multiplier for srtt; 3 bits frac.
+#define TCP_RTT_SHIFT 3   ///< 移位: t_srtt = srtt << 3 shift for srtt; 3 bits frac.
+#define TCP_RTTVAR_SCALE 4///< 相乘: t_rttvar = rttvar × 4 multiplier for rttvar; 2 bits
+#define TCP_RTTVAR_SHIFT 2///< 移位: t_rttvar = rttvar << 2 multiplier for rttvar; 2 bits
 
 /**
  * The initial retransmission should happen at rtt + 4 * rttvar.

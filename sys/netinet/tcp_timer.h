@@ -41,10 +41,10 @@
  */
 #define TCPT_NTIMERS 4
 
-#define TCPT_REXMT 0  ///< retransmit
-#define TCPT_PERSIST 1///< retransmit persistance
-#define TCPT_KEEP 2   ///< keep alive
-#define TCPT_2MSL 3   ///< 2*msl quiet time timer
+#define TCPT_REXMT 0  ///< 重传定时器 retransmit
+#define TCPT_PERSIST 1///< 持续定时器 retransmit persistance
+#define TCPT_KEEP 2   ///< 保活定时器或连接建立定时器 keep alive
+#define TCPT_2MSL 3   ///< 2MSL定时器或FIN_WAIT_2定时器 2*msl quiet time timer
 
 /*
  * The TCPT_REXMT timer is used to force retransmissions.
@@ -85,28 +85,28 @@
 /*
  * Time constants.
  */
-#define TCPTV_MSL (30 * PR_SLOWHZ)///< max seg lifetime (hah!)
-#define TCPTV_SRTTBASE 0              ///< base roundtrip time; if 0, no idea yet
-#define TCPTV_SRTTDFLT (3 * PR_SLOWHZ)///< assumed RTT if no info
+#define TCPTV_MSL (30 * PR_SLOWHZ)    ///< MSL,最大报文段生存时间 max seg lifetime (hah!)
+#define TCPTV_SRTTBASE 0              ///< 特殊取值,意味着目前无连接 RTT样本 base roundtrip time; if 0, no idea yet
+#define TCPTV_SRTTDFLT (3 * PR_SLOWHZ)///< 连接无RTT样本时的默认值 assumed RTT if no info
 
-#define TCPTV_PERSMIN (5 * PR_SLOWHZ) ///< retransmit persistance
-#define TCPTV_PERSMAX (60 * PR_SLOWHZ)///< maximum persist interval
+#define TCPTV_PERSMIN (5 * PR_SLOWHZ) ///< 持续定时器最小值 retransmit persistance
+#define TCPTV_PERSMAX (60 * PR_SLOWHZ)///< 持续定时器最大值 maximum persist interval
 
-#define TCPTV_KEEP_INIT (75 * PR_SLOWHZ)      ///< initial connect keep alive
-#define TCPTV_KEEP_IDLE (120 * 60 * PR_SLOWHZ)///< dflt time before probing
-#define TCPTV_KEEPINTVL (75 * PR_SLOWHZ)      ///< default probe interval
-#define TCPTV_KEEPCNT 8                       ///< max probes before drop
+#define TCPTV_KEEP_INIT (75 * PR_SLOWHZ)      ///< 连接建立定时器取值 initial connect keep alive
+#define TCPTV_KEEP_IDLE (120 * 60 * PR_SLOWHZ)///< 第一次保活测试前连接的空闲时间 (2小时) dflt time before probing
+#define TCPTV_KEEPINTVL (75 * PR_SLOWHZ)      ///< 对端无响应时保活测试间的间隔时间 default probe interval
+#define TCPTV_KEEPCNT 8                       ///< 对端无响应时,最大保活测试次数 max probes before drop
 
-#define TCPTV_MIN (1 * PR_SLOWHZ)      ///< minimum allowable value
-#define TCPTV_REXMTMAX (64 * PR_SLOWHZ)///< max allowable REXMT value
+#define TCPTV_MIN (1 * PR_SLOWHZ)      ///< 重传定时器最小值 minimum allowable value
+#define TCPTV_REXMTMAX (64 * PR_SLOWHZ)///< 重传定时器最大值 max allowable REXMT value
 
 #define TCP_LINGERTIME 120///< linger at most 2 minutes
 
 #define TCP_MAXRXTSHIFT 12///< maximum retransmits
 
 #ifdef TCPTIMERS
-	   char *tcptimers[] =
-	           {"REXMT", "PERSIST", "KEEP", "2MSL"};
+char *tcptimers[] =
+        {"REXMT", "PERSIST", "KEEP", "2MSL"};
 #endif
 
 /**
