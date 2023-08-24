@@ -45,11 +45,11 @@ struct tcp_debug {
 	struct tcpcb td_cb;
 };
 
-#define TA_INPUT 0
-#define TA_OUTPUT 1
-#define TA_USER 2
+#define TA_INPUT 0 ///< 输入处理完毕后,调用tcp_output之前
+#define TA_OUTPUT 1///< 调用ip_output发送报文段之前
+#define TA_USER 2  ///< RPU_xxx请求处理完毕后,被tcp_usrreq调用
 #define TA_RESPOND 3
-#define TA_DROP 4
+#define TA_DROP 4///< 当输入报文段被丢弃时,被tcp_input调用
 
 #ifdef TANAMES
 char *tanames[] =
