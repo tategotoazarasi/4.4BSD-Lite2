@@ -96,5 +96,5 @@ struct tcphdr {
 /*
  * User-settable options (used with setsockopt).
  */
-#define TCP_NODELAY 0x01///< don't delay send to coalesce packets
-#define TCP_MAXSEG 0x02 ///< set maximum segment size
+#define TCP_NODELAY 0x01///< Nagel算法 don't delay send to coalesce packets
+#define TCP_MAXSEG 0x02 ///< TCP将发送的最大报文段长度 set maximum segment size

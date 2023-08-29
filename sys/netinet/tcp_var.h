@@ -50,7 +50,7 @@ struct tcpcb {
 	short t_rxtshift;           ///< tcp_backoff[数组索引(指数退避)] log(2) of rexmt exp. backoff
 	short t_rxtcur;             ///< 当前重传时限 current retransmit value
 	short t_dupacks;            ///< consecutive dup acks recd
-	u_short t_maxseg;           ///< maximum segment size
+	u_short t_maxseg;           ///< TCP将发送的最大报文段长度 maximum segment size
 	char t_force;               ///< 1 if forcing out a byte
 	u_short t_flags;
 #define TF_ACKNOW 0x0001     ///< 立即发送ACK ack peer immediately
