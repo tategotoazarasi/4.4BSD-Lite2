@@ -54,13 +54,13 @@
 #include <netinet/ip_mroute.h>
 #include <netinet/in_pcb.h>
 
-struct inpcb rawinpcb;
+struct inpcb rawinpcb;///< 原始IP的Internet PCB链表表头
 
 /*
  * Nominal space allocated to a raw ip socket.
  */
-#define RIPSNDQ 8192
-#define RIPRCVQ 8192
+#define RIPSNDQ 8192///< 插口发送缓存大小默认值, 8192字节
+#define RIPRCVQ 8192///< 插口接收缓存大小默认值, 8192字节
 
 /*
  * Raw interface to IP protocol.
@@ -74,7 +74,7 @@ void rip_init() {
 	rawinpcb.inp_next = rawinpcb.inp_prev = &rawinpcb;
 }
 
-struct sockaddr_in ripsrc = {sizeof(ripsrc), AF_INET};
+struct sockaddr_in ripsrc = {sizeof(ripsrc), AF_INET};///< 在输入中包含发送方的 IP地址
 /**
  * 进程不识别的ICMP报文
  * Setup generic address and protocol structures
@@ -246,8 +246,8 @@ struct mbuf **m;
 	return (ip_ctloutput(op, so, level, optname, m));
 }
 
-u_long rip_sendspace = RIPSNDQ;
-u_long rip_recvspace = RIPRCVQ;
+u_long rip_sendspace = RIPSNDQ;///< 插口发送缓存大小默认值, 8192字节
+u_long rip_recvspace = RIPRCVQ;///< 插口接收缓存大小默认值, 8192字节
 
 /**
  * ARGSUSED
